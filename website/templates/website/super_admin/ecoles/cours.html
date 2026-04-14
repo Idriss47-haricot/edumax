@@ -1,0 +1,45 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Cours - {{ ecole.nom }}{% endblock %}
+{% block page_title %}Cours de {{ ecole.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">
+            <i class="fas fa-book-open me-2 text-primary"></i>
+            Tous les cours
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if cours %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr><th>Titre</th><th>Spécialité</th><th>Enseignant</th><th>Séances</th><th>Actions</th> </thead>
+                    <tbody>
+                        {% for c in cours %}
+                        <tr>
+                            <td><strong>{{ c.titre }}</strong></td>
+                            <td>{{ c.specialite.nom }}</td>
+                            <td>{% if c.enseignant %}{{ c.enseignant.prenom }} {{ c.enseignant.username }}{% else %}Non assigné{% endif %}</td>
+                            <td>{{ c.seances.count }}</td>
+                            <td>
+                                <a href="{% url 'cours_detail' c.id %}" class="btn btn-sm btn-info"><i class="fas fa-eye"></i></a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                <p>Aucun cours pour cette école.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

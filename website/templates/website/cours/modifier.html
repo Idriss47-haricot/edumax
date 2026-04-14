@@ -1,0 +1,86 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Modifier {{ cours.titre }}{% endblock %}
+{% block page_title %}Modifier le cours{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    Modifier le cours
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre du cours *</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Objectifs pédagogiques</label>
+                        {{ form.objectifs }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Enseignant responsable *</label>
+                        {{ form.enseignant }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de début *</label>
+                            {{ form.date_debut }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de fin</label>
+                            {{ form.date_fin }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mode de programmation</label>
+                            {{ form.mode_programmation }}
+                        </div>
+                        <div class="col-md-6 mb-3 form-check mt-4">
+                            {{ form.actif }}
+                            <label class="form-check-label">Cours actif</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Statut</label>
+                            {{ form.statut }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'specialite_detail' cours.specialite.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

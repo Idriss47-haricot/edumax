@@ -1,0 +1,55 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Soumettre {{ devoir.titre }}{% endblock %}
+{% block page_title %}Soumettre le devoir : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-upload me-2 text-primary"></i>
+                    Soumission du devoir
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if devoir.accepte_texte %}
+                        <div class="mb-3">
+                            <label class="form-label">Votre réponse</label>
+                            {{ form.texte_reponse }}
+                        </div>
+                    {% endif %}
+                    
+                    {% if devoir.accepte_fichiers %}
+                        <div class="mb-3">
+                            <label class="form-label">Fichiers joints (max {{ devoir.max_fichiers }})</label>
+                            <input type="file" name="fichier" class="form-control" multiple>
+                            <small class="text-muted">Taille max : {{ devoir.max_taille_fichier }} Mo par fichier</small>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Une fois soumis, vous ne pourrez plus modifier votre devoir avant la date limite.
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'devoir_detail' devoir.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i>Soumettre
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

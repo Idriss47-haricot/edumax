@@ -1,0 +1,65 @@
+/* Style principal */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Cartes menu */
+.menu-card {
+    transition: transform 0.3s, box-shadow 0.3s;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.menu-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 25px rgba(13, 110, 253, 0.3);
+}
+
+.menu-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.menu-card:hover .menu-icon {
+    transform: scale(1.1);
+}
+
+/* Tableaux */
+.table th {
+    font-weight: 600;
+    background-color: #e9ecef;
+}
+
+/* Progress bar */
+.progress {
+    border-radius: 10px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+/* Alertes */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Boutons */
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+}

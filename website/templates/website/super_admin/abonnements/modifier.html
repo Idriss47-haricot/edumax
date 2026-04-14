@@ -1,0 +1,75 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Modifier {{ abonnement.nom }}{% endblock %}
+{% block page_title %}Modifier le pack : {{ abonnement.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    Modification du pack
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nom du pack *</label>
+                        {{ form.nom }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Max étudiants *</label>
+                            {{ form.max_etudiants }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Max cours *</label>
+                            {{ form.max_cours }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Stockage (GB) *</label>
+                            {{ form.stockage_gb }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ordre d'affichage *</label>
+                            {{ form.ordre }}
+                            <small class="text-muted">Plus grand = plus haut dans le classement</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.actif }}
+                        <label class="form-check-label">Pack actif</label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'super_admin_abonnement_liste' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

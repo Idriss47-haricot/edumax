@@ -1,0 +1,193 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Ajouter une séance - {{ cours.titre }}{% endblock %}
+{% block page_title %}Ajouter une séance à "{{ cours.titre }}"{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>
+                    Nouvelle séance
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre de la séance *</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Objectifs pédagogiques</label>
+                        {{ form.objectifs }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type de séance *</label>
+                        {{ form.type_seance }}
+                    </div>
+                    
+                    <!-- Contenu selon le type -->
+                    <div id="visio_fields" class="type-fields" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-video me-2"></i>
+                            <strong>Visioconférence</strong><br>
+                            Une salle BigBlueButton sera créée automatiquement.<br>
+                            L'enregistrement sera disponible pendant 15 jours.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Lien de la visio (optionnel)</label>
+                            {{ form.lien_visio }}
+                        </div>
+                    </div>
+                    
+                    <div id="asynchrone_fields" class="type-fields" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-laptop me-2"></i>
+                            <strong>Séance asynchrone</strong><br>
+                            Contenu accessible à tout moment.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Fichier (PDF, PPT, Word)</label>
+                            {{ form.fichier }}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Lien vidéo (YouTube/Vimeo)</label>
+                            {{ form.lien_externe }}
+                        </div>
+                    </div>
+                    
+                    <div id="integration_fields" class="type-fields" style="display: none;">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-project-diagram me-2"></i>
+                            <strong>Activité d'intégration</strong><br>
+                            Projet réel ou travail long. Vous pourrez ajouter un devoir après.
+                        </div>
+                    </div>
+                    
+                    <div id="correction_fields" class="type-fields" style="display: none;">
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-double me-2"></i>
+                            <strong>Séance de correction</strong><br>
+                            Dédiée à la correction des devoirs et à la reprise des notions.
+                        </div>
+                    </div>
+                    
+                    <div id="presentation_fields" class="type-fields" style="display: none;">
+                        <div class="alert alert-purple">
+                            <i class="fas fa-chalkboard-user me-2"></i>
+                            <strong>Séance de présentation / Soutenance</strong><br>
+                            Les étudiants pourront déposer leurs fichiers.
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Jour *</label>
+                            {{ form.jour }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Heure début *</label>
+                            {{ form.heure_debut }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Heure fin *</label>
+                            {{ form.heure_fin }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Ordre</label>
+                            {{ form.ordre }}
+                            <small class="text-muted">Plus petit = plus haut</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Durée estimée (minutes)</label>
+                            {{ form.duree_estimee }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Note max</label>
+                            {{ form.note_max }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Contenu texte (optionnel)</label>
+                        {{ form.contenu_texte }}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'cours_detail_enseignant' cours.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Créer la séance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const typeSelect = document.getElementById('id_type_seance');
+    const visioFields = document.getElementById('visio_fields');
+    const asynchroneFields = document.getElementById('asynchrone_fields');
+    const integrationFields = document.getElementById('integration_fields');
+    const correctionFields = document.getElementById('correction_fields');
+    const presentationFields = document.getElementById('presentation_fields');
+    
+    function toggleFields() {
+        const type = typeSelect.value;
+        
+        visioFields.style.display = 'none';
+        asynchroneFields.style.display = 'none';
+        integrationFields.style.display = 'none';
+        correctionFields.style.display = 'none';
+        presentationFields.style.display = 'none';
+        
+        if (type === 'visio') {
+            visioFields.style.display = 'block';
+        } else if (type === 'asynchrone') {
+            asynchroneFields.style.display = 'block';
+        } else if (type === 'integration') {
+            integrationFields.style.display = 'block';
+        } else if (type === 'correction') {
+            correctionFields.style.display = 'block';
+        } else if (type === 'presentation') {
+            presentationFields.style.display = 'block';
+        }
+    }
+    
+    typeSelect.addEventListener('change', toggleFields);
+    toggleFields();
+</script>
+
+<style>
+    .bg-purple {
+        background-color: #6f42c1;
+        color: white;
+    }
+    .alert-purple {
+        background-color: #e9d8fd;
+        border-color: #6f42c1;
+        color: #4a1d8c;
+    }
+</style>
+
+{% endblock %}

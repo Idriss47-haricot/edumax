@@ -1,0 +1,203 @@
+{% extends 'website/base.html' %}
+
+{% block title %}{{ ecole.nom }}{% endblock %}
+
+{% block content %}
+
+<!-- Bannière -->
+<div class="position-relative" style="height: 400px;">
+    {% if ecole.banniere %}
+        <img src="{{ ecole.banniere.url }}" class="w-100 h-100 object-fit-cover" alt="{{ ecole.nom }}">
+    {% else %}
+        <div class="bg-gradient-primary w-100 h-100 d-flex align-items-center justify-content-center">
+            <i class="fas fa-school fa-6x text-white opacity-50"></i>
+        </div>
+    {% endif %}
+    <div class="position-absolute bottom-0 start-0 w-100" style="background: linear-gradient(transparent, rgba(0,0,0,0.7));">
+        <div class="container py-4">
+            <div class="d-flex align-items-center">
+                <div class="bg-white rounded-circle p-3 shadow-lg me-4" style="width: 120px; height: 120px;">
+                    {% if ecole.logo %}
+                        <img src="{{ ecole.logo.url }}" class="w-100 h-100 rounded-circle object-fit-cover" alt="{{ ecole.nom }}">
+                    {% else %}
+                        <i class="fas fa-school fa-4x text-primary d-flex align-items-center justify-content-center h-100"></i>
+                    {% endif %}
+                </div>
+                <div>
+                    <h1 class="text-white display-4 fw-bold mb-2">{{ ecole.nom }}</h1>
+                    <p class="text-white-50 mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>{{ ecole.ville }}, {{ ecole.pays }}
+                        {% if ecole.quartier %} - {{ ecole.quartier }}{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Description -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h4 mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>À propos</h3>
+                    <p class="text-muted">{{ ecole.description|linebreaks }}</p>
+                    
+                    {% if ecole.numero_agrement %}
+                        <div class="mt-3">
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                <i class="fas fa-certificate me-1"></i>Agrément n°{{ ecole.numero_agrement }}
+                            </span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Filières et spécialités -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h4 mb-3"><i class="fas fa-folder-tree me-2 text-primary"></i>Nos formations</h3>
+                    {% if filieres %}
+                        <div class="accordion" id="accordionFilieres">
+                            {% for filiere in filieres %}
+                                <div class="accordion-item border-0 mb-2">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button bg-light rounded-3 {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ filiere.id }}">
+                                            <strong>{{ filiere.nom }}</strong>
+                                            <span class="badge bg-primary ms-2">{{ filiere.specialites.count }} spécialités</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ filiere.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionFilieres">
+                                        <div class="accordion-body p-3">
+                                            <p class="text-muted">{{ filiere.description|default:"Aucune description" }}</p>
+                                            <div class="row">
+                                                {% for specialite in filiere.specialites.all %}
+                                                    <div class="col-md-6 mb-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-tag text-primary me-2"></i>
+                                                            <span>{{ specialite.nom }}</span>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucune formation disponible pour le moment.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Galerie photos -->
+            {% if ecole.galerie_images.exists %}
+                <div class="card shadow-sm border-0 rounded-4 mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="h4 mb-3"><i class="fas fa-images me-2 text-primary"></i>Galerie</h3>
+                        <div class="row g-3">
+                            {% for image in ecole.galerie_images.all|slice:":6" %}
+                                <div class="col-md-4">
+                                    <img src="{{ image.image.url }}" class="w-100 rounded-3" style="height: 150px; object-fit: cover;" alt="Galerie">
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="col-lg-4">
+            <!-- Contact -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h4 mb-3"><i class="fas fa-address-card me-2 text-primary"></i>Contact</h3>
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <i class="fas fa-envelope text-primary me-2"></i>
+                            <a href="mailto:{{ ecole.email }}" class="text-decoration-none">{{ ecole.email }}</a>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <a href="tel:{{ ecole.telephone }}" class="text-decoration-none">{{ ecole.telephone }}</a>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                            <span>{{ ecole.ville }}, {{ ecole.pays }}</span>
+                            {% if ecole.quartier %}<br><span class="ms-4">{{ ecole.quartier }}</span>{% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Réseaux sociaux -->
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h4 mb-3"><i class="fas fa-share-alt me-2 text-primary"></i>Suivez-nous</h3>
+                    <div class="d-flex gap-3">
+                        {% if ecole.facebook %}
+                            <a href="{{ ecole.facebook }}" target="_blank" class="btn btn-outline-primary rounded-circle p-3" style="width: 50px; height: 50px;">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                        {% endif %}
+                        {% if ecole.twitter %}
+                            <a href="{{ ecole.twitter }}" target="_blank" class="btn btn-outline-primary rounded-circle p-3" style="width: 50px; height: 50px;">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                        {% endif %}
+                        {% if ecole.instagram %}
+                            <a href="{{ ecole.instagram }}" target="_blank" class="btn btn-outline-primary rounded-circle p-3" style="width: 50px; height: 50px;">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        {% endif %}
+                        {% if ecole.youtube %}
+                            <a href="{{ ecole.youtube }}" target="_blank" class="btn btn-outline-primary rounded-circle p-3" style="width: 50px; height: 50px;">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                        {% endif %}
+                        {% if ecole.linkedin %}
+                            <a href="{{ ecole.linkedin }}" target="_blank" class="btn btn-outline-primary rounded-circle p-3" style="width: 50px; height: 50px;">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bouton inscription -->
+            <div class="card shadow-sm border-0 rounded-4 bg-primary text-white">
+                <div class="card-body p-4 text-center">
+                    <i class="fas fa-key fa-3x mb-3"></i>
+                    <h3 class="h4 mb-3">Rejoindre cette école</h3>
+                    <p>Inscrivez-vous avec la clé d'inscription fournie par l'école</p>
+                    <a href="{% url 'etudiant_inscription_cle' %}" class="btn btn-light rounded-pill px-4">
+                        S'inscrire <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    }
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    .accordion-button:not(.collapsed) {
+        background-color: #f0f7ff;
+        color: #1e3a8a;
+    }
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(30,58,138,0.2);
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Ajouter un utilisateur{% endblock %}
+{% block page_title %}Créer un nouvel utilisateur{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus me-2 text-primary"></i>
+                    Nouvel utilisateur
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" name="prenom" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" name="telephone" class="form-control">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Pays</label>
+                        <input type="text" name="pays" class="form-control" placeholder="Cameroun">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe *</label>
+                        <input type="password" name="password" class="form-control" required>
+                        <small class="text-muted">8 caractères min, une majuscule, une minuscule, un chiffre</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rôle *</label>
+                        <select name="role" class="form-control" id="roleSelect" required>
+                            <option value="super_admin">Super Administrateur</option>
+                            <option value="admin_ecole">Administrateur École</option>
+                            <option value="enseignant">Enseignant</option>
+                            <option value="etudiant">Étudiant</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="ecoleDiv" style="display: none;">
+                        <label class="form-label">École (pour Admin École, Enseignant ou Étudiant)</label>
+                        <select name="ecole" class="form-control">
+                            <option value="">-- Sélectionner une école --</option>
+                            {% for ecole in ecoles %}
+                                <option value="{{ ecole.id }}" {% if ecole_selected and ecole_selected.id == ecole.id %}selected{% endif %}>
+                                    {{ ecole.nom }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">Compte actif</label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'super_admin_utilisateurs' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Créer l'utilisateur
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('roleSelect').addEventListener('change', function() {
+        const ecoleDiv = document.getElementById('ecoleDiv');
+        const role = this.value;
+        if (role === 'admin_ecole' || role === 'enseignant' || role === 'etudiant') {
+            ecoleDiv.style.display = 'block';
+        } else {
+            ecoleDiv.style.display = 'none';
+        }
+    });
+</script>
+
+{% endblock %}

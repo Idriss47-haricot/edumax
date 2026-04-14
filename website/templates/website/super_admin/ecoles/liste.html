@@ -1,0 +1,123 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Gestion des écoles{% endblock %}
+{% block page_title %}Gestion des écoles{% endblock %}
+
+{% block content %}
+
+<!-- Barre de recherche -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" class="form-control" placeholder="Rechercher une école par nom, ville, pays ou email..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search me-1"></i>Rechercher
+            </button>
+            {% if request.GET.q %}
+                <a href="{% url 'super_admin_ecole_liste' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>Réinitialiser
+                </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Tableau des écoles existant -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-school me-2 text-primary"></i>
+            Liste des écoles
+        </h5>
+        <a href="{% url 'super_admin_ecole_creer' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nouvelle école
+        </a>
+    </div>
+    <div class="card-body">
+        {% if ecoles %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Logo</th>
+                            <th>Nom</th>
+                            <th>Email</th>
+                            <th>Téléphone</th>
+                            <th>Ville/Pays</th>
+                            <th>Abonnement</th>
+                            <th>Admin</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </thead>
+                        <tbody>
+                            {% for ecole in ecoles %}
+                        
+                                <td class="text-center">
+                                    {% if ecole.logo %}
+                                        <img src="{{ ecole.logo.url }}" width="40" height="40" class="rounded-circle" style="object-fit: cover;">
+                                    {% else %}
+                                        <i class="fas fa-school fa-2x text-muted"></i>
+                                    {% endif %}
+                                
+                                <td><strong>{{ ecole.nom }}</strong>
+                                <td>{{ ecole.email }}
+                                <td>{{ ecole.telephone }}
+                                <td>{{ ecole.ville }}, {{ ecole.pays }}
+                                <td>
+                                    {% if ecole.abonnement %}
+                                        <span class="badge bg-info">{{ ecole.abonnement.nom }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Aucun</span>
+                                    {% endif %}
+                                
+                                <td>
+                                    {% if ecole.admin_ecole %}
+                                        {{ ecole.admin_ecole.prenom|default:ecole.admin_ecole.username }}
+                                    {% else %}
+                                        <span class="text-muted">Non assigné</span>
+                                    {% endif %}
+                                
+                                <td>
+                                   <td>
+                                        {% if ecole.actif %}
+                                            <span class="badge bg-success">Active</span>
+                                            <a href="{% url 'super_admin_ecole_desactiver' ecole.id %}" class="btn btn-sm btn-warning ms-1" onclick="return confirm('Désactiver cette école ?')">
+                                                <i class="fas fa-ban"></i>
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                            <a href="{% url 'super_admin_ecole_activer' ecole.id %}" class="btn btn-sm btn-success ms-1" onclick="return confirm('Réactiver cette école ?')">
+                                                <i class="fas fa-check-circle"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'super_admin_ecole_detail' ecole.id %}" class="btn btn-info" title="Voir détail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'super_admin_ecole_modifier' ecole.id %}" class="btn btn-warning" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'super_admin_ecole_supprimer' ecole.id %}" class="btn btn-danger" title="Supprimer" 
+                                           onclick="return confirm('Supprimer définitivement {{ ecole.nom }} ?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                发展
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-school fa-3x text-muted mb-3"></i>
+                    <p>Aucune école trouvée{% if request.GET.q %} pour "{{ request.GET.q }}"{% endif %}.</p>
+                    <a href="{% url 'super_admin_ecole_creer' %}" class="btn btn-primary">Créer la première école</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

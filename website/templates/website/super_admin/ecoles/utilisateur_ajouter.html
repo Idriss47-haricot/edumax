@@ -1,0 +1,68 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Ajouter un utilisateur - {{ ecole.nom }}{% endblock %}
+{% block page_title %}Ajouter un utilisateur à {{ ecole.nom }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Nouvel utilisateur</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nom d'utilisateur *</label>
+                        <input type="text" name="username" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" name="prenom" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe *</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rôle *</label>
+                        <select name="role" class="form-control" id="roleSelect" required>
+                            <option value="enseignant">Enseignant</option>
+                            <option value="etudiant">Étudiant</option>
+                        </select>
+                    </div>
+                    <div class="mb-3" id="specialiteDiv" style="display: none;">
+                        <label class="form-label">Spécialité (pour étudiant)</label>
+                        <select name="specialite" class="form-control">
+                            <option value="">-- Sélectionner --</option>
+                            {% for specialite in specialites %}
+                                <option value="{{ specialite.id }}">{{ specialite.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'super_admin_ecole_utilisateurs' ecole.id %}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary">Créer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('roleSelect').addEventListener('change', function() {
+        const specialiteDiv = document.getElementById('specialiteDiv');
+        if (this.value === 'etudiant') {
+            specialiteDiv.style.display = 'block';
+        } else {
+            specialiteDiv.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'website/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Mot de passe oublié</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-4">Entrez votre adresse email pour recevoir un lien de réinitialisation.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Adresse email *</label>
+                            <input type="email" name="email" class="form-control" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Envoyer le lien</button>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <p><a href="{% url 'connexion' %}">Retour à la connexion</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Galerie - {{ ecole.nom }}{% endblock %}
+{% block page_title %}Galerie photos{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-images me-2 text-primary"></i>
+                    Galerie de l'école
+                </h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addImageModal">
+                    <i class="fas fa-plus me-1"></i>Ajouter une photo
+                </button>
+            </div>
+            <div class="card-body">
+                {% if images %}
+                    <div class="row g-3">
+                        {% for img in images %}
+                            <div class="col-md-3">
+                                <div class="position-relative">
+                                    <img src="{{ img.image.url }}" class="w-100 rounded-3" style="height: 150px; object-fit: cover;">
+                                    <button class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 rounded-circle" 
+                                           onclick="if(confirm('Supprimer cette image ?')) window.location.href='{% url 'admin_ecole_galerie_supprimer' img.id %}'"
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% if img.titre %}
+                                        <div class="mt-1 small text-muted">{{ img.titre }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                        <p>Aucune photo dans la galerie.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addImageModal">
+                            <i class="fas fa-plus me-1"></i>Ajouter votre première photo
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal ajout photo -->
+<div class="modal fade" id="addImageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter une photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'admin_ecole_galerie_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Photo *</label>
+                        <input type="file" name="image" class="form-control" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Titre (optionnel)</label>
+                        <input type="text" name="titre" class="form-control" placeholder="Ex: Journée portes ouvertes">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

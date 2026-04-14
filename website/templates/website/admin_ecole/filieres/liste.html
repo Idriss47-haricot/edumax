@@ -1,0 +1,79 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Gestion des filières - {{ ecole.nom }}{% endblock %}
+{% block page_title %}Filières de {{ ecole.nom }}{% endblock %}
+
+{% block content %}
+
+<!-- Barre de recherche -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" class="form-control" placeholder="Rechercher une filière..." value="{{ request.GET.q }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search me-1"></i>Rechercher
+            </button>
+            {% if request.GET.q %}
+                <a href="{% url 'admin_ecole_filiere_liste' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>Réinitialiser
+                </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-folder-tree me-2 text-primary"></i>
+            Filières
+        </h5>
+        <a href="{% url 'admin_ecole_filiere_creer' ecole.id %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nouvelle filière
+        </a>
+    </div>
+    <div class="card-body">
+        {% if filieres %}
+            <div class="list-group">
+                {% for filiere in filieres %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ filiere.nom }}</h5>
+                            <p class="mb-1 text-muted small">{{ filiere.description|truncatechars:100|default:"Aucune description" }}</p>
+                            <small class="text-muted">Ordre: {{ filiere.ordre }}</small>
+                            {% if filiere.public %}
+                                <span class="badge bg-success ms-2">Public</span>
+                            {% else %}
+                                <span class="badge bg-secondary ms-2">Privé</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'admin_ecole_specialite_liste' filiere.id %}" class="btn btn-info" title="Voir spécialités">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'admin_ecole_filiere_modifier' filiere.id %}" class="btn btn-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_ecole_filiere_supprimer' filiere.id %}" class="btn btn-danger" title="Supprimer" 
+                                   onclick="return confirm('Supprimer cette filière ?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <p>Aucune filière trouvée.</p>
+                <a href="{% url 'admin_ecole_filiere_creer' ecole.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Créer la première filière
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

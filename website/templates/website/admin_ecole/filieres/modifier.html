@@ -1,0 +1,57 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Modifier la filière - {{ filiere.nom }}{% endblock %}
+{% block page_title %}Modifier la filière{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    Modifier la filière
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nom de la filière *</label>
+                        {{ form.nom }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ordre d'affichage</label>
+                        {{ form.ordre }}
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.public }}
+                        <label class="form-check-label">Afficher sur la page publique</label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'admin_ecole_filiere_liste' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

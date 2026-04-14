@@ -1,0 +1,38 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Tous les cours{% endblock %}
+{% block page_title %}Gestion des cours{% endblock %}
+
+{% block content %}
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> 
+    <strong>Test :</strong> Cette page affiche les cours.
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Liste des cours
+        </h5>
+    </div>
+    <div class="card-body">
+        <p>Nombre de cours : <strong>{{ tous_les_cours|length }}</strong></p>
+        
+        {% if tous_les_cours %}
+            <ul>
+            {% for cours in tous_les_cours %}
+                <li>{{ cours.titre }} - {{ cours.specialite.nom }}</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                Aucun cours trouvé. Créez d'abord un cours avec un compte enseignant.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

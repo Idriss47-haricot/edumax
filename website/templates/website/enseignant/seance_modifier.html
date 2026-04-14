@@ -1,0 +1,138 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Modifier la séance - {{ seance.titre }}{% endblock %}
+{% block page_title %}Modifier la séance{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    Modifier la séance
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Objectifs</label>
+                        {{ form.objectifs }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type de séance</label>
+                        {{ form.type_seance }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Jour</label>
+                            {{ form.jour }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Heure début</label>
+                            {{ form.heure_debut }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Heure fin</label>
+                            {{ form.heure_fin }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Ordre</label>
+                            {{ form.ordre }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Durée (min)</label>
+                            {{ form.duree_estimee }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Note max</label>
+                            {{ form.note_max }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Contenu texte</label>
+                        {{ form.contenu_texte }}
+                    </div>
+                    
+                    <!-- Champs spécifiques selon le type -->
+                    <div id="fichier_field" class="mb-3">
+                        <label class="form-label">Fichier</label>
+                        {{ form.fichier }}
+                        {% if seance.fichier %}
+                            <div class="mt-1">
+                                <small>Fichier actuel : <a href="{{ seance.fichier.url }}" target="_blank">{{ seance.fichier.name }}</a></small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div id="lien_field" class="mb-3">
+                        <label class="form-label">Lien externe (vidéo)</label>
+                        {{ form.lien_externe }}
+                    </div>
+                    
+                    <div id="visio_field" class="mb-3">
+                        <label class="form-label">Lien de visio</label>
+                        {{ form.lien_visio }}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'cours_detail_enseignant' seance.cours.id %}" class="btn btn-secondary">
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const typeSelect = document.getElementById('id_type_seance');
+    const fichierField = document.getElementById('fichier_field');
+    const lienField = document.getElementById('lien_field');
+    const visioField = document.getElementById('visio_field');
+    
+    function toggleFields() {
+        const type = typeSelect.value;
+        
+        fichierField.style.display = 'none';
+        lienField.style.display = 'none';
+        visioField.style.display = 'none';
+        
+        if (type === 'asynchrone') {
+            fichierField.style.display = 'block';
+            lienField.style.display = 'block';
+        } else if (type === 'visio') {
+            visioField.style.display = 'block';
+        }
+    }
+    
+    typeSelect.addEventListener('change', toggleFields);
+    toggleFields();
+</script>
+
+{% endblock %}

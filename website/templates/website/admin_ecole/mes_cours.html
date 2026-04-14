@@ -1,0 +1,66 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Cours de l'école - {{ ecole.nom }}{% endblock %}
+{% block page_title %}Cours de {{ ecole.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-book-open me-2 text-primary"></i>
+            Tous les cours de l'école
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if cours_ecole %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Spécialité</th>
+                            <th>Date début</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </thead>
+                        <tbody>
+                            {% for cours in cours_ecole %}
+                            <tr>
+                                <td><strong>{{ cours.titre }}</strong></td>
+                                <td>{{ cours.specialite.nom }}</td>
+                                <td>{{ cours.date_debut|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if cours.actif %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'cours_detail' cours.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> Voir
+                                    </a>
+                                    <a href="{% url 'cours_modifier' cours.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'cours_supprimer' cours.id %}" class="btn btn-sm btn-danger" 
+                                       onclick="return confirm('Supprimer ce cours ?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                    <p>Aucun cours dans cette école.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Tableau de bord Enseignant{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card-stats d-flex justify-content-between align-items-center">
+            <div>
+                <h3>Mes cours</h3>
+                <div class="value">{{ cours_count }}</div>
+            </div>
+            <div class="icon"><i class="fas fa-book"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card-stats d-flex justify-content-between align-items-center">
+            <div>
+                <h3>Mes étudiants</h3>
+                <div class="value">{{ etudiants_count }}</div>
+            </div>
+            <div class="icon"><i class="fas fa-users"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card-stats d-flex justify-content-between align-items-center">
+            <div>
+                <h3>Visios à venir</h3>
+                <div class="value">{{ visios_count }}</div>
+            </div>
+            <div class="icon"><i class="fas fa-video"></i></div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card-stats d-flex justify-content-between align-items-center">
+            <div>
+                <h3>À corriger</h3>
+                <div class="value">{{ devoirs_a_corriger }}</div>
+            </div>
+            <div class="icon"><i class="fas fa-check-double"></i></div>
+        </div>
+    </div>
+</div>
+
+<!-- Mes écoles -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-school me-2 text-primary"></i>Mes écoles</h5>
+    </div>
+    <div class="card-body">
+        {% if ecoles %}
+            <div class="row">
+                {% for ecole in ecoles %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center">
+                                    {% if ecole.logo %}
+                                        <img src="{{ ecole.logo.url }}" width="50" height="50" class="rounded-circle me-3">
+                                    {% else %}
+                                        <i class="fas fa-school fa-2x text-muted me-3"></i>
+                                    {% endif %}
+                                    <div>
+                                        <h5 class="mb-0">{{ ecole.nom }}</h5>
+                                        <small class="text-muted">{{ ecole.ville }}, {{ ecole.pays }}</small>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <span><i class="fas fa-book"></i> {{ ecole.cours_count|default:0 }} cours</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted text-center mb-0">Vous n'êtes pas encore rattaché à une école.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Mes cours assignés -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-clock me-2 text-primary"></i>Mes cours assignés</h5>
+    </div>
+    <div class="card-body">
+        {% if cours_assignes %}
+            <div class="list-group">
+                {% for cours in cours_assignes %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ cours.titre }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-tag me-1"></i>{{ cours.specialite.nom }}
+                                <i class="fas fa-school ms-2 me-1"></i>{{ cours.specialite.filiere.ecole.nom }}
+                            </small>
+                        </div>
+                        <a href="{% url 'cours_detail_enseignant' cours.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye me-1"></i>Gérer
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted text-center mb-0">Aucun cours assigné pour le moment.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

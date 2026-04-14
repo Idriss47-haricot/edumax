@@ -1,0 +1,69 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Corriger - {{ devoir.titre }}{% endblock %}
+{% block page_title %}Correction du devoir : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Soumission de {{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Date de soumission :</strong> {{ soumission.date_soumission|date:"d/m/Y H:i" }}</p>
+                
+                {% if soumission.texte_reponse %}
+                    <p><strong>Réponse :</strong></p>
+                    <div class="border rounded p-3 bg-light">
+                        {{ soumission.texte_reponse|linebreaks }}
+                    </div>
+                {% endif %}
+                
+                {% if soumission.fichier %}
+                    <p><strong>Fichier joint :</strong></p>
+                    <a href="{{ soumission.fichier.url }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="fas fa-download me-1"></i>Télécharger le fichier
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Correction</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Note (sur {{ devoir.note_max }})</label>
+                        <input type="number" name="note" class="form-control" step="0.5" min="0" max="{{ devoir.note_max }}" value="{{ soumission.note|default:'' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Feedback / Commentaires</label>
+                        <textarea name="feedback" class="form-control" rows="6">{{ soumission.feedback }}</textarea>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'devoir_soumissions' devoir.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

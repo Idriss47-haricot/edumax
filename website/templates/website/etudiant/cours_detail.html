@@ -1,0 +1,113 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}{{ cours.titre }}{% endblock %}
+{% block page_title %}{{ cours.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Description -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Description</h5>
+            </div>
+            <div class="card-body">
+                <p>{{ cours.description|linebreaks }}</p>
+                {% if cours.objectifs %}
+                    <div class="alert alert-info">
+                        <strong>Objectifs :</strong>
+                        <p class="mb-0">{{ cours.objectifs|linebreaks }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Séances -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Séances</h5>
+            </div>
+            <div class="card-body">
+                {% if seances %}
+                    <div class="list-group">
+                        {% for seance in seances %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ seance.titre }}</strong><br>
+                                        <small>{{ seance.get_jour_display }} {{ seance.heure_debut|time:"H:i" }} - {{ seance.heure_fin|time:"H:i" }}</small>
+                                    </div>
+                                    <a href="{% url 'seance_detail' seance.id %}" class="btn btn-sm btn-outline-primary">Voir</a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Aucune séance pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Exercices -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Exercices</h5>
+            </div>
+            <div class="card-body">
+                {% if exercices %}
+                    {% for exercice in exercices %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ exercice.titre }} ({{ exercice.duree }} min)</span>
+                            {% if exercice.demarre %}
+                                <a href="{% url 'exercice_faire' exercice.id %}" class="btn btn-sm btn-success">Commencer</a>
+                            {% else %}
+                                <span class="badge bg-secondary">En attente</span>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Aucun exercice.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Devoirs -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Devoirs</h5>
+            </div>
+            <div class="card-body">
+                {% if devoirs %}
+                    {% for devoir in devoirs %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>{{ devoir.titre }}</span>
+                            <a href="{% url 'devoir_soumettre' devoir.id %}" class="btn btn-sm btn-warning">Rendre</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Aucun devoir.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h5>Informations</h5>
+                <hr>
+                <p><strong>Enseignant :</strong> {{ cours.enseignant.prenom|default:cours.enseignant.username }}</p>
+                <p><strong>Début :</strong> {{ cours.date_debut|date:"d/m/Y" }}</p>
+                {% if cours.date_fin %}
+                    <p><strong>Fin :</strong> {{ cours.date_fin|date:"d/m/Y" }}</p>
+                {% endif %}
+                <hr>
+                <a href="{% url 'etudiant_mes_cours' %}" class="btn btn-secondary w-100">Retour</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

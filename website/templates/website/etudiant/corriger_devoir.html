@@ -1,0 +1,75 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Corriger {{ soumission.devoir.titre }}{% endblock %}
+{% block page_title %}Correction du devoir : {{ soumission.devoir.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Soumission de {{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Date de soumission :</strong> {{ soumission.date_soumission|date:"d/m/Y H:i" }}</p>
+                
+                {% if soumission.texte_reponse %}
+                    <p><strong>Réponse :</strong></p>
+                    <div class="border rounded p-3 bg-light">
+                        {{ soumission.texte_reponse|linebreaks }}
+                    </div>
+                {% endif %}
+                
+                <p><strong>Fichiers joints :</strong></p>
+                <div class="list-group">
+                    {% for fichier in soumission.fichiers.all %}
+                        <a href="{{ fichier.fichier.url }}" target="_blank" class="list-group-item list-group-item-action">
+                            <i class="fas fa-file-download me-2"></i>
+                            {{ fichier.nom_original }}
+                            <span class="badge bg-secondary float-end">{{ fichier.taille|filesizeformat }}</span>
+                        </a>
+                    {% empty %}
+                        <p class="text-muted">Aucun fichier joint.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Correction</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Note (sur {{ soumission.devoir.note_max }})</label>
+                        <input type="number" name="note" class="form-control" step="0.5" min="0" max="{{ soumission.devoir.note_max }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Feedback / Commentaires</label>
+                        <textarea name="feedback" class="form-control" rows="6" placeholder="Expliquez la note, donnez des conseils..."></textarea>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'enseignant_devoirs_a_corriger' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer la correction
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}{{ ecole.nom }} - Détail{% endblock %}
+{% block page_title %}{{ ecole.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <!-- Carte de l'école -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="position-relative">
+                <!-- Bannière -->
+                <div class="cover-photo" style="height: 120px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); border-radius: 16px 16px 0 0;">
+                    {% if ecole.banniere %}
+                        <img src="{{ ecole.banniere.url }}" class="w-100 h-100 rounded-top" style="object-fit: cover;">
+                    {% endif %}
+                </div>
+                <!-- Logo -->
+                <div class="profile-photo text-center mt-3">
+                    <div class="position-relative d-inline-block">
+                        {% if ecole.logo %}
+                            <img src="{{ ecole.logo.url }}" class="rounded-circle border border-4 border-white shadow" width="100" height="100" style="object-fit: cover;">
+                        {% else %}
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+                                <i class="fas fa-school fa-3x"></i>
+                            </div>
+                        {% endif %}
+                        <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0" data-bs-toggle="modal" data-bs-target="#logoModal" data-ecole-id="{{ ecole.id }}">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <a href="{% url 'super_admin_ecole_modifier' ecole.id %}" class="btn btn-sm btn-outline-primary mt-3">
+                        <i class="fas fa-edit me-1"></i>Modifier le profil
+                    </a>
+                </div>
+            </div>
+            <div class="card-body text-center">
+                <h3 class="h4 mb-1">{{ ecole.nom }}</h3>
+                <p class="text-muted small">
+                    <i class="fas fa-map-marker-alt me-1"></i>{{ ecole.ville }}, {{ ecole.pays }}
+                </p>
+                <p class="small">{{ ecole.description|truncatechars:100 }}</p>
+                
+                <!-- Réseaux sociaux -->
+                <div class="social-links mb-3">
+                    {% if ecole.facebook %}<a href="{{ ecole.facebook }}" target="_blank" class="me-2"><i class="fab fa-facebook-f"></i></a>{% endif %}
+                    {% if ecole.twitter %}<a href="{{ ecole.twitter }}" target="_blank" class="me-2"><i class="fab fa-twitter"></i></a>{% endif %}
+                    {% if ecole.instagram %}<a href="{{ ecole.instagram }}" target="_blank" class="me-2"><i class="fab fa-instagram"></i></a>{% endif %}
+                    {% if ecole.youtube %}<a href="{{ ecole.youtube }}" target="_blank" class="me-2"><i class="fab fa-youtube"></i></a>{% endif %}
+                </div>
+                
+                <!-- Statistiques -->
+                <div class="row mt-3 pt-3 border-top">
+                    <div class="col-4">
+                        <h5 class="mb-0">{{ enseignants|length }}</h5>
+                        <small class="text-muted">Enseignants</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="mb-0">{{ etudiants|length }}</h5>
+                        <small class="text-muted">Étudiants</small>
+                    </div>
+                    <div class="col-4">
+                        <h5 class="mb-0">{{ cours_count }}</h5>
+                        <small class="text-muted">Cours</small>
+                    </div>
+                </div>
+                
+                <hr>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'super_admin_ecole_utilisateurs' ecole.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-users me-1"></i>Gérer les utilisateurs
+                    </a>
+                    <a href="{% url 'super_admin_ecole_galerie' ecole.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-images me-1"></i>Gérer la galerie
+                    </a>
+                    <a href="{% url 'super_admin_ecole_generer_cle' ecole.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-key me-1"></i>Générer une clé
+                    </a>
+                    <a href="{% url 'super_admin_ecole_cours' ecole.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-book-open me-1"></i>Voir les cours
+                    </a>
+                    <a href="{% url 'super_admin_filiere_creer' ecole.id %}" class="btn btn-sm btn-success mt-2">
+                        <i class="fas fa-plus"></i> Ajouter une filière
+                    {% for filiere in filieres %}
+                        <a href="{% url 'super_admin_specialite_creer' filiere.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Spécialité
+                        </a>
+{% endfor %}
+                    <a href="{% url 'super_admin_utilisateur_ajouter' ecole.id %}" class="btn btn-sm btn-info">
+                        <i class="fas fa-user-plus"></i> Ajouter un utilisateur
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations détaillées -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Informations de contact</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><i class="fas fa-envelope me-2 text-primary"></i> {{ ecole.email }}</p>
+                        <p><i class="fas fa-phone me-2 text-primary"></i> {{ ecole.telephone }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><i class="fas fa-map-marker-alt me-2 text-primary"></i> {{ ecole.ville }}, {{ ecole.pays }}</p>
+                        {% if ecole.quartier %}<p><i class="fas fa-location-dot me-2 text-primary"></i> {{ ecole.quartier }}</p>{% endif %}
+                    </div>
+                </div>
+                {% if ecole.numero_agrement %}
+                    <p><i class="fas fa-certificate me-2 text-success"></i> Agrément n°{{ ecole.numero_agrement }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Filières et spécialités</h5>
+            </div>
+            <div class="card-body">
+                {% if filieres %}
+                    <div class="accordion" id="accordionFilieres">
+                        {% for filiere in filieres %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ filiere.id }}">
+                                        <strong>{{ filiere.nom }}</strong>
+                                        <span class="badge bg-primary ms-2">{{ filiere.specialites.count }} spécialités</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ filiere.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionFilieres">
+                                    <div class="accordion-body">
+                                        <p>{{ filiere.description|default:"Aucune description" }}</p>
+                                        <ul class="list-group">
+                                            {% for specialite in filiere.specialites.all %}
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    <a href="{% url 'specialite_detail' specialite.id %}" class="text-decoration-none">
+                                                        <strong>{{ specialite.nom }}</strong>
+                                                    </a>
+                                                    <div>
+                                                        <code class="small me-2">{{ specialite.cle_inscription }}</code>
+                                                        <a href="{% url 'specialite_detail' specialite.id %}" class="btn btn-sm btn-info">
+                                                            <i class="fas fa-eye"></i> Voir cours
+                                                        </a>
+                                                    </div>
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Aucune filière pour cette école.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour changer le logo -->
+<div class="modal fade" id="logoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Changer le logo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" id="logoForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="file" name="logo" class="form-control" accept="image/*" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const logoModal = document.getElementById('logoModal');
+    logoModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const ecoleId = button.getAttribute('data-ecole-id');
+        const form = document.getElementById('logoForm');
+        form.action = `/super-admin/ecole/${ecoleId}/changer-logo/`;
+    });
+</script>
+
+{% endblock %}

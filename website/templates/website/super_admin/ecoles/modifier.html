@@ -1,0 +1,132 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Modifier {{ ecole.nom }}{% endblock %}
+{% block page_title %}Modifier l'école : {{ ecole.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    Modification
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nom de l'école *</label>
+                            {{ form.nom }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Logo</label>
+                            {{ form.logo }}
+                            {% if ecole.logo %}
+                                <div class="mt-2">
+                                    <img src="{{ ecole.logo.url }}" width="60" class="rounded-circle">
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email de contact *</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Téléphone *</label>
+                            {{ form.telephone }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Ville *</label>
+                            {{ form.ville }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Pays *</label>
+                            {{ form.pays }}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Quartier</label>
+                            {{ form.quartier }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Numéro d'agrément</label>
+                            {{ form.numero_agrement }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Pack d'abonnement *</label>
+                            {{ form.abonnement }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Administrateur de l'école</label>
+                        {{ form.admin_ecole }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Facebook</label>
+                            {{ form.facebook }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Twitter</label>
+                            {{ form.twitter }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Instagram</label>
+                            {{ form.instagram }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">YouTube</label>
+                            {{ form.youtube }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Bannière</label>
+                        {{ form.banniere }}
+                        {% if ecole.banniere %}
+                            <div class="mt-2">
+                                <img src="{{ ecole.banniere.url }}" width="200" class="rounded">
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'super_admin_ecole_liste' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

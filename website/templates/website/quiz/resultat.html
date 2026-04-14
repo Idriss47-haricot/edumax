@@ -1,0 +1,95 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Résultat du quiz : {{ quiz.titre }}{% endblock %}
+{% block page_title %}Résultat du quiz{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white text-center">
+                <h3 class="mb-0">{{ quiz.titre }}</h3>
+            </div>
+            <div class="card-body text-center">
+                <div class="display-1 mb-3">
+                    {% if tentative.note >= quiz.note_pour_reussir %}
+                        <i class="fas fa-check-circle text-success"></i>
+                    {% else %}
+                        <i class="fas fa-times-circle text-danger"></i>
+                    {% endif %}
+                </div>
+                <h2>{{ tentative.note|floatformat:1 }}/20</h2>
+                <p class="text-muted">
+                    {% if tentative.note >= quiz.note_pour_reussir %}
+                        Félicitations ! Vous avez réussi le quiz.
+                    {% else %}
+                        Vous n'avez pas atteint la note de réussite ({{ quiz.note_pour_reussir }}/20).
+                    {% endif %}
+                </p>
+                <hr>
+                <div class="row mb-4">
+                    <div class="col-6">
+                        <small class="text-muted">Points obtenus</small>
+                        <h4>{{ tentative.note|floatformat:1 }} / 20</h4>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">Tentative n°</small>
+                        <h4>{{ tentative.tentative_numero }}</h4>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4">Détail des réponses</h5>
+                <div class="list-group text-start">
+                    {% for reponse in reponses %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <span>
+                                    <strong>Question {{ forloop.counter }}</strong>
+                                    <div class="small mt-1">{{ reponse.question.enonce|truncatechars:100 }}</div>
+                                </span>
+                                {% if reponse.est_correcte %}
+                                    <span class="badge bg-success">Correct</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Incorrect</span>
+                                {% endif %}
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Votre réponse : 
+                                    {% if reponse.reponse_id %}
+                                        {% for r in reponse.question.reponses.all %}
+                                            {% if r.id == reponse.reponse_id %}
+                                                {{ r.texte }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ reponse.reponse_texte|default:"Non répondue" }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            {% if not reponse.est_correcte and reponse.question.feedback_general %}
+                                <div class="mt-2 text-info small">
+                                    <i class="fas fa-info-circle me-1"></i>{{ reponse.question.feedback_general }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'quiz_detail' quiz.id %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-1"></i>Retour au quiz
+                    </a>
+                    {% if tentative.tentative_numero < quiz.tentative_max %}
+                        <a href="{% url 'quiz_faire' quiz.id %}" class="btn btn-success">
+                            <i class="fas fa-redo me-1"></i>Recommencer
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduMax - {% block title %}Tableau de bord{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS Personnalisé -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'website/css/dashboard.css' %}">
+</head>
+<body>
+
+<div class="dashboard-container">
+    <!-- BARRE LATÉRALE GAUCHE -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>EduMax</span>
+            </div>
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-name">{{ user.prenom|default:user.username }}</div>
+                <div class="user-role">
+                    {% if user.role == 'super_admin' %}Super Administrateur
+                    {% elif user.role == 'admin_ecole' %}Administrateur École
+                    {% elif user.role == 'enseignant' %}Enseignant
+                    {% else %}Étudiant{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <!-- Tableau de bord -->
+                <li>
+                    <a href="{% url 'dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Tableau de bord</span>
+                    </a>
+                </li>
+                
+                <!-- Mes cours -->
+                <li>
+                    <a href="
+                        {% if user.role == 'enseignant' %}
+                            {% url 'enseignant_mes_cours' %}
+                        {% elif user.role == 'etudiant' %}
+                            {% url 'etudiant_mes_cours' %}
+                        {% else %}
+                            {% url 'dashboard' %}
+                        {% endif %}
+                    ">
+                        <i class="fas fa-book-open"></i>
+                        <span>Mes cours</span>
+                    </a>
+                </li>
+                
+                <!-- Forum -->
+                <li>
+                    <a href="{% url 'forum_liste' %}">
+                        <i class="fas fa-comments"></i>
+                        <span>Forum</span>
+                    </a>
+                </li>
+                
+                <!-- Messages -->
+                <li>
+                    <a href="{% url 'messages_liste' %}">
+                        <i class="fas fa-envelope"></i>
+                        <span>Messages</span>
+                    </a>
+                </li>
+                
+                {% if user.role == 'admin_ecole' %}
+                    <li><a href="{% url 'admin_ecole_filiere_liste' %}"><i class="fas fa-folder-tree"></i><span>Filières</span></a></li>
+                    <li><a href="{% url 'admin_ecole_enseignants' %}"><i class="fas fa-chalkboard-user"></i><span>Enseignants</span></a></li>
+                    <li><a href="{% url 'admin_ecole_etudiants' %}"><i class="fas fa-user-graduate"></i><span>Étudiants</span></a></li>
+                {% endif %}
+                
+                {% if user.role == 'super_admin' %}
+                    <li><a href="{% url 'super_admin_ecole_liste' %}"><i class="fas fa-school"></i><span>Écoles</span></a></li>
+                    <li><a href="{% url 'super_admin_abonnement_liste' %}"><i class="fas fa-tags"></i><span>Abonnements</span></a></li>
+                    <li><a href="{% url 'super_admin_utilisateurs' %}"><i class="fas fa-users"></i><span>Utilisateurs</span></a></li>
+                {% endif %}
+                
+                <li class="divider"></li>
+                
+                <li><a href="{% url 'accueil' %}"><i class="fas fa-globe"></i><span>Voir le site</span></a></li>
+                <li><a href="{% url 'deconnexion' %}"><i class="fas fa-sign-out-alt"></i><span>Déconnexion</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="dashboard-main">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1>{% block page_title %}Tableau de bord{% endblock %}</h1>
+            </div>
+            <div class="header-right">
+                <div class="notifications"><i class="fas fa-bell"></i><span class="badge">0</span></div>
+                <div class="user-menu"><span>{{ user.prenom|default:user.username }}</span><i class="fas fa-chevron-down"></i></div>
+            </div>
+        </header>
+        
+        <div class="dashboard-content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.querySelector('.dashboard-sidebar');
+    if(sidebarToggle) {
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    }
+</script>
+</body>
+</html>

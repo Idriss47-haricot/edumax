@@ -1,0 +1,41 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Mes cours à donner{% endblock %}
+{% block page_title %}Mes cours à donner{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">
+            <i class="fas fa-chalkboard me-2 text-primary"></i>
+            Cours dont je suis responsable
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if cours_list %}
+            <div class="list-group">
+                {% for cours in cours_list %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ cours.titre }}</h6>
+                            <small class="text-muted">
+                                Spécialité : {{ cours.specialite.nom }}
+                            </small>
+                        </div>
+                        <a href="{% url 'cours_detail_enseignant' cours.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye me-1"></i>Gérer les séances
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-chalkboard fa-3x text-muted mb-3"></i>
+                <p>Aucun cours ne vous est assigné pour le moment.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

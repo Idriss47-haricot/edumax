@@ -1,0 +1,45 @@
+{% extends 'website/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">S'inscrire à une école</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nom de l'école *</label>
+                            <select name="ecole" class="form-control" required>
+                                <option value="">Sélectionnez une école</option>
+                                {% for ecole in ecoles %}
+                                    <option value="{{ ecole.id }}">{{ ecole.nom }} - {{ ecole.ville }}, {{ ecole.pays }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Clé d'inscription *</label>
+                            <input type="text" name="cle_inscription" class="form-control text-uppercase" placeholder="Entrez la clé fournie par votre école" required>
+                            <small class="text-muted">La clé est sensible à la casse</small>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">S'inscrire</button>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <p><a href="{% url 'dashboard' %}">Retour au tableau de bord</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

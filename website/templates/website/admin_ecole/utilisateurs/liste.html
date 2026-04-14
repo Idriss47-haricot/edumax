@@ -1,0 +1,98 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Gestion des utilisateurs - {{ ecole.nom }}{% endblock %}
+{% block page_title %}Gestion des utilisateurs{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-users me-2 text-primary"></i>
+            Membres de l'école
+        </h5>
+        <a href="{% url 'admin_ecole_generer_cle' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-key me-1"></i>Générer une clé
+        </a>
+    </div>
+    <div class="card-body">
+        <ul class="nav nav-tabs mb-3" id="userTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="enseignants-tab" data-bs-toggle="tab" data-bs-target="#enseignants" type="button" role="tab">
+                    Enseignants <span class="badge bg-secondary ms-1">{{ enseignants|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="etudiants-tab" data-bs-toggle="tab" data-bs-target="#etudiants" type="button" role="tab">
+                    Étudiants <span class="badge bg-secondary ms-1">{{ etudiants|length }}</span>
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content">
+            <!-- Enseignants -->
+            <div class="tab-pane fade show active" id="enseignants" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Statut</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for user in enseignants %}
+                            <tr>
+                                <td><strong>{{ user.prenom|default:user.username }} {{ user.nom|default:"" }}</strong></td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.telephone|default:"-" }}</td>
+                                <td>{% if user.is_active %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-danger">Inactif</span>{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'admin_ecole_utilisateur_modifier' user.id %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                                    <a href="{% url 'admin_ecole_utilisateur_supprimer' user.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cet utilisateur ?')"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center">Aucun enseignant</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Étudiants -->
+            <div class="tab-pane fade" id="etudiants" role="tabpanel">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Spécialité</th><th>Statut</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for user in etudiants %}
+                            <tr>
+                                <td><strong>{{ user.prenom|default:user.username }} {{ user.nom|default:"" }}</strong></td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.telephone|default:"-" }}</td>
+                                <td>{% for ins in user.inscriptions.all %}{{ ins.specialite.nom }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</td>
+                                <td>{% if user.is_active %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-danger">Inactif</span>{% endif %}</td>
+                                <td>
+                                    <a href="{% url 'admin_ecole_utilisateur_modifier' user.id %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                                     {% if user.is_active %}
+                                        <a href="{% url 'super_admin_utilisateur_desactiver' user.id %}" class="btn btn-sm btn-warning" onclick="return confirm('Désactiver ce compte ?')">
+                                            <i class="fas fa-ban"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'super_admin_utilisateur_activer' user.id %}" class="btn btn-sm btn-success" onclick="return confirm('Réactiver ce compte ?')">
+                                            <i class="fas fa-check-circle"></i>
+                                        </a>
+                                    {% endif %}
+                                    <a href="{% url 'admin_ecole_utilisateur_supprimer' user.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cet utilisateur ?')"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="6" class="text-center">Aucun étudiant</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

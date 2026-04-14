@@ -1,0 +1,77 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Créer un cours{% endblock %}
+{% block page_title %}Créer un nouveau cours{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>
+                    Nouveau cours
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Spécialité *</label>
+                        <select name="specialite" class="form-control" required>
+                            <option value="">Sélectionnez une spécialité</option>
+                            {% for specialite in specialites %}
+                                <option value="{{ specialite.id }}">
+                                    {{ specialite.filiere.ecole.nom }} - {{ specialite.filiere.nom }} - {{ specialite.nom }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre du cours *</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description *</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Image du cours</label>
+                        {{ form.image }}
+                        <small class="text-muted">Optionnel. Format recommandé : 800x400px</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ordre d'affichage</label>
+                            {{ form.ordre }}
+                            <small class="text-muted">Plus petit = plus haut dans la liste</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check mt-4">
+                                {{ form.actif }}
+                                <label class="form-check-label">Cours actif</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'mes_cours' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Créer le cours
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

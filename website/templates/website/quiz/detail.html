@@ -1,0 +1,104 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}{{ exercice.titre }}{% endblock %}
+{% block page_title %}{{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Questions du quiz</h5>
+                <a href="{% url 'ajouter_question_quiz' exercice.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-plus me-1"></i>Ajouter une question
+                </a>
+            </div>
+            <div class="card-body">
+                {% if exercice.questions.all %}
+                    {% for question in exercice.questions.all %}
+                    <div class="list-group-item mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <strong>{{ question.enonce }}</strong>
+                                <span class="badge bg-secondary ms-2">{{ question.points }} pts</span>
+                                <span class="badge bg-info ms-2">{{ question.get_type_question_display }}</span>
+                                
+                                {% if question.reponses.all %}
+                                    <div class="mt-2 ms-3">
+                                        <small class="text-muted">Réponses :</small>
+                                        <ul class="mb-0">
+                                            {% for reponse in question.reponses.all %}
+                                                <li class="small">
+                                                    {{ reponse.texte }}
+                                                    {% if reponse.est_correcte %}
+                                                        <span class="badge bg-success ms-1">Correcte</span>
+                                                    {% endif %}
+                                                </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% else %}
+                                    <div class="mt-2 text-warning small">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Aucune réponse. 
+                                        <a href="{% url 'reponse_ajouter' question.id %}">Ajouter des réponses</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'reponse_ajouter' question.id %}" class="btn btn-outline-success" title="Ajouter une réponse">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="btn btn-outline-danger" title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <p>Aucune question pour le moment.</p>
+                        <a href="{% url 'question_ajouter' exercice.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Ajouter la première question
+                        </a>
+                    </div>
+                {% endif %}
+                
+                {% if not exercice.resultats_publies %}
+    <a href="{% url 'publier_resultats_quiz' exercice.id %}" class="btn btn-success w-100 mb-2" onclick="return confirm('Publier les résultats ?')">
+        <i class="fas fa-chart-line me-1"></i>Publier les résultats
+    </a>
+{% else %}
+    <a href="{% url 'quiz_resultats' exercice.id %}" class="btn btn-info w-100 mb-2">
+        <i class="fas fa-chart-bar me-1"></i>Voir les résultats
+    </a>
+{% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Informations</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Description :</strong></p>
+                <p>{{ exercice.description|default:"Aucune description"|linebreaks }}</p>
+                <p><strong>Durée :</strong> {{ exercice.duree }} minutes</p>
+                <hr>
+                <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-arrow-left me-1"></i>Retour à la séance
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

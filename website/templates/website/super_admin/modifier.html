@@ -1,0 +1,109 @@
+{% extends 'website/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Modifier l'école : {{ ecole.nom }}</h3>
+                </div>
+                <!-- Dans le formulaire existant, ajoute cette section -->
+                <div class="card mt-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-key me-2 text-warning"></i>
+                            Changer le mot de passe
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="password" name="new_password" class="form-control" placeholder="Nouveau mot de passe">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" name="action" value="change_password" class="btn btn-warning w-100">
+                                    <i class="fas fa-sync-alt me-1"></i>Changer
+                                </button>
+                            </div>
+                        </div>
+                        <small class="text-muted">8 caractères min, une majuscule, une minuscule, un chiffre</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nom de l'école *</label>
+                                {{ form.nom }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Logo</label>
+                                {{ form.logo }}
+                                {% if ecole.logo %}
+                                    <div class="mt-2">
+                                        <img src="{{ ecole.logo.url }}" width="80" class="img-thumbnail">
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description *</label>
+                            {{ form.description }}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email de contact *</label>
+                                {{ form.email }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Téléphone *</label>
+                                {{ form.telephone }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Ville *</label>
+                                {{ form.ville }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Pays *</label>
+                                {{ form.pays }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Quartier</label>
+                                {{ form.quartier }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Numéro d'agrément</label>
+                                {{ form.numero_agrement }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pack d'abonnement *</label>
+                                {{ form.abonnement }}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Administrateur de l'école *</label>
+                            {{ form.admin_ecole }}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
