@@ -1,0 +1,119 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Résultats - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Tableau des résultats : {{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-primary">{{ nb_etudiants|default:0 }}</h2>
+                        <p class="text-muted mb-0">Étudiants</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-success">{{ stats.moyenne|floatformat:1|default:"-" }}</h2>
+                        <p class="text-muted mb-0">Moyenne</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-warning">{{ nb_en_attente|default:0 }}</h2>
+                        <p class="text-muted mb-0">En attente</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-success">{{ nb_corrigees|default:0 }}</h2>
+                        <p class="text-muted mb-0">Corrigées</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Résultats -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Résultats des étudiants</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="results-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Étudiant</th>
+                                <th>Soumis le</th>
+                                <th>Mots</th>
+                                <th>Note</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for soumission in soumissions %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>
+                                    <strong>{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</strong>
+                                </td>
+                                <td>{{ soumission.date_soumission|date:"d/m/Y H:i" }}</td>
+                                <td>{{ soumission.redaction_reponse.nb_mots|default:0 }}</td>
+                                <td>
+                                    {% if soumission.note is not None %}
+                                        <span class="badge bg-{{ soumission.mention_color }} fs-6">
+                                            {{ soumission.note|floatformat:1 }}/{{ soumission.note_sur|floatformat:0 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">⏳ En attente</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if soumission.redaction_reponse.est_corrigee %}
+                                        <span class="badge bg-success">✅ Corrigée</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">⏳ À corriger</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">Aucune soumission</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <div>
+                <a href="{% url 'redaction_liste_a_corriger' exercice.id %}" class="btn btn-warning">
+                    <i class="fas fa-check-double me-1"></i>Corriger les copies
+                </a>
+                <a href="{% url 'redaction_configurer' exercice.id %}" class="btn btn-primary">
+                    <i class="fas fa-cog me-1"></i>Configurer
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

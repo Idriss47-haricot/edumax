@@ -1,0 +1,45 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Refuser la demande{% endblock %}
+{% block page_title %}Refuser la demande - Équipe technique{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-6 mx-auto">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-times-circle text-danger me-2"></i>Refuser la demande</h5>
+            </div>
+            <div class="card-body">
+                <div class="bg-light p-3 rounded mb-3">
+                    <p><strong>Utilisateur :</strong> {{ demande.utilisateur.prenom|default:demande.utilisateur.username }}</p>
+                    <p><strong>Domaine :</strong> {{ demande.domaine }}</p>
+                    <p><strong>Expérience :</strong></p>
+                    <p class="text-muted">{{ demande.experience|linebreaks }}</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Motif du refus *</label>
+                        <textarea name="commentaire" class="form-control" rows="4" required placeholder="Expliquez pourquoi cette demande est refusée..."></textarea>
+                        <small class="text-muted">Ce message sera envoyé à l'utilisateur.</small>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'admin_demandes_formateur' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-times me-1"></i>Refuser
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

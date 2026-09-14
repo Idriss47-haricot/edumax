@@ -1,0 +1,22 @@
+{% extends 'website/base_dashboard.html' %}
+{% block title %}Mes épreuves{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <h2>Mes épreuves achetées</h2>
+    <div class="row">
+        {% for item in epreuves %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h6>{{ item.epreuve.titre }}</h6>
+                    <p>Année {{ item.epreuve.annee|default:"-" }}</p>
+                    <a href="{% url 'telecharger_epreuve' item.epreuve.id %}" class="btn btn-primary">Télécharger le sujet</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p>Vous n'avez encore acheté aucune épreuve.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

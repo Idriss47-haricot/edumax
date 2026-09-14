@@ -1,0 +1,161 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Modifier l'épreuve - Admin{% endblock %}
+{% block page_title %}📝 Modifier l'épreuve{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-edit me-2 text-warning"></i>
+                        Modifier : {{ epreuve.titre }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Colonne gauche -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Catégorie *</label>
+                                    <select name="categorie" class="form-select" required>
+                                        <option value="">Sélectionner une catégorie</option>
+                                        {% for cat in categories %}
+                                            <option value="{{ cat.id }}" {% if epreuve.categorie.id == cat.id %}selected{% endif %}>
+                                                {{ cat.rubrique.nom }} - {{ cat.nom }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Titre *</label>
+                                    <input type="text" name="titre" class="form-control" value="{{ epreuve.titre }}" required>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Année</label>
+                                            <input type="number" name="annee" class="form-control" value="{{ epreuve.annee|default:'' }}" placeholder="2024">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Série</label>
+                                            <select name="serie" class="form-select">
+                                                <option value="">Toutes séries</option>
+                                                {% for serie in series_disponibles %}
+                                                    <option value="{{ serie }}" {% if epreuve.serie == serie %}selected{% endif %}>
+                                                        Série {{ serie }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Description</label>
+                                    <textarea name="description" class="form-control" rows="4">{{ epreuve.description|default:'' }}</textarea>
+                                </div>
+                            </div>
+                            
+                            <!-- Colonne droite -->
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Prix (FCFA)</label>
+                                            <input type="number" name="prix" class="form-control" value="{{ epreuve.prix }}" step="100">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Prix corrigé (FCFA)</label>
+                                            <input type="number" name="prix_corrige" class="form-control" value="{{ epreuve.prix_corrige|default:0 }}" step="100">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" name="est_populaire" class="form-check-input" id="est_populaire" {% if epreuve.est_populaire %}checked{% endif %}>
+                                    <label class="form-check-label" for="est_populaire">
+                                        <i class="fas fa-star text-warning"></i> Épreuve populaire (mise en avant)
+                                    </label>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Statut</label>
+                                    <select name="statut" class="form-select">
+                                        <option value="brouillon" {% if epreuve.statut == 'brouillon' %}selected{% endif %}>Brouillon</option>
+                                        <option value="publie" {% if epreuve.statut == 'publie' %}selected{% endif %}>Publié</option>
+                                    </select>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Fichier sujet (PDF)</label>
+                                    {% if epreuve.fichier_sujet %}
+                                        <div class="alert alert-info py-2">
+                                            <i class="fas fa-file-pdf text-danger"></i> 
+                                            <a href="{{ epreuve.fichier_sujet.url }}" target="_blank">Fichier actuel</a>
+                                            <small class="text-muted d-block">{{ epreuve.fichier_sujet.name }}</small>
+                                        </div>
+                                    {% endif %}
+                                    <input type="file" name="fichier_sujet" class="form-control" accept=".pdf">
+                                    <small class="text-muted">Laissez vide pour conserver le fichier actuel</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Fichier corrigé (PDF)</label>
+                                    {% if epreuve.fichier_corrige %}
+                                        <div class="alert alert-info py-2">
+                                            <i class="fas fa-file-pdf text-success"></i> 
+                                            <a href="{{ epreuve.fichier_corrige.url }}" target="_blank">Fichier actuel</a>
+                                            <small class="text-muted d-block">{{ epreuve.fichier_corrige.name }}</small>
+                                        </div>
+                                    {% endif %}
+                                    <input type="file" name="fichier_corrige" class="form-control" accept=".pdf">
+                                    <small class="text-muted">Laissez vide pour conserver le fichier actuel</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Aperçu (Image)</label>
+                                    {% if epreuve.apercu %}
+                                        <div class="mb-2">
+                                            <img src="{{ epreuve.apercu.url }}" alt="{{ epreuve.titre }}" style="max-height: 100px; border-radius: 8px;">
+                                        </div>
+                                    {% endif %}
+                                    <input type="file" name="apercu" class="form-control" accept="image/*">
+                                    <small class="text-muted">Format JPG, PNG (Laissez vide pour conserver l'image actuelle)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'admin_epreuves_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,20 @@
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between">
+        <h5>Règles de la plateforme</h5>
+        <a href="{% url 'regle_ajouter' %}" class="btn btn-primary btn-sm">+ Ajouter</a>
+    </div>
+    <div class="card-body">
+        {% regroup regles by get_rubrique_display as rubriques %}
+        {% for rubrique in rubriques %}
+            <h5 class="mt-3">{{ rubrique.grouper }}</h5>
+            <table class="table table-sm">
+                {% for r in rubrique.list %}
+                <tr><td><strong>{{ r.titre }}</strong><br>{{ r.contenu|truncatechars:100 }}</td>
+                    <td><a href="{% url 'regle_modifier' r.pk %}" class="btn btn-sm btn-warning">Modifier</a>
+                    <a href="{% url 'regle_supprimer' r.pk %}" class="btn btn-sm btn-danger">Supprimer</a></td>
+                </tr>
+                {% endfor %}
+            </table>
+        {% endfor %}
+    </div>
+</div>

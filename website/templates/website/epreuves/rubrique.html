@@ -1,0 +1,431 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}{{ rubrique.nom }} - Academia Net{% endblock %}
+
+{% block content %}
+
+<style>
+    :root {
+        --primary-color: #1e3a8a;
+        --primary-dark: #0f2b5e;
+        --primary-light: #3b82f6;
+        --gray-light: #f8fafc;
+        --gray-border: #e2e8f0;
+        --text-gray: #64748b;
+        --white: #ffffff;
+    }
+
+    .rubrique-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        padding: 50px 0;
+        color: white;
+    }
+
+    .rubrique-header h1 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .filters-bar {
+        background: var(--white);
+        padding: 15px 0;
+        border-bottom: 1px solid var(--gray-border);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .year-section {
+        margin-bottom: 40px;
+    }
+
+    .year-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        padding-bottom: 10px;
+        border-bottom: 2px solid var(--primary-color);
+        margin-bottom: 20px;
+        display: inline-block;
+    }
+
+    .epreuves-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .epreuve-card {
+        background: var(--white);
+        border-radius: 16px;
+        overflow: hidden;
+        transition: all 0.3s;
+        border: 1px solid var(--gray-border);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .epreuve-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .epreuve-thumbnail {
+        height: 160px;
+        background: #f1f5f9;
+        overflow: hidden;
+    }
+
+    .epreuve-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .thumbnail-placeholder {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    }
+
+    .thumbnail-placeholder i {
+        font-size: 3rem;
+        color: var(--primary-color);
+    }
+
+    .epreuve-body {
+        padding: 15px;
+        flex: 1;
+    }
+
+    .epreuve-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .epreuve-categorie {
+        font-size: 0.7rem;
+        color: var(--primary-color);
+        background: #e0e7ff;
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 20px;
+        margin-bottom: 8px;
+    }
+
+    .epreuve-meta {
+        font-size: 0.7rem;
+        color: var(--text-gray);
+        margin-bottom: 10px;
+    }
+
+    .epreuve-price {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .btn-cart {
+        background: #f1f5f9;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .btn-cart:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-voir-plus {
+        background: transparent;
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        padding: 10px 30px;
+        border-radius: 40px;
+        font-weight: 600;
+        margin-top: 20px;
+    }
+
+    .btn-voir-plus:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .cart-float {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+
+    .cart-float:hover {
+        transform: scale(1.1);
+        background: var(--primary-dark);
+    }
+
+    .cart-count {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: #ef4444;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    @media (max-width: 768px) {
+        .epreuves-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        }
+    }
+</style>
+
+<!-- Header -->
+<div class="rubrique-header">
+    <div class="container">
+        <h1>{{ rubrique.nom }}</h1>
+        <p>Découvrez toutes les épreuves de {{ rubrique.nom|lower }}</p>
+    </div>
+</div>
+
+<!-- Barre de filtres -->
+<div class="filters-bar">
+    <div class="container">
+        <div class="row align-items-center g-2">
+            <div class="col-md-4">
+                <select id="filter-categorie" class="form-select form-select-sm">
+                    <option value="">Toutes catégories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if categorie_active == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cat.nom }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select id="filter-serie" class="form-select form-select-sm">
+                    <option value="">Toutes séries</option>
+                    {% for serie in series_disponibles %}
+                        <option value="{{ serie }}" {% if serie_active == serie %}selected{% endif %}>
+                            Série {{ serie }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select id="filter-annee" class="form-select form-select-sm">
+                    <option value="">Toutes années</option>
+                    {% for annee in epreuves_par_annee.keys %}
+                        <option value="{{ annee }}" {% if annee_active == annee|stringformat:"s" %}selected{% endif %}>
+                            {{ annee }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-12 text-end">
+                <button id="apply-filters" class="btn btn-primary btn-sm">
+                    <i class="fas fa-filter me-1"></i>Appliquer les filtres
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Épreuves par année -->
+<div class="container py-4">
+    {% if epreuves_par_annee %}
+        {% for annee, epreuves_list in epreuves_par_annee.items %}
+            <div class="year-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="year-title mb-0">📚 Année {{ annee }}</h2>
+                    {% if categories %}
+                    <button class="btn btn-outline-primary btn-sm acheter-categorie-btn" 
+                            data-categorie-id="{{ categories.0.id }}"
+                            data-categorie-nom="{{ categories.0.nom }}">
+                        <i class="fas fa-cart-plus me-1"></i>Acheter toute la catégorie
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="epreuves-grid">
+                    {% for epreuve in epreuves_list %}
+                    <div class="epreuve-card" data-categorie="{{ epreuve.categorie.id }}" data-serie="{{ epreuve.serie|default:'' }}" data-annee="{{ annee }}">
+                        <div class="epreuve-thumbnail">
+                            {% if epreuve.apercu %}
+                                <img src="{{ epreuve.apercu.url }}" alt="{{ epreuve.titre }}">
+                            {% else %}
+                                <div class="thumbnail-placeholder">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="epreuve-body">
+                            <span class="epreuve-categorie">{{ epreuve.categorie.nom }}</span>
+                            <h3 class="epreuve-title">{{ epreuve.titre }}</h3>
+                            <div class="epreuve-meta">
+                                <span><i class="fas fa-calendar-alt"></i> {{ epreuve.annee|default:"Année non spécifiée" }}</span>
+                                {% if epreuve.serie %}
+                                    <span class="ms-2"><i class="fas fa-tag"></i> Série {{ epreuve.serie }}</span>
+                                {% endif %}
+                                <span class="ms-2"><i class="fas fa-download"></i> {{ epreuve.nb_ventes }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <span class="epreuve-price">{{ epreuve.prix|floatformat:0 }} FCFA</span>
+                                <form method="post" action="{% url 'ajouter_au_panier' %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="epreuve_id" value="{{ epreuve.id }}">
+                                    <button type="submit" class="btn-cart">
+                                        <i class="fas fa-cart-plus me-1"></i>Acheter
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                        <h4>Aucune épreuve pour l'année {{ annee }}</h4>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+            <h4>Aucune épreuve disponible</h4>
+            <p>Revenez plus tard, de nouvelles épreuves seront ajoutées.</p>
+        </div>
+    {% endif %}
+
+    <!-- Bouton Voir plus (pagination) -->
+    <div class="text-center mt-4">
+        <button id="voir-plus" class="btn-voir-plus" style="display: none;">
+            <i class="fas fa-chevron-down me-2"></i>Voir plus d'épreuves
+        </button>
+    </div>
+</div>
+
+<!-- Formulaire caché pour ajouter une catégorie au panier -->
+<form id="form-ajouter-categorie" method="post" action="{% url 'ajouter_categorie_panier' %}" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="categorie_id" id="categorie-id-input">
+</form>
+
+<!-- Icône flottante du panier -->
+<div id="cartFloat" class="cart-float" onclick="window.location.href='{% url 'epreuves_panier' %}'">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="cart-count" id="cartCount">0</span>
+</div>
+
+<script>
+    // Mettre à jour le compteur du panier
+    function updateCartCount() {
+        fetch('/api/panier/count/')
+            .then(response => response.json())
+            .then(data => {
+                const countEl = document.getElementById('cartCount');
+                if (countEl) {
+                    countEl.textContent = data.count || 0;
+                    if (data.count > 0) {
+                        countEl.style.display = 'flex';
+                    } else {
+                        countEl.style.display = 'none';
+                    }
+                }
+            })
+            .catch(error => console.error('Erreur panier:', error));
+    }
+    updateCartCount();
+
+    // Gestion des filtres
+    document.getElementById('apply-filters')?.addEventListener('click', function() {
+        const categorie = document.getElementById('filter-categorie').value;
+        const serie = document.getElementById('filter-serie').value;
+        const annee = document.getElementById('filter-annee').value;
+        
+        let url = new URL(window.location.href);
+        if (categorie && categorie !== '') url.searchParams.set('categorie', categorie);
+        else url.searchParams.delete('categorie');
+        
+        if (serie && serie !== '') url.searchParams.set('serie', serie);
+        else url.searchParams.delete('serie');
+        
+        if (annee && annee !== '') url.searchParams.set('annee', annee);
+        else url.searchParams.delete('annee');
+        
+        window.location.href = url.toString();
+    });
+
+    // Gestion de l'ajout de catégorie au panier
+    document.querySelectorAll('.acheter-categorie-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const categorieId = this.getAttribute('data-categorie-id');
+            const categorieNom = this.getAttribute('data-categorie-nom');
+            
+            if (confirm(`Ajouter tous les packs de la catégorie "${categorieNom}" au panier ?`)) {
+                // Utiliser fetch pour l'appel AJAX
+                fetch("{% url 'ajouter_categorie_panier' %}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `categorie_id=${categorieId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateCartCount();
+                        alert(data.message);
+                    } else {
+                        alert(data.message || 'Erreur lors de l\'ajout');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    // Fallback : soumission du formulaire normal
+                    const form = document.getElementById('form-ajouter-categorie');
+                    document.getElementById('categorie-id-input').value = categorieId;
+                    form.submit();
+                });
+            }
+        });
+    });
+
+    // Rafraîchir le compteur toutes les 30 secondes
+    setInterval(updateCartCount, 30000);
+</script>
+
+{% endblock %}

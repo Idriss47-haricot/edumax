@@ -1,0 +1,392 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Passer - {{ exercice.titre }}{% endblock %}
+{% block page_title %}{{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timer-box {
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: monospace;
+        background: #1a1a2e;
+        color: #00ff88;
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-align: center;
+    }
+    .timer-box.warning {
+        color: #ff4444;
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .contexte-box {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 5px solid #0d6efd;
+        white-space: pre-wrap;
+        line-height: 1.8;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    .sous-question-container {
+        scroll-margin-top: 100px;
+        border-left: 3px solid #dee2e6;
+        padding-left: 16px;
+    }
+    .sous-question-container.active {
+        border-left-color: #0d6efd;
+    }
+    .nav-sq {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        background-color: #e9ecef;
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    .nav-sq.answered {
+        background-color: #28a745;
+        color: white;
+    }
+    .nav-sq.current {
+        background-color: #0d6efd;
+        color: white;
+        transform: scale(1.1);
+    }
+    .sticky-top {
+        top: 20px;
+    }
+    .choix-option {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .choix-option:hover {
+        background: #e9ecef;
+    }
+    .choix-option.selected {
+        background: #0d6efd;
+        color: white;
+    }
+    .saved-indicator {
+        font-size: 0.8rem;
+        color: #28a745;
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-9">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h3 class="h5 mb-1">{{ exercice.titre }}</h3>
+                        <small class="text-muted">{{ sous_questions|length }} sous-question(s) • {{ exercice.points }} points</small>
+                    </div>
+                    <div class="timer-box" id="timer">
+                        {{ temps_restant|default:exercice.duree }}:00
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ exercice.consignes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Contexte -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-book-open text-primary me-2"></i>Contexte du cas</h5>
+            </div>
+            <div class="card-body">
+                <div class="contexte-box">
+                    {{ etude_cas.contexte|linebreaks }}
+                </div>
+                {% if etude_cas.document_cas %}
+                <div class="mt-3">
+                    <a href="{{ etude_cas.document_cas.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-file-download me-1"></i>Télécharger le document du cas
+                    </a>
+                </div>
+                {% endif %}
+                {% if etude_cas.image_cas %}
+                <div class="mt-3">
+                    <img src="{{ etude_cas.image_cas.url }}" alt="Image du cas" class="img-fluid rounded" style="max-height: 200px;">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <form id="exercice-form" method="post" action="{% url 'etude_cas_soumettre' exercice.id %}">
+            {% csrf_token %}
+            
+            {% for sq in sous_questions %}
+            <div class="card shadow-sm border-0 rounded-4 mb-3 sous-question-container" id="sq-{{ forloop.counter0 }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary fs-6 me-2">Q{{ forloop.counter }}</span>
+                            <span class="badge bg-info">{{ sq.points }} pts</span>
+                            <span class="badge {% if sq.type_question == 'qcm' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ sq.get_type_question_display }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <p class="fs-5 mb-3">{{ sq.texte }}</p>
+                    
+                    {% if sq.type_question == 'qcm' %}
+                        <div class="ms-3">
+                            {% for choix in sq.choix.all %}
+                            <div class="choix-option" data-sq-id="{{ sq.id }}" data-choix-id="{{ choix.id }}">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" 
+                                           name="sq_{{ sq.id }}" 
+                                           value="{{ choix.id }}"
+                                           id="sq_{{ sq.id }}_{{ choix.id }}">
+                                    <label class="form-check-label" for="sq_{{ sq.id }}_{{ choix.id }}">
+                                        {{ choix.texte }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Votre réponse :</label>
+                            <textarea class="form-control" name="sq_{{ sq.id }}_texte" rows="4" 
+                                      placeholder="Saisissez votre réponse ici..."></textarea>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="d-flex justify-content-between mb-4">
+                <button type="button" id="save-draft" class="btn btn-secondary">
+                    <i class="fas fa-save me-1"></i>Sauvegarder brouillon
+                </button>
+                <button type="submit" class="btn btn-success btn-lg" id="submit-btn">
+                    <i class="fas fa-paper-plane me-1"></i>Soumettre
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Sous-questions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 mb-3" id="sq-nav">
+                    {% for sq in sous_questions %}
+                    <div class="nav-sq" data-index="{{ forloop.counter0 }}">
+                        {{ forloop.counter }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <hr>
+                <div class="small text-muted">
+                    <div><span class="badge bg-success me-1">●</span> Répondu</div>
+                    <div><span class="badge bg-primary me-1">●</span> En cours</div>
+                    <div><span class="badge bg-secondary me-1">●</span> Non répondu</div>
+                </div>
+                <div class="mt-3 text-center">
+                    <span class="saved-indicator" id="saved-indicator">
+                        <i class="fas fa-check-circle"></i> Sauvegardé
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Timer
+let timeLeft = {{ temps_restant|default:exercice.duree }} * 60;
+const timerElement = document.getElementById('timer');
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 60) {
+        timerElement.classList.add('warning');
+    }
+    
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        alert('Temps écoulé ! Soumission automatique...');
+        document.getElementById('exercice-form').submit();
+    }
+    timeLeft--;
+}
+
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Navigation
+document.querySelectorAll('.nav-sq').forEach(nav => {
+    nav.addEventListener('click', () => {
+        const index = parseInt(nav.dataset.index);
+        const sqElement = document.getElementById(`sq-${index}`);
+        if (sqElement) {
+            sqElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+});
+
+// Sélection visuelle des choix QCM
+document.querySelectorAll('.choix-option').forEach(option => {
+    option.addEventListener('click', function() {
+        const radio = this.querySelector('input[type="radio"]');
+        if (radio) {
+            radio.checked = true;
+            // Mettre à jour l'affichage
+            const parent = this.closest('.ms-3');
+            parent.querySelectorAll('.choix-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            this.classList.add('selected');
+        }
+    });
+});
+
+// Mettre à jour le statut des sous-questions
+function updateSQStatus() {
+    document.querySelectorAll('.sous-question-container').forEach((container, idx) => {
+        const hasAnswer = Array.from(container.querySelectorAll('input:checked, textarea')).some(input => {
+            if (input.tagName === 'TEXTAREA') {
+                return input.value.trim().length > 0;
+            }
+            return input.checked;
+        });
+        
+        const nav = document.querySelector(`.nav-sq[data-index="${idx}"]`);
+        if (nav) {
+            if (hasAnswer) {
+                nav.classList.add('answered');
+            } else {
+                nav.classList.remove('answered');
+            }
+        }
+    });
+}
+
+document.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('change', updateSQStatus);
+    el.addEventListener('input', updateSQStatus);
+});
+updateSQStatus();
+
+// Sauvegarde automatique
+let saveTimeout;
+function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const reponses = {};
+        document.querySelectorAll('[name^="sq_"]').forEach(input => {
+            const name = input.getAttribute('name');
+            if (input.type === 'radio') {
+                if (input.checked) reponses[name] = input.value;
+            } else if (input.tagName === 'TEXTAREA') {
+                reponses[name] = input.value;
+            }
+        });
+        
+        fetch("{% url 'exercice_sauvegarder' exercice.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ reponses: reponses })
+        }).then(() => {
+            $('#saved-indicator').fadeIn(200).delay(1500).fadeOut(500);
+        });
+    }, 2000);
+}
+
+document.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('input', autoSave);
+});
+
+// Sauvegarde manuelle
+document.getElementById('save-draft').addEventListener('click', () => {
+    const reponses = {};
+    document.querySelectorAll('[name^="sq_"]').forEach(input => {
+        const name = input.getAttribute('name');
+        if (input.type === 'radio') {
+            if (input.checked) reponses[name] = input.value;
+        } else if (input.tagName === 'TEXTAREA') {
+            reponses[name] = input.value;
+        }
+    });
+    
+    fetch("{% url 'exercice_sauvegarder' exercice.id %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ reponses: reponses })
+    }).then(() => {
+        $('#saved-indicator').fadeIn(200).delay(2000).fadeOut(500);
+        alert('Brouillon sauvegardé !');
+    });
+});
+
+// Restaurer sauvegarde
+{% if sauvegarde %}
+const savedData = {{ sauvegarde|safe }};
+for (const [key, value] of Object.entries(savedData)) {
+    const inputs = document.querySelectorAll(`[name="${key}"]`);
+    inputs.forEach(input => {
+        if (input.type === 'radio') {
+            if (input.value == value) {
+                input.checked = true;
+                const parent = input.closest('.choix-option');
+                if (parent) parent.classList.add('selected');
+            }
+        } else if (input.tagName === 'TEXTAREA') {
+            input.value = value;
+        }
+    });
+}
+updateSQStatus();
+{% endif %}
+
+// Confirmation
+document.getElementById('submit-btn').addEventListener('click', (e) => {
+    if (!confirm('Êtes-vous sûr de vouloir soumettre ?')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

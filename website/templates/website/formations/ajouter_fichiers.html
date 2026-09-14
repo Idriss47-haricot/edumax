@@ -1,0 +1,234 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Ajouter des fichiers - {{ formation.titre }}{% endblock %}
+{% block page_title %}Ajouter des fichiers à "{{ formation.titre }}"{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top" style="top: 20px;">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-upload me-2 text-primary"></i>Ajouter un fichier</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="fichierForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titre du fichier *</label>
+                        <input type="text" name="titre" class="form-control" required placeholder="Ex: Cours 1 - Introduction">
+                        <small class="text-muted">Donnez un nom clair à votre fichier</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Type de fichier *</label>
+                        <select name="type_fichier" class="form-select" required>
+                            <option value="video">🎬 Vidéo (MP4, AVI, MKV)</option>
+                            <option value="pdf">📄 PDF</option>
+                            <option value="document">📁 Document (Word, Excel, PowerPoint)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Fichier *</label>
+                        <div class="dropzone" id="dropzone">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                            <p>Glissez-déposez votre fichier ici ou cliquez pour parcourir</p>
+                            <input type="file" name="fichier" class="d-none" id="fichierInput" required>
+                            <button type="button" class="btn btn-outline-primary" id="browseBtn">
+                                <i class="fas fa-folder-open me-1"></i>Parcourir
+                            </button>
+                        </div>
+                        <div id="fileInfo" class="mt-2" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-file me-2"></i>
+                                <span id="filename"></span>
+                                <span id="filesize" class="text-muted ms-2"></span>
+                            </div>
+                        </div>
+                        <small class="text-muted">Maximum 500MB. Formats acceptés: MP4, AVI, MKV, PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX</small>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                        <i class="fas fa-cloud-upload-alt me-1"></i>Ajouter le fichier
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2 text-primary"></i>Fichiers ajoutés</h5>
+                <span class="badge bg-primary">{{ fichiers|length }} fichier(s)</span>
+            </div>
+            <div class="card-body">
+                {% if fichiers %}
+                    <div class="list-group" id="fichiersList">
+                        {% for fichier in fichiers %}
+                        <div class="list-group-item list-group-item-action" data-id="{{ fichier.id }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        {% if fichier.type_fichier == 'video' %}
+                                            <i class="fas fa-video fa-2x text-primary"></i>
+                                        {% elif fichier.type_fichier == 'pdf' %}
+                                            <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                        {% else %}
+                                            <i class="fas fa-file-alt fa-2x text-success"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">{{ fichier.titre }}</h6>
+                                        <small class="text-muted">
+                                            {{ fichier.get_type_fichier_display }} • 
+                                            {{ fichier.taille|filesizeformat }} • 
+                                            Ajouté le {{ fichier.date_ajout|date:"d/m/Y H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div>
+                                    {% if fichier.fichier %}
+                                    <a href="{{ fichier.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ fichier.fichier.url }}" download class="btn btn-sm btn-outline-secondary me-1">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'formation_supprimer_fichier' formation.slug fichier.id %}" 
+                                       class="btn btn-sm btn-outline-danger btn-supprimer" 
+                                       data-id="{{ fichier.id }}"
+                                       onclick="return confirm('Supprimer ce fichier ?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                        <p class="text-muted">Aucun fichier ajouté pour le moment.</p>
+                        <p class="small text-muted">Ajoutez votre premier fichier en utilisant le formulaire.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Barre de progression de publication -->
+        <div class="card shadow-sm border-0 rounded-4 mt-4">
+            <div class="card-body">
+                <h6 class="mb-3">État de la formation</h6>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" style="width: 66%"></div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span><i class="fas fa-check-circle text-success"></i> Infos de base</span>
+                    <span><i class="fas fa-check-circle text-success"></i> Fichiers</span>
+                    <span><i class="fas fa-circle text-muted"></i> Publication</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 rounded-4 mt-3">
+            <div class="card-body d-flex justify-content-between">
+                <a href="{% url 'formation_detail' formation.slug %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voir la formation
+                </a>
+                {% if fichiers %}
+                    <a href="{% url 'formation_publier_confirmation' formation.slug %}" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-1"></i>Publier la formation
+                    </a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-lock me-1"></i>Ajoutez des fichiers d'abord
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: #f8fafc;
+    }
+    .dropzone:hover, .dropzone.dragover {
+        border-color: #0d6efd;
+        background-color: #eef2ff;
+    }
+    .list-group-item {
+        transition: all 0.2s ease;
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+        transform: translateX(5px);
+    }
+</style>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fichierInput');
+    const browseBtn = document.getElementById('browseBtn');
+    const fileInfo = document.getElementById('fileInfo');
+    const filenameSpan = document.getElementById('filename');
+    const filesizeSpan = document.getElementById('filesize');
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function handleFile(file) {
+        if (file) {
+            filenameSpan.textContent = file.name;
+            filesizeSpan.textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+        }
+    }
+    
+    dropzone.addEventListener('click', () => fileInput.click());
+    browseBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFile(e.target.files[0]);
+    });
+    
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            fileInput.files = e.dataTransfer.files;
+            handleFile(file);
+        }
+    });
+    
+    // Rafraîchir la page après ajout de fichier pour voir la liste mise à jour
+    // Le formulaire POST recharge déjà la page normalement
+</script>
+
+{% endblock %}

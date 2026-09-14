@@ -1,0 +1,256 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Créer une formation{% endblock %}
+{% block page_title %}Créer une nouvelle formation{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">Informations générales</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="formationForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre *</label>
+                        <input type="text" name="titre" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Résumé pour l'accueil</label>
+                        <input type="text" name="resume" class="form-control" placeholder="Petite phrase accrocheuse pour la page d'accueil...">
+                        <small class="text-muted">Apparaîtra sur la page d'accueil des formations</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description courte *</label>
+                        <textarea name="description_courte" class="form-control" rows="2" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description longue</label>
+                        <textarea name="description_longue" class="form-control" rows="5"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Prix (FCFA) *</label>
+                        <input type="number" name="prix" class="form-control" value="0" step="100" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Image de couverture</label>
+                                <input type="file" name="image_cover" class="form-control" accept="image/*">
+                                <small class="text-muted">Format JPG, PNG</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Vidéo de présentation (optionnel)</label>
+                                <input type="file" name="video_presentation" class="form-control" accept="video/*">
+                                <small class="text-muted">Vidéo courte pour l'accueil</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- SECTION CENTRES D'INTÉRÊT VIA API DBpedia -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-tag me-2 text-primary"></i>Centres d'intérêt
+                        </label>
+                        <p class="text-muted small mb-2">
+                            Recherchez des centres d'intérêt (les résultats viennent de Wikipédia).
+                            Sélectionnez ceux qui correspondent à votre formation.
+                        </p>
+                        
+                        <!-- Barre de recherche avec autocomplete -->
+                        <div class="position-relative">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" 
+                                       id="search-interest" 
+                                       class="form-control" 
+                                       placeholder="Ex: cuisine, bâtiment, informatique, santé, marketing..."
+                                       autocomplete="off">
+                            </div>
+                            
+                            <!-- Résultats de recherche -->
+                            <div id="search-results" class="list-group position-absolute w-100" 
+                                 style="z-index: 1000; display: none; max-height: 300px; overflow-y: auto;">
+                            </div>
+                        </div>
+                        
+                        <!-- Centres sélectionnés -->
+                        <div id="selected-interests" class="d-flex flex-wrap gap-2 mt-3">
+                            <div class="text-muted small" id="no-selection-msg">
+                                Aucun centre sélectionné. Tapez ci-dessus pour en ajouter.
+                            </div>
+                        </div>
+                        
+                        <!-- Container pour les inputs cachés -->
+                        <div id="selected-ids"></div>
+                        
+                        <small class="text-muted mt-2 d-block">
+                            <i class="fas fa-info-circle"></i> 
+                            Les centres d'intérêt proviennent de la base de données Wikipédia, garantissant des catégories fiables et variées.
+                        </small>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'mes_formations' %}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            <i class="fas fa-save me-1"></i>Créer la formation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Stocker les centres d'intérêt sélectionnés
+let selectedInterests = [];
+let searchTimeout;
+
+// Fonction pour mettre à jour l'affichage des tags sélectionnés
+function updateSelectedTags() {
+    const container = $('#selected-interests');
+    const idsContainer = $('#selected-ids');
+    container.empty();
+    idsContainer.empty();
+    
+    if (selectedInterests.length === 0) {
+        container.html('<div class="text-muted small">Aucun centre sélectionné. Tapez ci-dessus pour en ajouter.</div>');
+        return;
+    }
+    
+    selectedInterests.forEach((interest, index) => {
+        container.append(`
+            <div class="badge bg-primary p-2" data-index="${index}" data-name="${interest.name}">
+                <i class="fas fa-tag me-1"></i>${interest.name}
+                <span class="ms-1 remove-interest" style="cursor: pointer; opacity: 0.7;">&times;</span>
+            </div>
+        `);
+        idsContainer.append(`<input type="hidden" name="centres_interet" value="${interest.name}">`);
+    });
+}
+
+$(document).ready(function() {
+    // Recherche en temps réel via DBpedia API
+    $('#search-interest').on('input', function() {
+        const query = $(this).val().trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            $('#search-results').hide();
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            $.ajax({
+                url: "{% url 'rechercher_centres_interet' %}",
+                data: { q: query },
+                success: function(results) {
+                    const resultsContainer = $('#search-results');
+                    resultsContainer.empty();
+                    
+                    if (results.length === 0) {
+                        resultsContainer.append(`
+                            <div class="list-group-item text-muted">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Aucun résultat trouvé. Essayez un autre terme.
+                            </div>
+                        `);
+                    } else {
+                        results.forEach(item => {
+                            const alreadySelected = selectedInterests.some(i => i.name === item.nom);
+                            resultsContainer.append(`
+                                <div class="list-group-item list-group-item-action ${alreadySelected ? 'disabled' : ''}" 
+                                     data-name="${item.nom.replace(/"/g, '&quot;')}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${item.nom}</strong>
+                                            ${item.description ? `<br><small class="text-muted">${item.description.substring(0, 80)}</small>` : ''}
+                                        </div>
+                                        ${alreadySelected ? '<span class="badge bg-success"><i class="fas fa-check"></i> Ajouté</span>' : ''}
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    }
+                    resultsContainer.show();
+                },
+                error: function() {
+                    $('#search-results').html(`
+                        <div class="list-group-item text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Erreur de connexion. Réessayez plus tard.
+                        </div>
+                    `).show();
+                }
+            });
+        }, 300);
+    });
+    
+    // Sélection d'un résultat
+    $(document).on('click', '.list-group-item-action', function() {
+        if ($(this).hasClass('disabled')) return;
+        
+        const name = $(this).data('name');
+        
+        if (!selectedInterests.some(i => i.name === name)) {
+            selectedInterests.push({ name: name });
+            updateSelectedTags();
+        }
+        
+        $('#search-interest').val('');
+        $('#search-results').hide();
+    });
+    
+    // Suppression d'un tag
+    $(document).on('click', '.remove-interest', function() {
+        const name = $(this).closest('.badge').data('name');
+        selectedInterests = selectedInterests.filter(i => i.name !== name);
+        updateSelectedTags();
+    });
+    
+    // Cacher les résultats quand on clique ailleurs
+    $(document).click(function(e) {
+        if (!$(e.target).closest('#search-interest, #search-results').length) {
+            $('#search-results').hide();
+        }
+    });
+});
+
+// Gestion de la soumission
+document.getElementById('formationForm').addEventListener('submit', function(e) {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Traitement...';
+});
+</script>
+
+<style>
+.list-group-item-action {
+    cursor: pointer;
+}
+.list-group-item-action:hover {
+    background-color: #f8f9fa;
+}
+.list-group-item-action.disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+</style>
+
+{% endblock %}

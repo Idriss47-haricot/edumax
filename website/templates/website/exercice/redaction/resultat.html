@@ -1,0 +1,110 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Résultat - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Résultat : {{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Résumé -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4 text-center">
+            <div class="card-body py-5">
+                {% if soumission.note is not None %}
+                    <div class="mb-4">
+                        <div class="display-1 fw-bold {% if soumission.pourcentage >= 75 %}text-success{% elif soumission.pourcentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ soumission.note|floatformat:1 }}/{{ soumission.note_sur|floatformat:0 }}
+                        </div>
+                        <div class="h5">
+                            <span class="badge bg-{{ soumission.mention_color }} fs-6">
+                                {{ soumission.mention }} ({{ soumission.pourcentage }}%)
+                            </span>
+                        </div>
+                        {% if reponse.est_corrigee %}
+                            <div class="mt-2 text-muted small">
+                                <i class="fas fa-check-circle text-success me-1"></i>
+                                Corrigé le {{ reponse.date_correction|date:"d/m/Y H:i" }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-clock me-2"></i>
+                        Votre rédaction est en attente de correction par l'enseignant.
+                    </div>
+                    <div class="text-muted">
+                        <p>📝 Votre rédaction a été soumise le {{ soumission.date_soumission|date:"d/m/Y H:i" }}</p>
+                        <p class="small">Revenez plus tard pour voir votre note et les commentaires.</p>
+                    </div>
+                {% endif %}
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Date de soumission</div>
+                            <div class="fw-bold">{{ soumission.date_soumission|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Mots</div>
+                            <div class="fw-bold">{{ reponse.nb_mots|default:0 }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Statut</div>
+                            <div class="fw-bold {% if reponse.est_corrigee %}text-success{% else %}text-warning{% endif %}">
+                                {% if reponse.est_corrigee %}✅ Corrigée{% else %}⏳ En attente{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rédaction -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-edit text-primary me-2"></i>Votre rédaction</h5>
+            </div>
+            <div class="card-body">
+                <div class="bg-light p-4 rounded" style="white-space: pre-wrap; line-height: 1.8;">
+                    {{ reponse.texte_redige|default:"(Aucun texte)" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Feedback si disponible -->
+        {% if reponse.est_corrigee and reponse.commentaire_correcteur %}
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-comment-dots text-info me-2"></i>Commentaire de l'enseignant</h5>
+            </div>
+            <div class="card-body">
+                <div class="bg-light p-4 rounded">
+                    {{ reponse.commentaire_correcteur|linebreaks }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if not reponse.est_corrigee %}
+                <small class="text-muted align-self-center">🔄 La correction peut prendre quelques jours</small>
+            {% endif %}
+            {% if exercice.nb_tentatives_max == 0 or soumission.nb_tentative < exercice.nb_tentatives_max %}
+            <a href="{% url 'redaction_passer' exercice.id %}" class="btn btn-primary">
+                <i class="fas fa-redo me-1"></i>Refaire
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

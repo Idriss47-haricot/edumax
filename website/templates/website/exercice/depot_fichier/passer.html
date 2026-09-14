@@ -1,0 +1,390 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Déposer - {{ exercice.titre }}{% endblock %}
+{% block page_title %}{{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timer-box {
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: monospace;
+        background: #1a1a2e;
+        color: #00ff88;
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-align: center;
+    }
+    .timer-box.warning {
+        color: #ff4444;
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .drop-zone {
+        border: 3px dashed #dee2e6;
+        border-radius: 16px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+        background: #fafafa;
+    }
+    .drop-zone:hover {
+        border-color: #0d6efd;
+        background: #f0f8ff;
+    }
+    .drop-zone.dragover {
+        border-color: #28a745;
+        background: #d4edda;
+    }
+    .drop-zone .icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 15px;
+    }
+    .file-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+    }
+    .file-item .file-icon {
+        font-size: 1.5rem;
+        margin-right: 12px;
+        color: #0d6efd;
+    }
+    .file-item .file-size {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .file-item .remove-file {
+        cursor: pointer;
+        color: #dc3545;
+        transition: all 0.2s;
+    }
+    .file-item .remove-file:hover {
+        transform: scale(1.2);
+    }
+    .extensions-badge {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        margin: 2px 4px 2px 0;
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-9">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h3 class="h5 mb-1">{{ exercice.titre }}</h3>
+                        <small class="text-muted">{{ exercice.points }} points • 📁 Dépôt de fichier</small>
+                    </div>
+                    <div class="timer-box" id="timer">
+                        {{ temps_restant|default:exercice.duree }}:00
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ exercice.consignes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-file-alt text-primary me-2"></i>Instructions</h5>
+            </div>
+            <div class="card-body">
+                <div class="bg-light p-4 rounded" style="white-space: pre-wrap; line-height: 1.8;">
+                    {{ consigne.instructions|linebreaks }}
+                </div>
+                
+                <div class="mt-3">
+                    <strong>📋 Formats autorisés :</strong>
+                    {% for ext in consigne.liste_extensions %}
+                        <span class="extensions-badge">{{ ext }}</span>
+                    {% endfor %}
+                    <span class="ms-2 text-muted small">
+                        (Taille max : {{ consigne.taille_max_mo }} Mo • {{ consigne.nb_fichiers_max }} fichier(s) max)
+                    </span>
+                </div>
+                
+                {% if consigne.document_ressource %}
+                <div class="mt-3">
+                    <a href="{{ consigne.document_ressource.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-file-download me-1"></i>Télécharger le document ressource
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulaire de dépôt -->
+        <form id="depot-form" method="post" enctype="multipart/form-data" action="{% url 'depot_fichier_soumettre' exercice.id %}">
+            {% csrf_token %}
+            
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-white rounded-top-4">
+                    <h5 class="mb-0"><i class="fas fa-upload text-primary me-2"></i>Déposer vos fichiers</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Zone de drop -->
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                        <h5>Glissez-déposez vos fichiers ici</h5>
+                        <p class="text-muted">ou <strong>cliquez</strong> pour sélectionner</p>
+                        <input type="file" id="file-input" style="display: none;" multiple accept="
+                            {% for ext in consigne.liste_extensions %}.{{ ext }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                        <div class="mt-2 text-muted small">
+                            Formats acceptés : 
+                            {% for ext in consigne.liste_extensions %}
+                                <span class="extensions-badge">{{ ext }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des fichiers -->
+                    <div id="file-list" class="mt-3" style="display: none;">
+                        <h6 class="fw-bold">📎 Fichiers sélectionnés</h6>
+                        <div id="file-items"></div>
+                        <div class="text-muted small mt-2" id="file-info"></div>
+                    </div>
+                    
+                    <input type="hidden" id="fichiers-data" name="fichiers_data" value="">
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-4">
+                <button type="button" id="reset-files" class="btn btn-secondary" style="display: none;">
+                    <i class="fas fa-undo me-1"></i>Effacer tout
+                </button>
+                <button type="submit" class="btn btn-success btn-lg" id="submit-btn">
+                    <i class="fas fa-paper-plane me-1"></i>Soumettre
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Informations</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>📁 Dépôt</strong>
+                        <p class="text-muted small">Correction manuelle par l'enseignant</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>📏 Taille max</strong>
+                        <p class="text-muted small">{{ consigne.taille_max_mo }} Mo</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>📎 Fichiers max</strong>
+                        <p class="text-muted small">{{ consigne.nb_fichiers_max }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>⏱️ Temps</strong>
+                        <p class="text-muted small">{{ exercice.duree }} minutes</p>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Timer
+let timeLeft = {{ temps_restant|default:exercice.duree }} * 60;
+const timerElement = document.getElementById('timer');
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 60) {
+        timerElement.classList.add('warning');
+    }
+    
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        alert('Temps écoulé ! Soumission automatique...');
+        document.getElementById('depot-form').submit();
+    }
+    timeLeft--;
+}
+
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Gestion du drag & drop
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const fileList = document.getElementById('file-list');
+const fileItems = document.getElementById('file-items');
+const fileInfo = document.getElementById('file-info');
+const resetBtn = document.getElementById('reset-files');
+const maxFiles = {{ consigne.nb_fichiers_max }};
+const maxSize = {{ consigne.taille_max_mo }} * 1024 * 1024;
+const allowedExtensions = {{ consigne.liste_extensions|safe }};
+
+let files = [];
+
+// Ouvrir le sélecteur de fichiers
+dropZone.addEventListener('click', () => fileInput.click());
+
+// Drag & drop
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    addFiles(droppedFiles);
+});
+
+// Sélection de fichiers
+fileInput.addEventListener('change', (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    addFiles(selectedFiles);
+    fileInput.value = '';
+});
+
+// Ajouter des fichiers
+function addFiles(newFiles) {
+    let addedCount = 0;
+    
+    newFiles.forEach(file => {
+        // Vérifier le nombre max
+        if (files.length + addedCount >= maxFiles) {
+            alert(`Maximum ${maxFiles} fichier(s) autorisé(s).`);
+            return;
+        }
+        
+        // Vérifier l'extension
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(ext)) {
+            alert(`L'extension .${ext} n'est pas autorisée.`);
+            return;
+        }
+        
+        // Vérifier la taille
+        if (file.size > maxSize) {
+            alert(`Le fichier ${file.name} dépasse la taille maximale de ${maxSize/1024/1024} Mo.`);
+            return;
+        }
+        
+        files.push(file);
+        addedCount++;
+    });
+    
+    updateFileList();
+}
+
+// Mettre à jour l'affichage
+function updateFileList() {
+    if (files.length === 0) {
+        fileList.style.display = 'none';
+        resetBtn.style.display = 'none';
+        return;
+    }
+    
+    fileList.style.display = 'block';
+    resetBtn.style.display = 'inline-block';
+    
+    fileItems.innerHTML = '';
+    let totalSize = 0;
+    
+    files.forEach((file, index) => {
+        totalSize += file.size;
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+            <div>
+                <span class="file-icon"><i class="fas fa-file"></i></span>
+                <strong>${file.name}</strong>
+                <span class="file-size">(${(file.size / 1024).toFixed(1)} Ko)</span>
+            </div>
+            <div class="remove-file" data-index="${index}">
+                <i class="fas fa-times-circle"></i>
+            </div>
+        `;
+        fileItems.appendChild(div);
+    });
+    
+    // Gestion de la suppression
+    document.querySelectorAll('.remove-file').forEach(el => {
+        el.addEventListener('click', () => {
+            const index = parseInt(el.dataset.index);
+            files.splice(index, 1);
+            updateFileList();
+        });
+    });
+    
+    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+    fileInfo.textContent = `${files.length} fichier(s) • ${totalSizeMB} Mo`;
+}
+
+// Effacer tout
+resetBtn.addEventListener('click', () => {
+    if (confirm('Effacer tous les fichiers sélectionnés ?')) {
+        files = [];
+        updateFileList();
+    }
+});
+
+// Soumission
+document.getElementById('depot-form').addEventListener('submit', (e) => {
+    if (files.length === 0) {
+        e.preventDefault();
+        alert('Veuillez sélectionner au moins un fichier.');
+        return;
+    }
+    
+    if (!confirm('Êtes-vous sûr de vouloir soumettre ces fichiers ?')) {
+        e.preventDefault();
+    }
+});
+
+// Restaurer des fichiers existants (si une soumission existe déjà)
+{% if fichiers_existants %}
+    {% for fichier in fichiers_existants %}
+        // Les fichiers existants sont déjà dans la liste
+    {% endfor %}
+{% endif %}
+</script>
+{% endblock %}

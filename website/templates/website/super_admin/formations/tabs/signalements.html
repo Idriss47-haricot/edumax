@@ -1,0 +1,35 @@
+<div class="card">
+    <div class="card-header bg-white">
+        <h5>Signalements des formations</h5>
+    </div>
+    <div class="card-body">
+        {% for signalement in signalements_list %}
+        <div class="border rounded p-3 mb-3">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>Formation:</strong> <a href="{% url 'formation_detail' signalement.formation.slug %}" target="_blank">{{ signalement.formation.titre }}</a><br>
+                    <strong>Signalé par:</strong> {{ signalement.utilisateur.username }}<br>
+                    <strong>Motif:</strong> {{ signalement.get_motif_display }}<br>
+                    <strong>Description:</strong> {{ signalement.description|default:"-" }}<br>
+                    <strong>Date:</strong> {{ signalement.date_creation|date:"d/m/Y H:i" }}
+                </div>
+                <div>
+                    {% if not signalement.traite %}
+                        <a href="{% url 'traiter_signalement' signalement.id %}?action=ignorer" class="btn btn-sm btn-secondary">Ignorer</a>
+                        <a href="{% url 'traiter_signalement' signalement.id %}?action=supprimer" class="btn btn-sm btn-danger">Supprimer formation</a>
+                        <a href="{% url 'traiter_signalement' signalement.id %}?action=suspendre" class="btn btn-sm btn-warning">Suspendre</a>
+                    {% else %}
+                        <span class="badge bg-success">Traité</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if signalement.commentaire_traitement %}
+                <hr>
+                <small class="text-muted">Réponse: {{ signalement.commentaire_traitement }}</small>
+            {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">Aucun signalement</p>
+        {% endfor %}
+    </div>
+</div>

@@ -1,0 +1,151 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Corriger - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Correction des dépôts : {{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-primary">{{ nb_total|default:0 }}</h2>
+                        <p class="text-muted mb-0">Total dépôts</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-warning">{{ a_corriger|length }}</h2>
+                        <p class="text-muted mb-0">À corriger</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-success">{{ corriges|length }}</h2>
+                        <p class="text-muted mb-0">Corrigés</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <a href="{% url 'depot_fichier_tableau_resultats' exercice.id %}" class="btn btn-info w-100">
+                            <i class="fas fa-chart-bar me-1"></i>Voir les résultats
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dépôts à corriger -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-clock text-warning me-2"></i>Dépôts à corriger ({{ a_corriger|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if a_corriger %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Étudiant</th>
+                                    <th>Fichiers</th>
+                                    <th>Déposé le</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for soumission in a_corriger %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</strong>
+                                    </td>
+                                    <td>{{ soumission.fichiers_deposes.count }}</td>
+                                    <td>{{ soumission.date_soumission|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'depot_fichier_corriger' soumission.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit me-1"></i>Corriger
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Tous les dépôts ont été corrigés ! 🎉
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Dépôts corrigés -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-check-circle text-success me-2"></i>Dépôts corrigés ({{ corriges|length }})</h5>
+            </div>
+            <div class="card-body">
+                {% if corriges %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Étudiant</th>
+                                    <th>Note</th>
+                                    <th>Corrigé le</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for soumission in corriges %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ soumission.note|floatformat:1 }}/{{ exercice.points }}</span>
+                                    </td>
+                                    <td>{{ soumission.correction_depot.date_correction|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <a href="{% url 'depot_fichier_corriger' soumission.id %}" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye me-1"></i>Voir
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">Aucun dépôt corrigé pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <a href="{% url 'depot_fichier_configurer' exercice.id %}" class="btn btn-primary">
+                <i class="fas fa-cog me-1"></i>Configurer
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Résultats - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Tableau des résultats : {{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Statistiques -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-primary">{{ stats.nb_total|default:0 }}</h2>
+                        <p class="text-muted mb-0">Étudiants</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <h2 class="display-4 fw-bold text-success">{{ stats.moyenne|floatformat:1|default:"0" }}</h2>
+                        <p class="text-muted mb-0">Moyenne</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <span class="fs-4 fw-bold">{{ exercice.total_points }}</span>
+                        <p class="text-muted mb-0">Points total</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card shadow-sm border-0 rounded-4 text-center">
+                    <div class="card-body">
+                        <span class="fs-4 fw-bold">{{ trous_stats|length }}</span>
+                        <p class="text-muted mb-0">Trous</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Onglets -->
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#tab-etudiants">👥 Étudiants</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#tab-trous">📊 Analyse par trou</a>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Tab: Étudiants -->
+            <div class="tab-pane fade show active" id="tab-etudiants">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Étudiant</th>
+                                        <th>Date</th>
+                                        <th>Note</th>
+                                        <th>%</th>
+                                        <th>Mention</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for soumission in soumissions %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</strong>
+                                        </td>
+                                        <td>{{ soumission.date_soumission|date:"d/m/Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ soumission.mention_color }} fs-6">
+                                                {{ soumission.note|floatformat:1 }}/{{ soumission.note_sur|floatformat:0 }}
+                                            </span>
+                                        </td>
+                                        <td>{{ soumission.pourcentage }}%</td>
+                                        <td>{{ soumission.mention }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">Aucune soumission</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Analyse par trou -->
+            <div class="tab-pane fade" id="tab-trous">
+                <div class="card shadow-sm border-0 rounded-4">
+                    <div class="card-body">
+                        {% for tstat in trous_stats %}
+                        <div class="mb-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-bold">Trou #{{ tstat.trou.numero }}</span>
+                                <span>{{ tstat.nb_correct }}/{{ tstat.nb_total }} correctes ({{ tstat.pct }}%)</span>
+                            </div>
+                            <div class="progress" style="height: 25px;">
+                                <div class="progress-bar bg-success" 
+                                     role="progressbar" 
+                                     style="width: {{ tstat.pct }}%;"
+                                     aria-valuenow="{{ tstat.pct }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                    {{ tstat.pct }}%
+                                </div>
+                            </div>
+                            <div class="mt-1 text-muted small">
+                                Réponses acceptées : {{ tstat.trou.liste_reponses|join:", " }}
+                                <span class="ms-2">({{ tstat.trou.points }} pts)</span>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">Aucune donnée disponible</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            <a href="{% url 'texte_trous_configurer' exercice.id %}" class="btn btn-primary">
+                <i class="fas fa-cog me-1"></i>Configurer
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Publier les résultats
+document.getElementById('publish-results')?.addEventListener('click', function() {
+    if (confirm('Publier les résultats aux étudiants ?')) {
+        window.location.href = "{% url 'exercice_publier_resultats' exercice.id %}";
+    }
+});
+</script>
+
+{% endblock %}

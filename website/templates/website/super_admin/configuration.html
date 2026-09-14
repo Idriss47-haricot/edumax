@@ -1,0 +1,627 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+{% block title %}Panneau de contrôle — Configuration plateforme{% endblock %}
+{% block page_title %}⚙️ Configuration centrale de la plateforme{% endblock %}
+
+{% block content %}
+
+<style>
+.config-nav { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:32px; }
+.config-nav-btn {
+    padding:10px 20px; border-radius:10px; border:2px solid #e5e7eb;
+    background:white; font-weight:600; cursor:pointer; transition:all 0.2s;
+    color:#374151; font-size:0.9rem; display:flex; align-items:center; gap:8px;
+}
+.config-nav-btn:hover, .config-nav-btn.active { border-color:#1e3a8a; background:#1e3a8a; color:white; }
+.config-section { display:none; }
+.config-section.active { display:block; }
+.config-card { background:white; border-radius:16px; padding:28px; border:1px solid #e5e7eb; margin-bottom:20px; }
+.config-card-title { font-size:1.1rem; font-weight:700; color:#111827; margin-bottom:20px; display:flex; align-items:center; gap:10px; border-bottom:2px solid #f3f4f6; padding-bottom:12px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:600px) { .form-row { grid-template-columns:1fr; } }
+.form-group { margin-bottom:18px; }
+.form-label { font-size:0.85rem; font-weight:600; color:#374151; margin-bottom:6px; display:block; }
+.form-hint { font-size:0.75rem; color:#9ca3af; margin-top:4px; }
+.form-control, .form-select { border-radius:10px; border:1.5px solid #e5e7eb; padding:10px 14px; font-size:0.9rem; transition:all 0.2s; }
+.form-control:focus, .form-select:focus { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,0.08); outline:none; }
+.toggle-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid #f3f4f6; }
+.toggle-row:last-child { border:none; }
+.toggle-label { font-size:0.9rem; font-weight:500; color:#374151; }
+.toggle-hint { font-size:0.78rem; color:#9ca3af; margin-top:2px; }
+.toggle-switch { position:relative; width:50px; height:28px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider {
+    position:absolute; inset:0; background:#e5e7eb; border-radius:50px; cursor:pointer;
+    transition:all 0.3s;
+}
+.toggle-slider:before {
+    content:''; position:absolute; width:22px; height:22px;
+    left:3px; bottom:3px; background:white; border-radius:50%;
+    transition:all 0.3s; box-shadow:0 1px 4px rgba(0,0,0,0.15);
+}
+input:checked + .toggle-slider { background:#1e3a8a; }
+input:checked + .toggle-slider:before { transform:translateX(22px); }
+.color-preview {
+    width:30px; height:30px; border-radius:8px; border:2px solid #e5e7eb;
+    display:inline-block; vertical-align:middle; margin-left:8px;
+}
+.save-bar {
+    position:sticky; bottom:0; background:white; border-top:2px solid #e5e7eb;
+    padding:16px 0; margin-top:30px; display:flex; justify-content:flex-end; gap:12px; z-index:100;
+}
+.btn-save { background:#1e3a8a; color:white; padding:12px 32px; border-radius:12px; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; font-size:0.95rem; }
+.btn-save:hover { background:#0f2b5e; transform:translateY(-1px); }
+.btn-preview-site { background:white; color:#1e3a8a; border:2px solid #1e3a8a; padding:12px 24px; border-radius:12px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:8px; font-size:0.95rem; transition:all 0.2s; }
+.btn-preview-site:hover { background:#f0f4ff; }
+.section-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+@media(max-width:700px) { .section-stats { grid-template-columns:1fr 1fr; } }
+.stat-box { background:white; border-radius:14px; padding:20px; border:1px solid #e5e7eb; text-align:center; }
+.stat-box .val { font-size:2rem; font-weight:900; color:#1e3a8a; display:block; }
+.stat-box .lbl { font-size:0.78rem; color:#6b7280; font-weight:500; }
+.alert-info-box { background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:14px 18px; font-size:0.85rem; color:#1e3a8a; margin-bottom:20px; }
+.slide-manager { border:1.5px dashed #e5e7eb; border-radius:14px; padding:20px; margin-bottom:14px; background:#f9fafb; }
+.slide-manager-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.temoignage-manager { border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:12px; }
+</style>
+
+<!-- Stats rapides -->
+<div class="section-stats">
+    <div class="stat-box">
+        <span class="val">{{ stats.nb_ecoles }}</span>
+        <span class="lbl">Écoles actives</span>
+    </div>
+    <div class="stat-box">
+        <span class="val">{{ stats.nb_formations }}</span>
+        <span class="lbl">Formations publiées</span>
+    </div>
+    <div class="stat-box">
+        <span class="val">{{ stats.nb_epreuves }}</span>
+        <span class="lbl">Épreuves publiées</span>
+    </div>
+    <div class="stat-box">
+        <span class="val">{{ stats.nb_utilisateurs }}</span>
+        <span class="lbl">Utilisateurs inscrits</span>
+    </div>
+</div>
+
+<div class="alert-info-box">
+    <i class="fas fa-info-circle me-2"></i>
+    Tout ce que vous modifiez ici s'applique <strong>immédiatement</strong> sur le site public, sans retoucher le code.
+</div>
+
+<!-- Navigation par onglets -->
+<div class="config-nav">
+    <button class="config-nav-btn active" onclick="showSection('branding', this)">
+        <i class="fas fa-palette"></i> Identité & couleurs
+    </button>
+    <button class="config-nav-btn" onclick="showSection('hero', this)">
+        <i class="fas fa-image"></i> Hero & diaporama
+    </button>
+    <button class="config-nav-btn" onclick="showSection('sections', this)">
+        <i class="fas fa-eye"></i> Sections & titres
+    </button>
+    <button class="config-nav-btn" onclick="showSection('formations_config', this)">
+        <i class="fas fa-book"></i> Formations
+    </button>
+    <button class="config-nav-btn" onclick="showSection('temoignages_section', this)">
+        <i class="fas fa-comments"></i> Témoignages
+    </button>
+    <button class="config-nav-btn" onclick="showSection('footer_config', this)">
+        <i class="fas fa-sitemap"></i> Footer & contact
+    </button>
+    <button class="config-nav-btn" onclick="showSection('avance', this)">
+        <i class="fas fa-cog"></i> Avancé
+    </button>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="configForm">
+    {% csrf_token %}
+
+    <!-- ── SECTION : BRANDING ── -->
+    <div class="config-section active" id="section-branding">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-graduation-cap text-primary"></i> Identité du site</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Nom du site</label>
+                    <input type="text" name="nom_site" value="{{ config.nom_site }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Slogan</label>
+                    <input type="text" name="slogan_site" value="{{ config.slogan_site }}" class="form-control">
+                    <span class="form-hint">Affiché dans le titre de la page (onglet navigateur)</span>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Logo du site</label>
+                    {% if config.logo %}<img src="{{ config.logo.url }}" height="40" class="mb-2 d-block">{% endif %}
+                    <input type="file" name="logo" class="form-control" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Favicon</label>
+                    {% if config.favicon %}<img src="{{ config.favicon.url }}" height="32" class="mb-2 d-block">{% endif %}
+                    <input type="file" name="favicon" class="form-control" accept="image/*">
+                    <span class="form-hint">Icône dans l'onglet du navigateur (32×32 px recommandé)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-palette text-warning"></i> Couleurs</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">
+                        Couleur principale
+                        <span class="color-preview" id="prev-primary" style="background:{{ config.couleur_principale }};"></span>
+                    </label>
+                    <input type="color" name="couleur_principale" value="{{ config.couleur_principale }}" class="form-control" style="height:46px;"
+                           oninput="document.getElementById('prev-primary').style.background=this.value">
+                    <span class="form-hint">Bleu principal du site — header, boutons, titres</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        Couleur secondaire (accent)
+                        <span class="color-preview" id="prev-accent" style="background:{{ config.couleur_secondaire }};"></span>
+                    </label>
+                    <input type="color" name="couleur_secondaire" value="{{ config.couleur_secondaire }}" class="form-control" style="height:46px;"
+                           oninput="document.getElementById('prev-accent').style.background=this.value">
+                    <span class="form-hint">Jaune doré — boutons CTA, badges vedette</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">
+                        Couleur accent vert
+                        <span class="color-preview" id="prev-green" style="background:{{ config.couleur_accent }};"></span>
+                    </label>
+                    <input type="color" name="couleur_accent" value="{{ config.couleur_accent }}" class="form-control" style="height:46px;"
+                           oninput="document.getElementById('prev-green').style.background=this.value">
+                    <span class="form-hint">Vert — badges gratuit, validations, épreuves</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION : HERO ── -->
+    <div class="config-section" id="section-hero">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-image text-primary"></i> Bandeau principal (Hero)</div>
+            <p class="text-muted small mb-3">Si vous créez des diapositives ci-dessous, elles remplaceront ce hero statique.</p>
+            <div class="form-group">
+                <label class="form-label">Titre principal</label>
+                <input type="text" name="hero_titre" value="{{ config.hero_titre }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Titre accentué (en couleur dorée, sous le titre)</label>
+                <input type="text" name="hero_titre_accent" value="{{ config.hero_titre_accent }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea name="hero_description" class="form-control" rows="3">{{ config.hero_description }}</textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Texte bouton 1</label>
+                    <input type="text" name="hero_bouton1_texte" value="{{ config.hero_bouton1_texte }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lien bouton 1</label>
+                    <input type="text" name="hero_bouton1_lien" value="{{ config.hero_bouton1_lien }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Texte bouton 2</label>
+                    <input type="text" name="hero_bouton2_texte" value="{{ config.hero_bouton2_texte }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lien bouton 2</label>
+                    <input type="text" name="hero_bouton2_lien" value="{{ config.hero_bouton2_lien }}" class="form-control">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Image droite (optionnel)</label>
+                    {% if config.hero_image %}<img src="{{ config.hero_image.url }}" height="80" class="mb-2 d-block rounded">{% endif %}
+                    <input type="file" name="hero_image" class="form-control" accept="image/*">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL vidéo de présentation (YouTube/mp4)</label>
+                    <input type="url" name="hero_video_url" value="{{ config.hero_video_url|default:'' }}" class="form-control" placeholder="https://youtube.com/watch?v=...">
+                </div>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Afficher les statistiques dans le Hero</div></div>
+                <label class="toggle-switch">
+                    <input type="checkbox" name="hero_afficher_stats" {% if config.hero_afficher_stats %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Stats hero -->
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-chart-bar text-success"></i> Statistiques affichées dans le Hero</div>
+            <div class="form-row" style="align-items:end; border-bottom:1px solid #f3f4f6; padding-bottom:12px; margin-bottom:12px;">
+    <div class="form-group" style="margin:0;">
+        <label class="form-label">Stat 1 — Label</label>
+        <input type="text" name="stat1_label" value="{{ config.stat1_label }}" class="form-control">
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label class="form-label">Valeur fixe</label>
+        <input type="text" name="stat1_valeur_fixe" value="{{ config.stat1_valeur_fixe }}" class="form-control">
+    </div>
+    <div class="form-group" style="margin:0; display:flex; align-items:center; gap:10px; padding-top:20px;">
+        <label class="toggle-switch">
+            <input type="checkbox" name="stat1_valeur_auto" {% if config.stat1_valeur_auto %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+        </label>
+        <span class="form-label" style="margin:0;">Auto</span>
+    </div>
+</div>
+
+<div class="form-row" style="align-items:end; border-bottom:1px solid #f3f4f6; padding-bottom:12px; margin-bottom:12px;">
+    <div class="form-group" style="margin:0;">
+        <label class="form-label">Stat 2 — Label</label>
+        <input type="text" name="stat2_label" value="{{ config.stat2_label }}" class="form-control">
+    </div>
+    <div class="form-group" style="margin:0;">
+        <label class="form-label">Valeur fixe</label>
+        <input type="text" name="stat2_valeur_fixe" value="{{ config.stat2_valeur_fixe }}" class="form-control">
+    </div>
+    <div class="form-group" style="margin:0; display:flex; align-items:center; gap:10px; padding-top:20px;">
+        <label class="toggle-switch">
+            <input type="checkbox" name="stat2_valeur_auto" {% if config.stat2_valeur_auto %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+        </label>
+        <span class="form-label" style="margin:0;">Auto</span>
+    </div>
+</div>
+
+        <div class="form-row" style="align-items:end; border-bottom:1px solid #f3f4f6; padding-bottom:12px; margin-bottom:12px;">
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Stat 3 — Label</label>
+                <input type="text" name="stat3_label" value="{{ config.stat3_label }}" class="form-control">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Valeur fixe</label>
+                <input type="text" name="stat3_valeur_fixe" value="{{ config.stat3_valeur_fixe }}" class="form-control">
+            </div>
+            <div class="form-group" style="margin:0; display:flex; align-items:center; gap:10px; padding-top:20px;">
+                <label class="toggle-switch">
+                    <input type="checkbox" name="stat3_valeur_auto" {% if config.stat3_valeur_auto %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="form-label" style="margin:0;">Auto</span>
+            </div>
+        </div>
+
+        <div class="form-row" style="align-items:end; border-bottom:1px solid #f3f4f6; padding-bottom:12px; margin-bottom:12px;">
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Stat 4 — Label</label>
+                <input type="text" name="stat4_label" value="{{ config.stat4_label }}" class="form-control">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Valeur fixe</label>
+                <input type="text" name="stat4_valeur_fixe" value="{{ config.stat4_valeur_fixe }}" class="form-control">
+            </div>
+            <div class="form-group" style="margin:0; display:flex; align-items:center; gap:10px; padding-top:20px;">
+                <label class="toggle-switch">
+                    <input type="checkbox" name="stat4_valeur_auto" {% if config.stat4_valeur_auto %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="form-label" style="margin:0;">Auto</span>
+            </div>
+        </div>
+        </div>
+
+        <!-- Diaporama -->
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-film text-primary"></i> Diaporama Hero (remplace le hero statique)</div>
+            <div class="alert-info-box"><i class="fas fa-lightbulb me-2"></i>Créez des diapositives pour avoir un carrousel automatique. Si vide, le hero statique s'affiche.</div>
+
+            {% for slide in slides %}
+            <div class="slide-manager">
+                <div class="slide-manager-header">
+                    <strong>Diapositive {{ forloop.counter }} — {{ slide.titre|truncatechars:30 }}</strong>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'super_admin_slide_edit' slide.id %}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                        <a href="{% url 'super_admin_slide_delete' slide.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette diapositive ?')">Supprimer</a>
+                    </div>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    {% if slide.image %}
+                    <img src="{{ slide.image.url }}" height="60" style="border-radius:8px;">
+                    {% endif %}
+                    <div class="text-muted small">
+                        {% if slide.bouton_texte %}Bouton : {{ slide.bouton_texte }}{% endif %} |
+                        {% if slide.actif %}<span class="text-success">Active</span>{% else %}<span class="text-danger">Inactive</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-3">Aucune diapositive créée. Le hero statique est utilisé.</p>
+            {% endfor %}
+
+            <a href="{% url 'super_admin_slide_create' %}" class="btn btn-outline-primary w-100 mt-2">
+                <i class="fas fa-plus me-2"></i>Ajouter une diapositive
+            </a>
+        </div>
+    </div>
+
+    <!-- ── SECTION : SECTIONS & TITRES ── -->
+    <div class="config-section" id="section-sections">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-eye text-primary"></i> Sections visibles sur l'accueil</div>
+            <p class="text-muted small mb-3">Activez ou désactivez chaque section de la page d'accueil publique.</p>
+
+            {% with toggles=config %}
+            <div class="toggle-row">
+                <div><div class="toggle-label">Services (Écoles · Formations · Épreuves)</div><div class="toggle-hint">Les 3 piliers de la plateforme</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_services_visible" {% if config.section_services_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Formations en vedette</div><div class="toggle-hint">Grille des meilleures formations</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_formations_visible" {% if config.section_formations_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Épreuves</div><div class="toggle-hint">Bibliothèque Bac, BEPC, Concours</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_epreuves_visible" {% if config.section_epreuves_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Écoles partenaires</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_ecoles_visible" {% if config.section_ecoles_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Pour qui ?</div><div class="toggle-hint">Établissements · Formateurs · Étudiants · Parents</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_audience_visible" {% if config.section_audience_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Comment ça marche ?</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_comment_ca_marche_visible" {% if config.section_comment_ca_marche_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Témoignages</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_temoignages_visible" {% if config.section_temoignages_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">CTA finale</div><div class="toggle-hint">Bouton "Démarrer maintenant"</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_cta_visible" {% if config.section_cta_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Section Partenaires</div><div class="toggle-hint">Logos des partenaires</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="section_partenaires_visible" {% if config.section_partenaires_visible %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            {% endwith %}
+        </div>
+
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-pen text-warning"></i> Titres & sous-titres des sections</div>
+            <div class="form-group">
+                <label class="form-label">Titre — section Formations</label>
+                <input type="text" name="titre_section_formations" value="{{ config.titre_section_formations }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sous-titre — section Formations</label>
+                <input type="text" name="sous_titre_section_formations" value="{{ config.sous_titre_section_formations }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Titre — section Épreuves</label>
+                <input type="text" name="titre_section_epreuves" value="{{ config.titre_section_epreuves }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sous-titre — section Épreuves</label>
+                <input type="text" name="sous_titre_section_epreuves" value="{{ config.sous_titre_section_epreuves }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Titre — section Écoles</label>
+                <input type="text" name="titre_section_ecoles" value="{{ config.titre_section_ecoles }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Titre — section Témoignages</label>
+                <input type="text" name="titre_section_temoignages" value="{{ config.titre_section_temoignages }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Titre CTA finale</label>
+                <input type="text" name="titre_section_cta" value="{{ config.titre_section_cta }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Sous-titre CTA finale</label>
+                <input type="text" name="sous_titre_section_cta" value="{{ config.sous_titre_section_cta }}" class="form-control">
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION : FORMATIONS CONFIG ── -->
+    <div class="config-section" id="section-formations_config">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-sliders-h text-primary"></i> Paramètres d'affichage des formations</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Nombre de formations sur l'accueil</label>
+                    <input type="number" name="nb_formations_accueil" value="{{ config.nb_formations_accueil }}" class="form-control" min="3" max="12">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre d'épreuves sur l'accueil</label>
+                    <input type="number" name="nb_epreuves_accueil" value="{{ config.nb_epreuves_accueil }}" class="form-control" min="4" max="16">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre d'écoles sur l'accueil</label>
+                    <input type="number" name="nb_ecoles_accueil" value="{{ config.nb_ecoles_accueil }}" class="form-control" min="3" max="12">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tri des formations (accueil)</label>
+                <select name="formations_tri" class="form-select">
+                    <option value="-date_publication" {% if config.formations_tri == '-date_publication' %}selected{% endif %}>Plus récentes</option>
+                    <option value="-nb_ventes" {% if config.formations_tri == '-nb_ventes' %}selected{% endif %}>Plus vendues</option>
+                    <option value="-note_moyenne" {% if config.formations_tri == '-note_moyenne' %}selected{% endif %}>Mieux notées</option>
+                </select>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Badge "Gratuit" sur les formations à 0 FCFA</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="afficher_formations_gratuites_badge" {% if config.afficher_formations_gratuites_badge %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Afficher le prix des formations</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="afficher_prix_formations" {% if config.afficher_prix_formations %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Afficher la note / étoiles</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="afficher_note_formations" {% if config.afficher_note_formations %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Afficher le nombre de ventes</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="afficher_nb_ventes_formations" {% if config.afficher_nb_ventes_formations %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION : TÉMOIGNAGES ── -->
+    <div class="config-section" id="section-temoignages_section">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-star text-warning"></i> Gestion des témoignages</div>
+            {% for t in temoignages %}
+            <div class="temoignage-manager">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <strong>{{ t.nom }}</strong> — <em>{{ t.role }}</em>
+                        {% for i in "12345" %}
+                        <i class="fas fa-star {% if forloop.counter <= t.note %}text-warning{% else %}text-muted{% endif %} small"></i>
+                        {% endfor %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'super_admin_temoignage_edit' t.id %}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                        <a href="{% url 'super_admin_temoignage_delete' t.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ?')">Supprimer</a>
+                    </div>
+                </div>
+                <p class="text-muted small mb-0">"{{ t.texte|truncatechars:120 }}"</p>
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-3">Aucun témoignage. Ajoutez-en pour enrichir l'accueil.</p>
+            {% endfor %}
+            <a href="{% url 'super_admin_temoignage_create' %}" class="btn btn-outline-primary w-100 mt-2">
+                <i class="fas fa-plus me-2"></i>Ajouter un témoignage
+            </a>
+        </div>
+
+        <!-- Bannière promo -->
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-bullhorn text-danger"></i> Bannière promotionnelle (bandeau en haut)</div>
+            {% if banniere_promo %}
+            <div class="d-flex gap-3 align-items-center p-3 rounded mb-3" style="background:{{ banniere_promo.couleur_fond }};color:{{ banniere_promo.couleur_texte }};">
+                {{ banniere_promo.texte }}
+                <span class="ms-auto badge bg-success">Active</span>
+            </div>
+            <a href="{% url 'super_admin_banniere_edit' banniere_promo.id %}" class="btn btn-sm btn-outline-primary me-2">Modifier</a>
+            {% else %}
+            <p class="text-muted">Aucune bannière active.</p>
+            {% endif %}
+            <a href="{% url 'super_admin_banniere_create' %}" class="btn btn-sm btn-outline-success">
+                <i class="fas fa-plus me-1"></i>Nouvelle bannière
+            </a>
+        </div>
+    </div>
+
+    <!-- ── SECTION : FOOTER ── -->
+    <div class="config-section" id="section-footer_config">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-address-card text-primary"></i> Coordonnées & footer</div>
+            <div class="form-group">
+                <label class="form-label">Texte de présentation (footer)</label>
+                <textarea name="footer_texte" class="form-control" rows="3">{{ config.footer_texte }}</textarea>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Email de contact</label>
+                    <input type="email" name="footer_email_contact" value="{{ config.footer_email_contact }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Téléphone</label>
+                    <input type="text" name="footer_telephone" value="{{ config.footer_telephone }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Adresse</label>
+                    <input type="text" name="footer_adresse" value="{{ config.footer_adresse }}" class="form-control">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label"><i class="fab fa-facebook text-primary"></i> Facebook</label>
+                    <input type="url" name="footer_facebook" value="{{ config.footer_facebook }}" class="form-control" placeholder="https://facebook.com/...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><i class="fab fa-twitter" style="color:#1da1f2"></i> Twitter / X</label>
+                    <input type="url" name="footer_twitter" value="{{ config.footer_twitter }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><i class="fab fa-linkedin" style="color:#0077b5"></i> LinkedIn</label>
+                    <input type="url" name="footer_linkedin" value="{{ config.footer_linkedin }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><i class="fab fa-instagram" style="color:#e4405f"></i> Instagram</label>
+                    <input type="url" name="footer_instagram" value="{{ config.footer_instagram }}" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label"><i class="fab fa-youtube text-danger"></i> YouTube</label>
+                    <input type="url" name="footer_youtube" value="{{ config.footer_youtube }}" class="form-control">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── SECTION : AVANCÉ ── -->
+    <div class="config-section" id="section-avance">
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-tools text-danger"></i> Paramètres avancés</div>
+            <div class="toggle-row">
+                <div>
+                    <div class="toggle-label" style="color:#dc2626;">⚠️ Mode maintenance</div>
+                    <div class="toggle-hint">Les visiteurs voient un message de maintenance. Vous gardez l'accès admin.</div>
+                </div>
+                <label class="toggle-switch"><input type="checkbox" name="mode_maintenance" {% if config.mode_maintenance %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="form-group mt-3">
+                <label class="form-label">Message de maintenance</label>
+                <textarea name="message_maintenance" class="form-control" rows="2">{{ config.message_maintenance }}</textarea>
+            </div>
+        </div>
+
+        <div class="config-card">
+            <div class="config-card-title"><i class="fas fa-robot text-primary"></i> Auto-publication formations</div>
+            <div class="toggle-row">
+                <div><div class="toggle-label">Activer la publication automatique</div><div class="toggle-hint">Les formations en attente sont publiées après le délai</div></div>
+                <label class="toggle-switch"><input type="checkbox" name="auto_publication_active" {% if config.auto_publication_active %}checked{% endif %}><span class="toggle-slider"></span></label>
+            </div>
+            <div class="form-group mt-3">
+                <label class="form-label">Délai avant publication automatique (minutes)</label>
+                <input type="number" name="auto_publication_delai_minutes" value="{{ config.auto_publication_delai_minutes }}" class="form-control" min="5" max="10080">
+            </div>
+        </div>
+    </div>
+
+    <!-- Barre de sauvegarde fixée en bas -->
+    <div class="save-bar">
+        <a href="{% url 'accueil' %}" target="_blank" class="btn-preview-site">
+            <i class="fas fa-external-link-alt"></i> Aperçu du site
+        </a>
+        <button type="submit" class="btn-save">
+            <i class="fas fa-save me-2"></i>Enregistrer toutes les modifications
+        </button>
+    </div>
+</form>
+
+<script>
+function showSection(id, btn) {
+    document.querySelectorAll('.config-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.config-nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    btn.classList.add('active');
+}
+
+// Confirmation avant sauvegarde
+document.getElementById('configForm').addEventListener('submit', function(e) {
+    const btn = this.querySelector('.btn-save');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enregistrement...';
+    btn.disabled = true;
+});
+</script>
+
+{% endblock %}

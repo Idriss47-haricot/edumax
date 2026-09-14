@@ -1,0 +1,554 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer Étude de cas - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Configuration de l'Étude de cas : {{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sous-question-card {
+        border-left: 4px solid #0d6efd;
+        transition: all 0.2s ease;
+        margin-bottom: 12px;
+    }
+    .sous-question-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    }
+    .sous-question-card .badge-ordre {
+        background: #0d6efd;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+    }
+    .contexte-box {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 5px solid #0d6efd;
+        white-space: pre-wrap;
+        line-height: 1.8;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .choix-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+    }
+    .choix-item.correct {
+        border: 1px solid #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">{{ exercice.titre }}</h5>
+                        <small class="text-muted">{{ exercice.duree }} min • {{ exercice.points }} pts</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'exercice_modifier' exercice.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>{{ sous_questions|length }}</strong> sous-question(s) -
+                    Total points: {{ exercice.total_points }}
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge {% if exercice.est_lance %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                        {% if exercice.est_lance %}✓ Publié{% else %}📝 Brouillon{% endif %}
+                    </span>
+                    <span class="badge bg-info fs-6">
+                        📚 Étude de cas
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire : Contexte du cas -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-book-open text-primary me-2"></i>Contexte du cas</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="contexte-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Contexte / Scénario *</label>
+                        <textarea name="contexte" class="form-control" rows="6" 
+                                  placeholder="Ex: Une entreprise de consulting souhaite moderniser ses systèmes..." 
+                                  required>{{ etude_cas.contexte|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Document du cas (optionnel)</label>
+                            <input type="file" name="document_cas" class="form-control" accept=".pdf,.doc,.docx">
+                            {% if etude_cas.document_cas %}
+                                <small class="text-muted">Actuel : <a href="{{ etude_cas.document_cas.url }}" target="_blank">{{ etude_cas.document_cas.name }}</a></small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Image (optionnel)</label>
+                            <input type="file" name="image_cas" class="form-control" accept="image/*">
+                            {% if etude_cas.image_cas %}
+                                <small class="text-muted">Actuel : <a href="{{ etude_cas.image_cas.url }}" target="_blank">Voir l'image</a></small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <button type="submit" name="save_contexte" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Enregistrer le contexte
+                    </button>
+                </form>
+                
+                {% if etude_cas.contexte %}
+                <div class="mt-3">
+                    <h6 class="fw-bold">📖 Aperçu du contexte :</h6>
+                    <div class="contexte-box">
+                        {{ etude_cas.contexte|linebreaks }}
+                    </div>
+                    {% if etude_cas.image_cas %}
+                    <div class="mt-2">
+                        <img src="{{ etude_cas.image_cas.url }}" alt="Image du cas" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Liste des sous-questions -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0"><i class="fas fa-list-ol text-primary me-2"></i>Sous-questions</h5>
+                <span class="badge bg-primary">{{ sous_questions|length }}</span>
+            </div>
+            <div class="card-body">
+                <div id="sous-questions-list">
+                    {% for sq in sous_questions %}
+                    <div class="card shadow-sm border-0 rounded-4 sous-question-card" 
+                         data-sq-id="{{ sq.id }}" id="sq-{{ sq.id }}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                        <span class="badge-ordre">Q{{ sq.ordre }}</span>
+                                        <span class="badge bg-info">{{ sq.points }} pts</span>
+                                        <span class="badge {% if sq.type_question == 'qcm' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {{ sq.get_type_question_display }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-3 fw-medium">{{ sq.texte }}</p>
+                                    
+                                    {% if sq.type_question == 'qcm' %}
+                                    <div class="ms-3">
+                                        {% for choix in sq.choix.all %}
+                                        <div class="choix-item {% if choix.est_correct %}correct{% endif %}">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" 
+                                                           {% if choix.est_correct %}checked{% endif %} disabled>
+                                                </div>
+                                                <span>{{ choix.texte }}</span>
+                                                {% if choix.est_correct %}
+                                                    <span class="badge bg-success ms-auto">✅ Correct</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Boutons d'action -->
+                                <div class="d-flex flex-column gap-2 ms-3">
+                                    <button class="btn btn-sm btn-outline-primary edit-sq-btn" data-sq-id="{{ sq.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger delete-sq-btn" data-sq-id="{{ sq.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-warning text-center">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Aucune sous-question. Ajoutez-en avec le formulaire à droite.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar - Ajout de sous-question -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-plus-circle text-success me-2"></i>Ajouter une sous-question</h5>
+            </div>
+            <div class="card-body">
+                <form id="sq-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Question *</label>
+                        <textarea id="sq-texte" class="form-control" rows="3" 
+                                  placeholder="Saisissez votre sous-question..." required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Points</label>
+                            <input type="number" id="sq-points" class="form-control" value="2" min="1">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Type</label>
+                            <select id="sq-type" class="form-select">
+                                <option value="texte_libre">📝 Texte libre</option>
+                                <option value="qcm">🎯 QCM</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="sq-qcm-section" style="display: none;">
+                        <hr>
+                        <h6 class="fw-bold"><i class="fas fa-list-ul me-2"></i>Choix (QCM)</h6>
+                        <div id="sq-choix-list">
+                            <div class="choix-item-form mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="sq-correct-radio" class="sq-correct-radio" value="0">
+                                    </span>
+                                    <input type="text" class="form-control sq-choix-texte" placeholder="Choix 1">
+                                    <button class="btn btn-outline-danger sq-remove-choix" type="button" style="display: none;">×</button>
+                                </div>
+                            </div>
+                            <div class="choix-item-form mb-2">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="sq-correct-radio" class="sq-correct-radio" value="1">
+                                    </span>
+                                    <input type="text" class="form-control sq-choix-texte" placeholder="Choix 2">
+                                    <button class="btn btn-outline-danger sq-remove-choix" type="button" style="display: none;">×</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="sq-add-choix" class="btn btn-sm btn-outline-secondary w-100 mb-3">
+                            + Ajouter un choix
+                        </button>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-save me-1"></i>Ajouter la sous-question
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Actions globales -->
+        <div class="card shadow-sm border-0 rounded-4 mt-3">
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'exercice_lancer' exercice.id %}" class="btn {% if exercice.est_lance %}btn-warning{% else %}btn-success{% endif %}" 
+                       onclick="return confirm('{% if exercice.est_lance %}Arrêter l\'exercice ?{% else %}Publier l\'exercice ?{% endif %}')">
+                        <i class="fas {% if exercice.est_lance %}fa-stop{% else %}fa-play{% endif %} me-1"></i>
+                        {% if exercice.est_lance %}Arrêter{% else %}Publier{% endif %}
+                    </a>
+                    <a href="{% url 'etude_cas_tableau_resultats' exercice.id %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar me-1"></i>Résultats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'édition -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier la sous-question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-sq-id">
+                
+                <div class="mb-3">
+                    <label class="form-label">Question</label>
+                    <textarea id="edit-texte" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Points</label>
+                        <input type="number" id="edit-points" class="form-control" min="1">
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label">Type</label>
+                        <select id="edit-type" class="form-select">
+                            <option value="texte_libre">📝 Texte libre</option>
+                            <option value="qcm">🎯 QCM</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="edit-qcm-section" style="display: none;">
+                    <hr>
+                    <h6 class="fw-bold">Choix</h6>
+                    <div id="edit-choix-list"></div>
+                    <button type="button" id="edit-add-choix" class="btn btn-sm btn-outline-secondary w-100 mt-2">+ Ajouter un choix</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" id="save-edit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const exerciceId = {{ exercice.id }};
+let choixCount = 2;
+
+// Afficher/masquer la section QCM
+document.getElementById('sq-type').addEventListener('change', function() {
+    document.getElementById('sq-qcm-section').style.display = this.value === 'qcm' ? 'block' : 'none';
+});
+
+// Ajouter un choix (QCM)
+document.getElementById('sq-add-choix').addEventListener('click', function() {
+    const newId = choixCount++;
+    const container = document.getElementById('sq-choix-list');
+    const div = document.createElement('div');
+    div.className = 'choix-item-form mb-2';
+    div.innerHTML = `
+        <div class="input-group">
+            <span class="input-group-text">
+                <input type="radio" name="sq-correct-radio" class="sq-correct-radio" value="${newId}">
+            </span>
+            <input type="text" class="form-control sq-choix-texte" placeholder="Choix ${newId + 1}">
+            <button class="btn btn-outline-danger sq-remove-choix" type="button">×</button>
+        </div>
+    `;
+    container.appendChild(div);
+    document.querySelectorAll('.sq-remove-choix').forEach(btn => btn.style.display = 'block');
+});
+
+// Supprimer un choix
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('sq-remove-choix')) {
+        const items = document.querySelectorAll('.choix-item-form');
+        if (items.length > 2) {
+            e.target.closest('.choix-item-form').remove();
+        } else {
+            alert('Minimum 2 choix');
+        }
+    }
+});
+
+// Ajouter une sous-question
+document.getElementById('sq-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const texte = document.getElementById('sq-texte').value.trim();
+    if (!texte) return alert('Veuillez saisir une question');
+    const type = document.getElementById('sq-type').value;
+    const points = parseInt(document.getElementById('sq-points').value) || 2;
+    
+    const data = { texte, type, points };
+    
+    if (type === 'qcm') {
+        const choix = [];
+        document.querySelectorAll('.sq-choix-texte').forEach(input => {
+            const val = input.value.trim();
+            if (val) choix.push(val);
+        });
+        if (choix.length < 2) return alert('Minimum 2 choix');
+        
+        const corrects = [];
+        document.querySelectorAll('.sq-correct-radio:checked').forEach(cb => {
+            corrects.push(parseInt(cb.value));
+        });
+        if (corrects.length === 0) return alert('Sélectionnez une bonne réponse');
+        
+        data.choix = choix;
+        data.corrects = corrects;
+    }
+    
+    try {
+        const response = await fetch(`/etude_cas/sous_question/ajouter/${exerciceId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) location.reload();
+        else {
+            const err = await response.json();
+            alert('Erreur: ' + (err.error || 'Erreur serveur'));
+        }
+    } catch (err) {
+        alert('Erreur réseau');
+    }
+});
+
+// Supprimer une sous-question
+document.querySelectorAll('.delete-sq-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        if (!confirm('Supprimer cette sous-question ?')) return;
+        const sqId = this.dataset.sqId;
+        
+        try {
+            const response = await fetch(`/etude_cas/sous_question/supprimer/${exerciceId}/${sqId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            });
+            if (response.ok) location.reload();
+        } catch (err) {}
+    });
+});
+
+// Éditer une sous-question
+document.querySelectorAll('.edit-sq-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const sqId = this.dataset.sqId;
+        const card = document.getElementById(`sq-${sqId}`);
+        
+        document.getElementById('edit-sq-id').value = sqId;
+        document.getElementById('edit-texte').value = card.querySelector('.fw-medium')?.textContent.trim() || '';
+        document.getElementById('edit-points').value = card.querySelector('.badge.bg-info')?.textContent.replace('pts', '').trim() || 2;
+        
+        const type = card.querySelector('.badge.bg-success') ? 'qcm' : 'texte_libre';
+        document.getElementById('edit-type').value = type;
+        document.getElementById('edit-qcm-section').style.display = type === 'qcm' ? 'block' : 'none';
+        
+        if (type === 'qcm') {
+            const editList = document.getElementById('edit-choix-list');
+            editList.innerHTML = '';
+            const choixItems = card.querySelectorAll('.choix-item');
+            choixItems.forEach((item, idx) => {
+                const span = item.querySelector('span');
+                const isCorrect = item.classList.contains('correct');
+                const div = document.createElement('div');
+                div.className = 'edit-choix-item mb-2';
+                div.innerHTML = `
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <input type="radio" name="edit-correct-radio" class="edit-correct-radio" ${isCorrect ? 'checked' : ''} data-idx="${idx}">
+                        </span>
+                        <input type="text" class="form-control edit-choix-texte" value="${span?.textContent.trim() || ''}">
+                        <button class="btn btn-outline-danger edit-remove-choix" type="button">×</button>
+                    </div>
+                `;
+                editList.appendChild(div);
+            });
+        }
+        
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    });
+});
+
+// Sauvegarder l'édition
+document.getElementById('save-edit').addEventListener('click', async function() {
+    const sqId = document.getElementById('edit-sq-id').value;
+    const texte = document.getElementById('edit-texte').value.trim();
+    const type = document.getElementById('edit-type').value;
+    const points = parseInt(document.getElementById('edit-points').value) || 2;
+    
+    if (!texte) return alert('Question requise');
+    
+    const data = { texte, type, points };
+    
+    if (type === 'qcm') {
+        const choix = [];
+        document.querySelectorAll('.edit-choix-texte').forEach(input => {
+            const val = input.value.trim();
+            if (val) choix.push(val);
+        });
+        if (choix.length < 2) return alert('Minimum 2 choix');
+        
+        const corrects = [];
+        document.querySelectorAll('.edit-correct-radio:checked').forEach(cb => {
+            corrects.push(parseInt(cb.dataset.idx));
+        });
+        if (corrects.length === 0) return alert('Sélectionnez une bonne réponse');
+        
+        data.choix = choix;
+        data.corrects = corrects;
+    }
+    
+    try {
+        const response = await fetch(`/etude_cas/sous_question/modifier/${sqId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) location.reload();
+    } catch (err) {}
+});
+
+// Ajouter un choix dans l'édition
+document.getElementById('edit-add-choix').addEventListener('click', function() {
+    const list = document.getElementById('edit-choix-list');
+    const idx = list.children.length;
+    const div = document.createElement('div');
+    div.className = 'edit-choix-item mb-2';
+    div.innerHTML = `
+        <div class="input-group">
+            <span class="input-group-text">
+                <input type="radio" name="edit-correct-radio" class="edit-correct-radio" data-idx="${idx}">
+            </span>
+            <input type="text" class="form-control edit-choix-texte" placeholder="Choix ${idx + 1}">
+            <button class="btn btn-outline-danger edit-remove-choix" type="button">×</button>
+        </div>
+    `;
+    list.appendChild(div);
+});
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('edit-remove-choix')) {
+        const items = document.querySelectorAll('.edit-choix-item');
+        if (items.length > 2) {
+            e.target.closest('.edit-choix-item').remove();
+        } else {
+            alert('Minimum 2 choix');
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer - {{ devoir.titre }}{% endblock %}
+{% block page_title %}Configuration du devoir : {{ devoir.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2 text-primary"></i>
+                    Configuration du devoir
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Choisissez le type d'exercice pour ce devoir. Un exercice correspondant sera automatiquement créé.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titre</label>
+                        <input type="text" name="titre" class="form-control" value="{{ devoir.titre }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <textarea name="description" class="form-control" rows="3">{{ devoir.description }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Consignes</label>
+                        <textarea name="consignes" class="form-control" rows="4" required>{{ devoir.consignes }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Type d'exercice *</label>
+                        <select name="type_exercice" class="form-select" required>
+                            {% for value, label in type_choices %}
+                            <option value="{{ value }}" {% if devoir.type_exercice == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Le type d'exercice détermine comment les étudiants interagissent avec le devoir.</small>
+                    </div>
+                    
+                    <hr>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Attention :</strong> Une fois configuré, un exercice sera créé. Vous pourrez ensuite ajouter les questions/réponses dans la configuration de l'exercice.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'seance_detail' devoir.seance.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Configurer le devoir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

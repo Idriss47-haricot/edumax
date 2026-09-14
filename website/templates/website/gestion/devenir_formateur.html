@@ -1,0 +1,270 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Devenir formateur{% endblock %}
+{% block page_title %}Devenir formateur sur Academia Net{% endblock %}
+
+{% block extra_css %}
+<style>
+    .regles-box {
+        background: #f8fafc;
+        border-radius: 14px;
+        padding: 24px;
+        border: 1px solid #eef2f6;
+        margin-bottom: 24px;
+    }
+    .regles-box ul {
+        padding-left: 20px;
+        line-height: 2;
+    }
+    .regles-box ul li {
+        font-size: 0.9rem;
+        color: #2d3748;
+    }
+    .document-zone {
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+    .document-zone:hover {
+        border-color: #0d6efd;
+        background: #f8faff;
+    }
+    .document-zone i {
+        font-size: 3rem;
+        color: #9ca3af;
+        margin-bottom: 12px;
+    }
+    .document-zone .file-name {
+        font-weight: 600;
+        color: #0a1628;
+        margin-top: 8px;
+    }
+    .avantage-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f4f9;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .avantage-item:last-child {
+        border-bottom: none;
+    }
+    .avantage-item i {
+        width: 24px;
+        color: #0d6efd;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        
+        <!-- ========== ÉTAT ACTUEL ========== -->
+        {% if statut == 'valide' %}
+        <div class="alert alert-success d-flex align-items-center gap-3 mb-4">
+            <i class="fas fa-check-circle fa-2x"></i>
+            <div>
+                <h5 class="fw-bold mb-1">✅ Vous êtes formateur !</h5>
+                <p class="mb-0">Votre rôle enseignant est actif. Vous pouvez maintenant créer des cours et vendre des formations.</p>
+                <small class="text-muted">Si le rôle ne s'affiche pas, déconnectez-vous et reconnectez-vous.</small>
+            </div>
+        </div>
+        
+        {% elif statut == 'refuse' %}
+        <div class="alert alert-danger d-flex align-items-center gap-3 mb-4">
+            <i class="fas fa-times-circle fa-2x"></i>
+            <div>
+                <h5 class="fw-bold mb-1">❌ Demande refusée</h5>
+                <p class="mb-0">Motif : {{ derniere_demande.commentaire|default:"Non spécifié" }}</p>
+                <small>Vous pouvez faire une nouvelle demande avec des informations plus complètes.</small>
+            </div>
+        </div>
+        
+        {% elif statut == 'en_attente' %}
+        <div class="alert alert-warning d-flex align-items-center gap-3 mb-4">
+            <i class="fas fa-clock fa-2x"></i>
+            <div>
+                <h5 class="fw-bold mb-1">⏳ Demande en cours d'examen</h5>
+                <p class="mb-0">Notre équipe technique examine votre demande.</p>
+                <small>Délai moyen : {{ config.delai_traitement_heures }}h</small>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ========== AVANTAGES ========== -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-star text-primary me-2"></i>Ce que vous pourrez faire en tant que formateur</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="avantage-item">
+                    <i class="fas fa-chalkboard-user"></i>
+                    <div><strong>Créer des cours</strong> — Créer des cours complets avec séances, exercices et contenus pédagogiques</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-video"></i>
+                    <div><strong>Donner des cours en ligne</strong> — Organiser des visioconférences en direct avec vos étudiants</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-puzzle-piece"></i>
+                    <div><strong>Créer des exercices</strong> — QCM, Vrai/Faux, Texte à trous, Réponse courte, Rédaction, Dépôt de fichier, Étude de cas</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-check-double"></i>
+                    <div><strong>Corriger les devoirs</strong> — Corriger les devoirs soumis par les étudiants et donner des feedbacks</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-hand-holding-usd"></i>
+                    <div><strong>Vendre des formations</strong> — Proposer et vendre vos formations sur la plateforme</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-users"></i>
+                    <div><strong>Gérer les étudiants</strong> — Suivre la progression de vos étudiants et leurs résultats</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-comments"></i>
+                    <div><strong>Animer des forums</strong> — Créer et modérer des forums de discussion pour vos cours</div>
+                </div>
+                <div class="avantage-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div><strong>Statistiques détaillées</strong> — Accéder à des statistiques sur vos cours et vos étudiants</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== RÈGLES ========== -->
+        {% if config.demandes_actives %}
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-list-check text-primary me-2"></i>Conditions</h5>
+            </div>
+            <div class="card-body">
+                <div class="regles-box">
+                    {{ config.regles_texte|linebreaks }}
+                </div>
+                <div class="text-muted small">
+                    <i class="fas fa-clock me-1"></i>
+                    Délai de traitement : <strong>{{ config.delai_traitement_heures }}h</strong>
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-file me-1"></i>
+                    Formats acceptés : <strong>{{ config.extensions_autorisees }}</strong>
+                    <span class="mx-2">•</span>
+                    <i class="fas fa-weight-hanging me-1"></i>
+                    Taille max : <strong>{{ config.taille_max_mo }} Mo</strong>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-secondary">
+            <i class="fas fa-info-circle me-2"></i>
+            Les demandes de formateur sont actuellement désactivées. Réessayez plus tard.
+        </div>
+        {% endif %}
+
+        <!-- ========== FORMULAIRE ========== -->
+        {% if config.demandes_actives and statut != 'valide' and statut != 'en_attente' %}
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-pen-to-square text-primary me-2"></i>Formulaire de demande</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Domaine d'expertise *</label>
+                        {{ form.domaine }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Décrivez votre expérience *</label>
+                        {{ form.experience }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Document justificatif *</label>
+                        <div class="document-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p class="text-muted">Glissez-déposez votre fichier ici ou <strong>cliquez</strong> pour parcourir</p>
+                            <div class="file-name" id="fileName"></div>
+                            {{ form.document }}
+                            <small class="text-muted d-block mt-2">
+                                Formats acceptés : {{ config.extensions_autorisees }} (max {{ config.taille_max_mo }} Mo)
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="conditions" required>
+                        <label class="form-check-label" for="conditions">
+                            J'accepte les conditions générales et je certifie que les informations fournies sont exactes.
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100" style="border-radius:12px;padding:12px;">
+                        <i class="fas fa-paper-plane me-2"></i>Envoyer ma demande
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ========== LIENS ========== -->
+        <div class="text-center mt-4">
+            <a href="{% url 'mes_demandes' %}" class="text-muted text-decoration-none small">
+                <i class="fas fa-list me-1"></i>Voir mes demandes
+            </a>
+            <span class="mx-2 text-muted">|</span>
+            <a href="{% url 'creer_ecole' %}" class="text-muted text-decoration-none small">
+                <i class="fas fa-school me-1"></i>Créer mon école
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Drag & Drop
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileName = document.getElementById('fileName');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#0d6efd';
+        dropZone.style.background = '#f8faff';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '#d1d5db';
+        dropZone.style.background = 'transparent';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#d1d5db';
+        dropZone.style.background = 'transparent';
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            fileName.textContent = files[0].name;
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            fileName.textContent = fileInput.files[0].name;
+        }
+    });
+</script>
+
+{% endblock %}

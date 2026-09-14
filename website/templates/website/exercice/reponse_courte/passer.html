@@ -1,0 +1,302 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Passer - {{ exercice.titre }}{% endblock %}
+{% block page_title %}{{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timer-box {
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: monospace;
+        background: #1a1a2e;
+        color: #00ff88;
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-align: center;
+    }
+    .timer-box.warning {
+        color: #ff4444;
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .question-container {
+        scroll-margin-top: 100px;
+    }
+    .nav-question {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
+        background-color: #e9ecef;
+        color: #6c757d;
+    }
+    .nav-question.answered {
+        background-color: #28a745;
+        color: white;
+    }
+    .nav-question.current {
+        background-color: #0d6efd;
+        color: white;
+        transform: scale(1.1);
+    }
+    .nav-question:not(.answered):not(.current) {
+        background-color: #e9ecef;
+        color: #6c757d;
+    }
+    .saved-indicator {
+        font-size: 0.8rem;
+        color: #28a745;
+        display: none;
+    }
+    .reponse-courte-input {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        width: 100%;
+    }
+    .reponse-courte-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        outline: none;
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-9">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h3 class="h5 mb-1">{{ exercice.titre }}</h3>
+                        <small class="text-muted">{{ questions|length }} question(s) • {{ exercice.points }} points</small>
+                    </div>
+                    <div class="timer-box" id="timer">
+                        {{ temps_restant|default:exercice.duree }}:00
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ exercice.consignes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <form id="exercice-form" method="post" action="{% url 'reponse_courte_soumettre' exercice.id %}">
+            {% csrf_token %}
+            
+            {% for question in questions %}
+            <div class="card shadow-sm border-0 rounded-4 mb-4 question-container" id="question-{{ forloop.counter0 }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary fs-6 me-2">Q{{ forloop.counter }}</span>
+                            <span class="badge bg-info">{{ question.points }} pts</span>
+                        </div>
+                    </div>
+                    
+                    {% if question.image %}
+                    <div class="mb-3">
+                        <img src="{{ question.image.url }}" alt="Illustration" class="img-fluid rounded" style="max-height: 200px;">
+                    </div>
+                    {% endif %}
+                    
+                    <p class="fs-5 mb-3">{{ question.texte }}</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Votre réponse :</label>
+                        <input type="text" 
+                               class="reponse-courte-input" 
+                               name="question_{{ question.id }}" 
+                               id="reponse-{{ question.id }}"
+                               placeholder="Saisissez votre réponse ici..."
+                               autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div class="d-flex justify-content-between mb-4">
+                <button type="button" id="save-draft" class="btn btn-secondary">
+                    <i class="fas fa-save me-1"></i>Sauvegarder brouillon
+                </button>
+                <button type="submit" class="btn btn-success btn-lg" id="submit-btn">
+                    <i class="fas fa-paper-plane me-1"></i>Soumettre
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Questions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2 mb-3" id="questions-nav">
+                    {% for question in questions %}
+                    <div class="nav-question" data-index="{{ forloop.counter0 }}">
+                        {{ forloop.counter }}
+                    </div>
+                    {% endfor %}
+                </div>
+                <hr>
+                <div class="small text-muted">
+                    <div><span class="badge bg-success me-1">●</span> Répondu</div>
+                    <div><span class="badge bg-primary me-1">●</span> En cours</div>
+                    <div><span class="badge bg-secondary me-1">●</span> Non répondu</div>
+                </div>
+                <div class="mt-3 text-center">
+                    <span class="saved-indicator" id="saved-indicator">
+                        <i class="fas fa-check-circle"></i> Sauvegardé
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Timer
+let timeLeft = {{ temps_restant|default:exercice.duree }} * 60;
+const timerElement = document.getElementById('timer');
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 60) {
+        timerElement.classList.add('warning');
+    }
+    
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        alert('Temps écoulé ! Soumission automatique...');
+        document.getElementById('exercice-form').submit();
+    }
+    timeLeft--;
+}
+
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Navigation entre questions
+document.querySelectorAll('.nav-question').forEach(nav => {
+    nav.addEventListener('click', () => {
+        const index = parseInt(nav.dataset.index);
+        const questionElement = document.getElementById(`question-${index}`);
+        if (questionElement) {
+            questionElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+});
+
+// Mettre à jour le statut des questions
+function updateQuestionStatus() {
+    document.querySelectorAll('.question-container').forEach((container, idx) => {
+        const input = container.querySelector('.reponse-courte-input');
+        const nav = document.querySelector(`.nav-question[data-index="${idx}"]`);
+        if (nav && input) {
+            if (input.value.trim().length > 0) {
+                nav.classList.add('answered');
+            } else {
+                nav.classList.remove('answered');
+            }
+        }
+    });
+}
+
+document.querySelectorAll('.reponse-courte-input').forEach(input => {
+    input.addEventListener('input', updateQuestionStatus);
+});
+updateQuestionStatus();
+
+// Sauvegarde automatique
+let saveTimeout;
+function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const reponses = {};
+        document.querySelectorAll('.reponse-courte-input').forEach(input => {
+            const name = input.getAttribute('name');
+            reponses[name] = input.value;
+        });
+        
+        fetch("{% url 'exercice_sauvegarder' exercice.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ reponses: reponses })
+        }).then(() => {
+            $('#saved-indicator').fadeIn(200).delay(1500).fadeOut(500);
+        });
+    }, 2000);
+}
+
+document.querySelectorAll('.reponse-courte-input').forEach(input => {
+    input.addEventListener('input', autoSave);
+});
+
+// Sauvegarde manuelle
+document.getElementById('save-draft').addEventListener('click', () => {
+    const reponses = {};
+    document.querySelectorAll('.reponse-courte-input').forEach(input => {
+        const name = input.getAttribute('name');
+        reponses[name] = input.value;
+    });
+    
+    fetch("{% url 'exercice_sauvegarder' exercice.id %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ reponses: reponses })
+    }).then(() => {
+        $('#saved-indicator').fadeIn(200).delay(2000).fadeOut(500);
+        alert('Brouillon sauvegardé !');
+    });
+});
+
+// Restaurer sauvegarde
+{% if sauvegarde %}
+const savedData = {{ sauvegarde|safe }};
+for (const [key, value] of Object.entries(savedData)) {
+    const input = document.querySelector(`[name="${key}"]`);
+    if (input) input.value = value;
+}
+updateQuestionStatus();
+{% endif %}
+
+// Confirmation avant soumission
+document.getElementById('submit-btn').addEventListener('click', (e) => {
+    if (!confirm('Êtes-vous sûr de vouloir soumettre ? Vous ne pourrez plus modifier vos réponses.')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

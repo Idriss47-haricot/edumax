@@ -1,0 +1,308 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Paramètres de l'école{% endblock %}
+{% block page_title %}Paramètres de l'école{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <!-- En-tête avec illustration -->
+    <div class="settings-header mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">
+                    <i class="fas fa-school text-primary me-3"></i>
+                    Paramètres de l'école
+                </h1>
+                <p class="text-muted fs-5">Gérez tous les aspects de votre école depuis un seul endroit</p>
+            </div>
+            <div class="mt-3 mt-md-0">
+                <span class="badge bg-success fs-6 px-3 py-2">
+                    <i class="fas fa-shield-alt me-2"></i>{{ user.ecole_admin.nom|default:"Administrateur École" }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes d'administration -->
+    <div class="row g-4">
+        
+        <!-- Carte 1 : Informations de l'école -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card" data-href="{% url 'admin_ecole_modifier' %}">
+                <div class="card-icon" style="background: linear-gradient(135deg, #4e73df, #224abe);">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h3>Informations de l'école</h3>
+                <p>Modifier le nom, description, logo, bannière et coordonnées</p>
+                <div class="card-footer-link">
+                    <span>Accéder <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte 2 : Galerie de l'école -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card" data-href="{% url 'admin_ecole_galerie' %}">
+                <div class="card-icon" style="background: linear-gradient(135deg, #1cc88a, #13855c);">
+                    <i class="fas fa-images"></i>
+                </div>
+                <h3>Galerie de l'école</h3>
+                <p>Ajouter, modifier ou supprimer des images de la galerie</p>
+                <div class="card-footer-link">
+                    <span>Accéder <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte 3 : Gérer les utilisateurs -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card" data-href="{% url 'admin_ecole_utilisateurs' %}">
+                <div class="card-icon" style="background: linear-gradient(135deg, #36b9cc, #2c9faf);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Gérer les utilisateurs</h3>
+                <p>Enseignants, étudiants, rôles et permissions</p>
+                <div class="card-footer-link">
+                    <span>Accéder <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte 4 : Gérer les filières -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card" data-href="{% url 'admin_ecole_filiere_liste' %}">
+                <div class="card-icon" style="background: linear-gradient(135deg, #f6c23e, #dda20a);">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <h3>Gérer les filières</h3>
+                <p>Ajouter, modifier ou supprimer des filières et spécialités</p>
+                <div class="card-footer-link">
+                    <span>Accéder <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte 5 : Gérer les forums -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card" data-href="{% url 'admin_ecole_forums' %}">
+                <div class="card-icon" style="background: linear-gradient(135deg, #858796, #5a5c69);">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Gérer les forums</h3>
+                <p>Forums, paramètres, signalements, modération</p>
+                <div class="card-footer-link">
+                    <span>Accéder <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte 6 : Clé d'inscription -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card" data-href="{% url 'admin_ecole_generer_cle' %}">
+                <div class="card-icon" style="background: linear-gradient(135deg, #e74a3b, #be2617);">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h3>Clé d'inscription</h3>
+                <p>Générer et gérer les clés d'inscription pour les étudiants</p>
+                <div class="card-footer-link">
+                    <span>Accéder <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte 7 : Abonnement -->
+        <div class="col-md-6 col-lg-4 col-xl-3">
+            <div class="admin-card">
+                <div class="card-icon" style="background: linear-gradient(135deg, #4e73df, #224abe);">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <h3>Abonnement</h3>
+                <p>
+                    <strong>Plan actuel :</strong> 
+                    {% if user.ecole_admin.abonnement %}
+                        {{ user.ecole_admin.abonnement.nom }}
+                    {% else %}
+                        <span class="text-muted">Aucun</span>
+                    {% endif %}
+                    <br>
+                    <small class="text-muted">
+                        Max: {{ user.ecole_admin.abonnement.max_etudiants|default:0 }} étudiants • 
+                        {{ user.ecole_admin.abonnement.max_cours|default:0 }} cours
+                    </small>
+                </p>
+                <div class="card-footer-link">
+                    <span>Voir les détails <i class="fas fa-arrow-right ms-1"></i></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* Styles pour la page paramètres */
+.settings-container {
+    padding: 1rem;
+}
+
+.settings-header {
+    background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+    padding: 2rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+}
+
+/* Cartes modernes */
+.admin-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.8rem 1.5rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.admin-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #4e73df, #1cc88a, #36b9cc);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.admin-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card:hover::before {
+    transform: scaleX(1);
+}
+
+.card-icon {
+    width: 65px;
+    height: 65px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.admin-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: #2c3e50;
+}
+
+.admin-card p {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+    flex: 1;
+}
+
+.card-footer-link {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.card-footer-link span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4e73df;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+}
+
+.admin-card:hover .card-footer-link span {
+    transform: translateX(5px);
+}
+
+/* Animation de chargement */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.admin-card {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+}
+
+.admin-card:nth-child(1) { animation-delay: 0.05s; }
+.admin-card:nth-child(2) { animation-delay: 0.1s; }
+.admin-card:nth-child(3) { animation-delay: 0.15s; }
+.admin-card:nth-child(4) { animation-delay: 0.2s; }
+.admin-card:nth-child(5) { animation-delay: 0.25s; }
+.admin-card:nth-child(6) { animation-delay: 0.3s; }
+.admin-card:nth-child(7) { animation-delay: 0.35s; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .settings-header {
+        padding: 1.5rem;
+    }
+    
+    .settings-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .admin-card {
+        padding: 1.5rem 1.2rem;
+    }
+    
+    .card-icon {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .card-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .admin-card h3 {
+        font-size: 1.1rem;
+    }
+}
+</style>
+
+<script>
+// Script pour rendre les cartes cliquables
+document.querySelectorAll('.admin-card').forEach(card => {
+    card.addEventListener('click', function() {
+        const url = this.getAttribute('data-href');
+        if (url) {
+            window.location.href = url;
+        }
+    });
+});
+</script>
+
+{% endblock %}

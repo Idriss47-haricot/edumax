@@ -1,0 +1,378 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer Réponse courte - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Configuration Réponse courte : {{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .question-card {
+        border-left: 4px solid #0d6efd;
+        transition: all 0.2s ease;
+    }
+    .question-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    }
+    .question-card .reponses-acceptees {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-top: 8px;
+    }
+    .question-card .reponses-acceptees .badge-reponse {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 2px 10px;
+        border-radius: 12px;
+        margin: 2px 4px 2px 0;
+        font-size: 0.85rem;
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <!-- Colonne gauche : Liste des questions -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">{{ exercice.titre }}</h5>
+                        <small class="text-muted">{{ exercice.duree }} min • {{ exercice.points }} pts</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'exercice_modifier' exercice.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>{{ questions|length }} question(s)</strong> - 
+                    Total points: {{ exercice.total_points }}
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge {% if exercice.est_lance %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                        {% if exercice.est_lance %}✓ Publié{% else %}📝 Brouillon{% endif %}
+                    </span>
+                    <span class="badge bg-info fs-6">
+                        {% if exercice.melanger_questions %}🔀 Mélangé{% else %}📋 Ordre fixe{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des questions -->
+        <div id="questions-list">
+            {% for question in questions %}
+            <div class="card shadow-sm border-0 rounded-4 mb-3 question-card" 
+                 data-question-id="{{ question.id }}" id="question-{{ question.id }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <span class="badge bg-primary fs-6">Q{{ question.ordre }}</span>
+                                <span class="badge bg-info">{{ question.points }} pts</span>
+                                {% if question.sensible_casse %}
+                                    <span class="badge bg-warning text-dark">🔤 Sensible à la casse</span>
+                                {% endif %}
+                            </div>
+                            {% if question.image %}
+                            <div class="mb-2">
+                                <img src="{{ question.image.url }}" alt="Illustration" class="img-fluid rounded" style="max-height: 150px;">
+                            </div>
+                            {% endif %}
+                            <p class="mb-2 fw-medium">{{ question.texte|linebreaks }}</p>
+                            
+                            <!-- Réponses acceptées -->
+                            <div class="reponses-acceptees">
+                                <small class="text-muted">✅ Réponses acceptées :</small>
+                                {% for reponse in question.liste_reponses %}
+                                    <span class="badge-reponse">{{ reponse }}</span>
+                                {% empty %}
+                                    <span class="text-muted">Aucune réponse configurée</span>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if question.explication %}
+                            <div class="mt-2 text-muted small">
+                                <i class="fas fa-lightbulb text-warning me-1"></i>
+                                <em>{{ question.explication }}</em>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="d-flex flex-column gap-2 ms-3">
+                            <button class="btn btn-sm btn-outline-primary edit-question-btn" data-question-id="{{ question.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-question-btn" data-question-id="{{ question.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Aucune question. Ajoutez des questions à réponse courte avec le formulaire à droite.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Colonne droite : Formulaire d'ajout -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-plus-circle text-success me-2"></i>Ajouter une question</h5>
+            </div>
+            <div class="card-body">
+                <form id="question-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Question *</label>
+                        <textarea id="question-texte" class="form-control" rows="3" 
+                                  placeholder="Ex: Quelle est la capitale de la France ?" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Réponses acceptées *</label>
+                        <textarea id="question-reponses" class="form-control" rows="3" 
+                                  placeholder="Ex: Paris&#10;paris&#10;PARIS" required></textarea>
+                        <small class="text-muted">Une réponse par ligne. La comparaison est insensible à la casse par défaut.</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Points</label>
+                        <input type="number" id="question-points" class="form-control" value="1" min="1">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" id="question-sensible-casse" class="form-check-input">
+                            <label class="form-check-label" for="question-sensible-casse">
+                                🔤 Sensible à la casse
+                            </label>
+                            <small class="d-block text-muted">Activez pour distinguer majuscules/minuscules</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Image (optionnel)</label>
+                        <input type="file" id="question-image" class="form-control" accept="image/*">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Explication (optionnel)</label>
+                        <textarea id="question-explication" class="form-control" rows="2" 
+                                  placeholder="Explication affichée après correction..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-save me-1"></i>Ajouter la question
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Actions globales -->
+        <div class="card shadow-sm border-0 rounded-4 mt-3">
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'exercice_lancer' exercice.id %}" class="btn {% if exercice.est_lance %}btn-warning{% else %}btn-success{% endif %}" 
+                       onclick="return confirm('{% if exercice.est_lance %}Arrêter l\'exercice ?{% else %}Publier l\'exercice ?{% endif %}')">
+                        <i class="fas {% if exercice.est_lance %}fa-stop{% else %}fa-play{% endif %} me-1"></i>
+                        {% if exercice.est_lance %}Arrêter{% else %}Publier{% endif %}
+                    </a>
+                    <a href="{% url 'reponse_courte_tableau_resultats' exercice.id %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar me-1"></i>Résultats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'édition -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier la question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-question-id">
+                
+                <div class="mb-3">
+                    <label class="form-label">Question</label>
+                    <textarea id="edit-texte" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Réponses acceptées</label>
+                    <textarea id="edit-reponses" class="form-control" rows="3"></textarea>
+                    <small class="text-muted">Une réponse par ligne</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Points</label>
+                    <input type="number" id="edit-points" class="form-control" min="1">
+                </div>
+                
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" id="edit-sensible-casse" class="form-check-input">
+                        <label class="form-check-label" for="edit-sensible-casse">Sensible à la casse</label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Explication</label>
+                    <textarea id="edit-explication" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" id="save-edit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const exerciceId = {{ exercice.id }};
+
+// Ajouter une question (AJAX avec FormData pour l'image)
+document.getElementById('question-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const texte = document.getElementById('question-texte').value.trim();
+    const reponses = document.getElementById('question-reponses').value.trim();
+    
+    if (!texte) return alert('Veuillez saisir une question');
+    if (!reponses) return alert('Veuillez saisir au moins une réponse acceptée');
+    
+    const formData = new FormData();
+    formData.append('texte', texte);
+    formData.append('reponses_acceptees', reponses);
+    formData.append('points', document.getElementById('question-points').value || 1);
+    formData.append('sensible_casse', document.getElementById('question-sensible-casse').checked ? 'on' : '');
+    formData.append('explication', document.getElementById('question-explication').value);
+    
+    const imageInput = document.getElementById('question-image');
+    if (imageInput.files.length > 0) {
+        formData.append('image', imageInput.files[0]);
+    }
+    
+    try {
+        const response = await fetch(`/reponse_courte/ajouter/${exerciceId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value },
+            body: formData
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const err = await response.json();
+            alert('Erreur: ' + (err.error || 'Erreur serveur'));
+        }
+    } catch (err) {
+        alert('Erreur réseau');
+    }
+});
+
+// Supprimer une question
+document.querySelectorAll('.delete-question-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        if (!confirm('Supprimer cette question ?')) return;
+        const qId = btn.dataset.questionId;
+        
+        try {
+            const response = await fetch(`/reponse_courte/supprimer/${exerciceId}/${qId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            });
+            if (response.ok) location.reload();
+            else alert('Erreur');
+        } catch (err) {}
+    });
+});
+
+// Éditer une question
+document.querySelectorAll('.edit-question-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const qId = btn.dataset.questionId;
+        const card = document.getElementById(`question-${qId}`);
+        
+        document.getElementById('edit-question-id').value = qId;
+        document.getElementById('edit-texte').value = card.querySelector('.fw-medium')?.textContent.trim() || '';
+        document.getElementById('edit-points').value = card.querySelector('.badge.bg-info')?.textContent.replace('pts', '').trim() || 1;
+        
+        // Récupérer les réponses acceptées
+        const reponses = [];
+        card.querySelectorAll('.badge-reponse').forEach(badge => {
+            reponses.push(badge.textContent.trim());
+        });
+        document.getElementById('edit-reponses').value = reponses.join('\n');
+        
+        // Sensible à la casse
+        const sensibleCasse = card.querySelector('.badge-warning') !== null;
+        document.getElementById('edit-sensible-casse').checked = sensibleCasse;
+        
+        const explicationSpan = card.querySelector('.fa-lightbulb')?.closest('div')?.querySelector('em');
+        document.getElementById('edit-explication').value = explicationSpan?.textContent || '';
+        
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    });
+});
+
+// Sauvegarder l'édition
+document.getElementById('save-edit').addEventListener('click', async () => {
+    const qId = document.getElementById('edit-question-id').value;
+    const texte = document.getElementById('edit-texte').value.trim();
+    const reponses = document.getElementById('edit-reponses').value.trim();
+    const points = parseInt(document.getElementById('edit-points').value) || 1;
+    const sensibleCasse = document.getElementById('edit-sensible-casse').checked;
+    const explication = document.getElementById('edit-explication').value;
+    
+    if (!texte || !reponses) return alert('Question et réponses requises');
+    
+    try {
+        const response = await fetch(`/reponse_courte/modifier/${qId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ 
+                texte, 
+                reponses_acceptees: reponses, 
+                points, 
+                sensible_casse: sensibleCasse, 
+                explication 
+            })
+        });
+        
+        if (response.ok) location.reload();
+        else alert('Erreur');
+    } catch (err) {}
+});
+</script>
+{% endblock %}

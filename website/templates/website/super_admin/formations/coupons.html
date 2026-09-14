@@ -1,0 +1,99 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gérer les coupons{% endblock %}
+{% block page_title %}Codes promotionnels{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">Créer un code promo</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Code</label>
+                        <input type="text" name="code" class="form-control" placeholder="PROMO20" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Réduction (%)</label>
+                            <input type="number" name="reduction_pourcentage" class="form-control" step="5" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Réduction fixe (FCFA)</label>
+                            <input type="number" name="reduction_fixe" class="form-control" step="500" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date début</label>
+                            <input type="datetime-local" name="validite_debut" class="form-control" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date fin</label>
+                            <input type="datetime-local" name="validite_fin" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Utilisations max</label>
+                        <input type="number" name="utilisations_max" class="form-control" value="1">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Créer le code promo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">Codes promo existants</h5>
+            </div>
+            <div class="card-body">
+                {% if coupons %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr><th>Code</th><th>Réduction</th><th>Valide du</th><th>au</th><th>Utilisations</th><th>Statut</th></thead>
+                            <tbody>
+                                {% for coupon in coupons %}
+                                <tr>
+                                    <td><strong>{{ coupon.code }}</strong></td>
+                                    <td>
+                                        {% if coupon.reduction_pourcentage > 0 %}{{ coupon.reduction_pourcentage }}%{% endif %}
+                                        {% if coupon.reduction_fixe > 0 %}{{ coupon.reduction_fixe }} FCFA{% endif %}
+                                    </td>
+                                    <td>{{ coupon.validite_debut|date:"d/m/Y" }}</td>
+                                    <td>{{ coupon.validite_fin|date:"d/m/Y" }}</td>
+                                    <td>{{ coupon.utilisations_count }}/{{ coupon.utilisations_max }}</td>
+                                    <td>
+                                        {% if coupon.est_valide %}
+                                            <span class="badge bg-success">Actif</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactif</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Aucun code promo.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

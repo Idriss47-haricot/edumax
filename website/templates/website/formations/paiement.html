@@ -1,0 +1,253 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Paiement — {{ formation.titre }}{% endblock %}
+
+{% block content %}
+<div class="pay-page">
+<div class="container py-5">
+<div class="row justify-content-center g-4">
+
+  <!-- ── Résumé formation ── -->
+  <div class="col-lg-5 order-lg-2">
+    <div class="pay-summary-card">
+      <div class="pay-cover">
+        {% if formation.image_cover %}
+        <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}">
+        {% else %}
+        <div class="pay-cover-placeholder"><i class="fas fa-graduation-cap fa-3x"></i></div>
+        {% endif %}
+      </div>
+      <div class="pay-summary-body">
+        <h5 class="pay-formation-title">{{ formation.titre }}</h5>
+        <p class="pay-formation-desc text-muted">{{ formation.description_courte|truncatechars:100 }}</p>
+
+        <div class="pay-price-breakdown">
+          <div class="pay-price-row">
+            <span>Prix de base</span>
+            <span>{{ prix|floatformat:0 }} FCFA</span>
+          </div>
+          {% if reduction > 0 %}
+          <div class="pay-price-row text-success">
+            <span><i class="fas fa-tag me-1"></i>Réduction coupon</span>
+            <span>-{{ reduction|floatformat:0 }} FCFA</span>
+          </div>
+          {% endif %}
+          <div class="pay-price-row pay-price-total">
+            <span>Total à payer</span>
+            <span class="pay-total-amount">{{ prix_net|floatformat:0 }} FCFA</span>
+          </div>
+        </div>
+
+        <div class="pay-garanties">
+          <div class="pay-garantie"><i class="fas fa-infinity text-primary"></i> Accès à vie</div>
+          <div class="pay-garantie"><i class="fas fa-mobile-alt text-primary"></i> Mobile & PC</div>
+          <div class="pay-garantie"><i class="fas fa-headset text-primary"></i> Support 7j/7</div>
+          {% if formation.certifiee %}
+          <div class="pay-garantie"><i class="fas fa-certificate text-warning"></i> Certificat de completion</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Formulaire de paiement ── -->
+  <div class="col-lg-7 order-lg-1">
+    <div class="pay-form-card">
+      <h4 class="pay-form-title">
+        <i class="fas fa-lock me-2 text-success"></i>Paiement sécurisé
+      </h4>
+
+      <!-- Coupon déjà appliqué -->
+      {% if coupon_obj %}
+      <div class="alert alert-success d-flex align-items-center gap-2">
+        <i class="fas fa-tag"></i>
+        <span>Coupon <strong>{{ coupon_code }}</strong> appliqué — économie de {{ reduction|floatformat:0 }} FCFA</span>
+      </div>
+      {% endif %}
+
+      <form method="post" id="payForm">
+        {% csrf_token %}
+        {% if coupon_code %}<input type="hidden" name="coupon_code" value="{{ coupon_code }}">{% endif %}
+
+        <!-- Choix du mode de paiement -->
+        <div class="pay-field-group">
+          <label class="pay-label">Mode de paiement <span class="text-danger">*</span></label>
+          <div class="pay-methods-grid">
+            <label class="pay-method-option">
+              <input type="radio" name="type_paiement" value="mtn_momo" required>
+              <div class="pay-method-card">
+                <span class="pay-method-badge pay-momo">MTN MoMo</span>
+                <span class="pay-method-desc">Mobile Money MTN</span>
+              </div>
+            </label>
+            <label class="pay-method-option">
+              <input type="radio" name="type_paiement" value="orange_money">
+              <div class="pay-method-card">
+                <span class="pay-method-badge pay-om">Orange Money</span>
+                <span class="pay-method-desc">Orange Money</span>
+              </div>
+            </label>
+            <label class="pay-method-option">
+              <input type="radio" name="type_paiement" value="wave">
+              <div class="pay-method-card">
+                <span class="pay-method-badge pay-wave">Wave</span>
+                <span class="pay-method-desc">Paiement Wave</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Numéro de téléphone -->
+        <div class="pay-field-group">
+          <label class="pay-label" for="telephone">
+            Numéro de téléphone <span class="text-danger">*</span>
+          </label>
+          <div class="pay-input-wrap">
+            <span class="pay-input-prefix"><i class="fas fa-phone"></i></span>
+            <input type="tel" name="telephone" id="telephone" class="pay-input"
+                   placeholder="6XXXXXXXX" required pattern="[0-9]{9}"
+                   maxlength="9">
+          </div>
+          <small class="pay-hint">Entrez votre numéro sans l'indicatif pays (9 chiffres)</small>
+        </div>
+
+        <!-- Conditions -->
+        <div class="pay-field-group">
+          <label class="pay-checkbox-wrap">
+            <input type="checkbox" name="conditions" id="conditions" required>
+            <span class="pay-checkbox-custom"></span>
+            <span class="pay-checkbox-label">
+              J'accepte les
+              <a href="{% url 'conditions_vente' %}" target="_blank">conditions générales de vente</a>
+              et je certifie que les informations saisies sont exactes.
+            </span>
+          </label>
+        </div>
+
+        <!-- Récap montant -->
+        <div class="pay-recap-box">
+          <div class="pay-recap-row">
+            <span class="pay-recap-label">Montant total</span>
+            <span class="pay-recap-amount">{{ prix_net|floatformat:0 }} FCFA</span>
+          </div>
+          <div class="pay-recap-sub">
+            <i class="fas fa-info-circle me-1"></i>
+            Commission plateforme ({{ commission_pct }}%) : {{ commission|floatformat:0 }} FCFA incluse
+          </div>
+        </div>
+
+        <button type="submit" class="pay-submit-btn" id="payBtn">
+          <i class="fas fa-credit-card me-2"></i>
+          Payer {{ prix_net|floatformat:0 }} FCFA maintenant
+        </button>
+
+        <p class="pay-secure-note">
+          <i class="fas fa-shield-alt me-1 text-success"></i>
+          Transaction sécurisée — Référence générée après validation
+        </p>
+      </form>
+    </div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<style>
+.pay-page { background:#f8faff; min-height:100vh; padding:20px 0; }
+
+/* Résumé */
+.pay-summary-card { background:white; border-radius:16px; border:1.5px solid #e5e7eb; overflow:hidden; position:sticky; top:80px; }
+.pay-cover { height:160px; overflow:hidden; background:#e0e7ff; }
+.pay-cover img { width:100%; height:100%; object-fit:cover; }
+.pay-cover-placeholder { height:100%; display:flex; align-items:center; justify-content:center; color:#1e3a8a; opacity:0.3; }
+.pay-summary-body { padding:20px; }
+.pay-formation-title { font-size:1rem; font-weight:700; color:#111827; margin-bottom:8px; }
+.pay-formation-desc { font-size:0.82rem; margin-bottom:16px; }
+.pay-price-breakdown { border-top:1px solid #f3f4f6; padding-top:12px; margin-bottom:16px; }
+.pay-price-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:0.88rem; color:#374151; }
+.pay-price-total { font-weight:700; border-top:2px solid #e5e7eb; padding-top:10px; margin-top:4px; }
+.pay-total-amount { font-size:1.1rem; color:#1e3a8a; }
+.pay-garanties { display:flex; flex-direction:column; gap:6px; }
+.pay-garantie { font-size:0.8rem; color:#6b7280; display:flex; align-items:center; gap:8px; }
+.pay-garantie i { width:16px; }
+
+/* Formulaire */
+.pay-form-card { background:white; border-radius:16px; border:1.5px solid #e5e7eb; padding:28px; }
+.pay-form-title { font-size:1.2rem; font-weight:700; color:#111827; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid #f3f4f6; }
+.pay-field-group { margin-bottom:24px; }
+.pay-label { font-size:0.9rem; font-weight:600; color:#374151; display:block; margin-bottom:10px; }
+
+/* Méthodes de paiement */
+.pay-methods-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.pay-method-option input { display:none; }
+.pay-method-card { border:2px solid #e5e7eb; border-radius:12px; padding:14px 10px; text-align:center; cursor:pointer; transition:all 0.2s; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.pay-method-option input:checked + .pay-method-card { border-color:#1e3a8a; background:#f0f4ff; }
+.pay-method-card:hover { border-color:#93c5fd; }
+.pay-method-badge { font-size:0.78rem; font-weight:800; padding:4px 12px; border-radius:50px; display:block; }
+.pay-momo { background:#f59e0b; color:white; }
+.pay-om { background:#ff6600; color:white; }
+.pay-wave { background:#0066cc; color:white; }
+.pay-method-desc { font-size:0.72rem; color:#6b7280; }
+
+/* Input téléphone */
+.pay-input-wrap { display:flex; align-items:center; border:1.5px solid #e5e7eb; border-radius:10px; overflow:hidden; transition:all 0.2s; }
+.pay-input-wrap:focus-within { border-color:#1e3a8a; box-shadow:0 0 0 3px rgba(30,58,138,0.08); }
+.pay-input-prefix { padding:0 14px; color:#6b7280; font-size:0.95rem; background:#f9fafb; border-right:1px solid #e5e7eb; height:46px; display:flex; align-items:center; }
+.pay-input { flex:1; border:none; outline:none; padding:12px 14px; font-size:0.95rem; }
+.pay-hint { font-size:0.75rem; color:#9ca3af; margin-top:6px; display:block; }
+
+/* Checkbox conditions */
+.pay-checkbox-wrap { display:flex; align-items:flex-start; gap:12px; cursor:pointer; }
+.pay-checkbox-wrap input { display:none; }
+.pay-checkbox-custom { width:20px; height:20px; border:2px solid #e5e7eb; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.2s; margin-top:1px; }
+.pay-checkbox-wrap input:checked + .pay-checkbox-custom { background:#1e3a8a; border-color:#1e3a8a; }
+.pay-checkbox-wrap input:checked + .pay-checkbox-custom::after { content:'✓'; color:white; font-size:0.75rem; font-weight:700; }
+.pay-checkbox-label { font-size:0.85rem; color:#374151; line-height:1.5; }
+.pay-checkbox-label a { color:#1e3a8a; }
+
+/* Récap */
+.pay-recap-box { background:#f0f4ff; border-radius:12px; padding:16px 20px; margin-bottom:20px; }
+.pay-recap-row { display:flex; justify-content:space-between; align-items:center; }
+.pay-recap-label { font-weight:600; color:#374151; }
+.pay-recap-amount { font-size:1.4rem; font-weight:900; color:#1e3a8a; }
+.pay-recap-sub { font-size:0.78rem; color:#6b7280; margin-top:6px; }
+
+/* Bouton submit */
+.pay-submit-btn { width:100%; background:linear-gradient(135deg,#d97706,#f59e0b); color:#1a2b00; border:none; border-radius:14px; padding:16px; font-size:1.05rem; font-weight:800; cursor:pointer; transition:all 0.25s; box-shadow:0 4px 16px rgba(245,158,11,0.35); }
+.pay-submit-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(245,158,11,0.45); }
+.pay-submit-btn:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
+.pay-secure-note { text-align:center; font-size:0.8rem; color:#9ca3af; margin-top:14px; }
+
+@media(max-width:576px) { .pay-methods-grid { grid-template-columns:1fr; } }
+</style>
+
+<script>
+document.getElementById('payForm').addEventListener('submit', function(e) {
+  const btn = document.getElementById('payBtn');
+  const tel = document.getElementById('telephone').value;
+  const methode = document.querySelector('input[name="type_paiement"]:checked');
+  const conditions = document.getElementById('conditions').checked;
+
+  if (!methode) {
+    e.preventDefault();
+    alert('Veuillez choisir un mode de paiement.');
+    return;
+  }
+  if (!tel || tel.length !== 9) {
+    e.preventDefault();
+    alert('Veuillez entrer un numéro de téléphone valide (9 chiffres).');
+    return;
+  }
+  if (!conditions) {
+    e.preventDefault();
+    alert('Veuillez accepter les conditions de vente.');
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Traitement en cours...';
+});
+</script>
+
+{% endblock %}

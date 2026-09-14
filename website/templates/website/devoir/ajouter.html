@@ -1,0 +1,67 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Ajouter un devoir{% endblock %}
+{% block page_title %}Ajouter un devoir à la séance{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Nouveau devoir</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Titre *</label>
+                        {{ form.titre }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Consignes *</label>
+                        {{ form.consignes }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date de début *</label>
+                            {{ form.date_debut }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Date limite *</label>
+                            {{ form.date_limite }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Mode de correction *</label>
+                            {{ form.mode_correction }}
+                        </div>
+                        <div class="col-md-6 mb-3" id="seance_correction_div" style="display: none;">
+                            <label class="form-label">Séance de correction</label>
+                            {{ form.seance_correction }}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'seance_detail' seance.id %}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary">Créer le devoir</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const modeSelect = document.getElementById('id_mode_correction');
+    const seanceDiv = document.getElementById('seance_correction_div');
+    function toggleSeanceField() {
+        seanceDiv.style.display = modeSelect.value === 'seance' ? 'block' : 'none';
+    }
+    modeSelect.addEventListener('change', toggleSeanceField);
+    toggleSeanceField();
+</script>
+{% endblock %}

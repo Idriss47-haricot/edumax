@@ -1,0 +1,109 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ action }} une diapositive{% endblock %}
+{% block page_title %}{{ action }} une diapositive{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-image me-2"></i>{{ action }} une diapositive</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Titre *</label>
+                            <input type="text" name="titre" class="form-control" value="{{ slide.titre|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Sous-titre</label>
+                            <input type="text" name="sous_titre" class="form-control" value="{{ slide.sous_titre|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea name="description" class="form-control" rows="3">{{ slide.description|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Couleur de fond</label>
+                                    <input type="color" name="couleur_fond" class="form-control" value="{{ slide.couleur_fond|default:'#1e3a8a' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Image</label>
+                                    {% if slide.image %}
+                                    <div class="mb-2">
+                                        <img src="{{ slide.image.url }}" style="height:80px; border-radius:8px;">
+                                    </div>
+                                    {% endif %}
+                                    <input type="file" name="image" class="form-control" accept="image/*">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Bouton 1 - Texte</label>
+                                    <input type="text" name="bouton_texte" class="form-control" value="{{ slide.bouton_texte|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Bouton 1 - Lien</label>
+                                    <input type="text" name="bouton_lien" class="form-control" value="{{ slide.bouton_lien|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Bouton 2 - Texte</label>
+                                    <input type="text" name="bouton2_texte" class="form-control" value="{{ slide.bouton2_texte|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Bouton 2 - Lien</label>
+                                    <input type="text" name="bouton2_lien" class="form-control" value="{{ slide.bouton2_lien|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ordre d'affichage</label>
+                                    <input type="number" name="ordre" class="form-control" value="{{ slide.ordre|default:0 }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" name="actif" class="form-check-input" id="actif" {% if slide.actif or not slide %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="actif">Actif</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 text-end">
+                            <a href="{% url 'super_admin_configuration' %}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

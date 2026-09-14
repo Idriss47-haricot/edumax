@@ -1,0 +1,92 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Modifier - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Modifier l'exercice{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-edit text-warning me-2"></i>
+                    Modifier : {{ exercice.titre }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Titre</label>
+                        <input type="text" name="titre" class="form-control" value="{{ exercice.titre }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Consignes</label>
+                        <textarea name="consignes" class="form-control" rows="4" required>{{ exercice.consignes }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Durée (minutes)</label>
+                            <input type="number" name="duree" class="form-control" value="{{ exercice.duree }}" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Points maximum</label>
+                            <input type="number" name="points" class="form-control" value="{{ exercice.points }}" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tentatives max</label>
+                        <input type="number" name="nb_tentatives_max" class="form-control" value="{{ exercice.nb_tentatives_max }}" min="0">
+                        <small class="text-muted">0 = illimité</small>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <h6 class="fw-bold mb-3"><i class="fas fa-sliders-h text-primary me-2"></i>Options</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="melanger_questions" class="form-check-input" id="melanger_questions" {% if exercice.melanger_questions %}checked{% endif %}>
+                                <label class="form-check-label" for="melanger_questions">Mélanger les questions</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="melanger_reponses" class="form-check-input" id="melanger_reponses" {% if exercice.melanger_reponses %}checked{% endif %}>
+                                <label class="form-check-label" for="melanger_reponses">Mélanger les réponses</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="afficher_note_immediate" class="form-check-input" id="afficher_note_immediate" {% if exercice.afficher_note_immediate %}checked{% endif %}>
+                                <label class="form-check-label" for="afficher_note_immediate">Afficher note immédiate</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="afficher_correction_immediate" class="form-check-input" id="afficher_correction_immediate" {% if exercice.afficher_correction_immediate %}checked{% endif %}>
+                                <label class="form-check-label" for="afficher_correction_immediate">Afficher correction immédiate</label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input type="checkbox" name="multi_reponse" class="form-check-input" id="multi_reponse" {% if exercice.multi_reponse %}checked{% endif %}>
+                                <label class="form-check-label" for="multi_reponse">Autoriser les réponses multiples</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

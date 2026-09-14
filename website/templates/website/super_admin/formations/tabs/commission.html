@@ -1,0 +1,23 @@
+<div class="card">
+    <div class="card-header bg-white">
+        <h5>Commission sur les ventes</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'formation_configurer_conditions' %}">
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6">
+                    <label>Commission (%)</label>
+                    <input type="number" step="0.5" name="commission_pourcentage" class="form-control" value="{{ condition.commission_pourcentage|default:10 }}" required>
+                </div>
+                <div class="col-md-6 mt-4">
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </div>
+        </form>
+        <hr>
+        <div class="alert alert-info">
+            Exemple : Formation à 20 000 FCFA → Commission {{ condition.commission_pourcentage|default:10 }}% = {{ commission_calculee }} FCFA
+        </div>
+    </div>
+</div>

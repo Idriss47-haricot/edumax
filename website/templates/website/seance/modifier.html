@@ -1,0 +1,61 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Modifier - {{ seance.titre }}{% endblock %}
+{% block page_title %}Modifier la séance{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Modifier la séance</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Objectifs</label>
+                        {{ form.objectifs }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type de séance</label>
+                        {{ form.type_seance }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ordre</label>
+                            {{ form.ordre }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Durée (minutes)</label>
+                            {{ form.duree_estimee }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'seance_detail' seance.id %}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

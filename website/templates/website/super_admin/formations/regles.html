@@ -1,0 +1,60 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des règles{% endblock %}
+{% block page_title %}Règles de la plateforme{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm border-0 rounded-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-gavel me-2 text-primary"></i>
+            Règles par rubrique
+        </h5>
+        <a href="{% url 'regle_ajouter' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Ajouter une règle
+        </a>
+    </div>
+    <div class="card-body">
+        {% regroup regles by get_rubrique_display as rubriques %}
+        
+        {% for rubrique in rubriques %}
+            <div class="mb-4">
+                <h4 class="border-bottom pb-2">{{ rubrique.grouper }}</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr><th>Titre</th><th>Contenu</th><th>Ordre</th><th>Actif</th><th>Actions</th> </thead>
+                        <tbody>
+                            {% for regle in rubrique.list %}
+                            <tr>
+                                <td><strong>{{ regle.titre }}</strong></td>
+                                <td>{{ regle.contenu|truncatechars:100|linebreaksbr }}</td>
+                                <td>{{ regle.ordre }}</td>
+                                <td>
+                                    {% if regle.actif %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactif</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'regle_modifier' regle.pk %}" class="btn btn-sm btn-warning">Modifier</a>
+                                    <a href="{% url 'regle_supprimer' regle.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cette règle ?')">Supprimer</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5">Aucune règle dans cette rubrique.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-muted text-center">Aucune règle. Cliquez sur "Ajouter une règle".</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

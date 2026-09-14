@@ -62,7 +62,7 @@
                                             </div>
                                         {% endif %}
                                         <div class="mt-2">
-                                            <span class="badge bg-info">Enseignant: {{ cours.enseignant.prenom|default:cours.enseignant.username|default:"Non assigné" }}</span>
+                                            <span class="badge bg-info">Enseignant: {% if cours.enseignant %}{{ cours.enseignant.prenom|default:cours.enseignant.username }}{% else %}Non assigné{% endif %}</span>
                                             <span class="badge {% if cours.statut == 'termine' %}bg-success{% else %}bg-primary{% endif %}">
                                                 {{ cours.get_statut_display }}
                                             </span>

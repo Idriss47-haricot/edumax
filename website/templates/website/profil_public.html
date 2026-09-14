@@ -1,0 +1,65 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Profil de {{ profil.prenom|default:profil.username }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 text-center">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
+                            <i class="fas fa-user fa-3x"></i>
+                        </div>
+                    </div>
+                    <h4>{{ profil.prenom|default:profil.username }}</h4>
+                    <p class="text-muted small">Membre depuis {{ profil.date_joined|date:"F Y" }}</p>
+                    {% if profil.certifie %}
+                        <span class="badge bg-success"><i class="fas fa-certificate me-1"></i>Compte certifié</span>
+                    {% endif %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <h5>{{ formations|length }}</h5>
+                            <small class="text-muted">Formations</small>
+                        </div>
+                        <div class="col-6">
+                            <h5>{{ total_ventes }}</h5>
+                            <small class="text-muted">Ventes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white">
+                    <h5>Formations de {{ profil.prenom|default:profil.username }}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for formation in formations %}
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6>{{ formation.titre }}</h6>
+                                    <p class="text-muted small">{{ formation.description_courte|truncatechars:80 }}</p>
+                                    <p class="fw-bold text-primary">{{ formation.prix }} FCFA</p>
+                                </div>
+                                <div class="card-footer bg-white border-0">
+                                    <a href="{% url 'formation_detail' formation.slug %}" class="btn btn-sm btn-outline-primary w-100">Voir la formation</a>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted text-center">Aucune formation publiée.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

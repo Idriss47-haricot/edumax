@@ -1,0 +1,223 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Logs des transactions - Super Admin{% endblock %}
+{% block page_title %}Logs des transactions{% endblock %}
+
+{% block content %}
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-1">Total encaissé</h6>
+                        <h3 class="mb-0">{{ stats.total_encaisses|default:"0" }} FCFA</h3>
+                    </div>
+                    <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-1">Transactions réussies</h6>
+                        <h3 class="mb-0">{{ stats.transactions_reussies|default:"0" }}</h3>
+                    </div>
+                    <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-1">Transactions échouées</h6>
+                        <h3 class="mb-0">{{ stats.transactions_echouees|default:"0" }}</h3>
+                    </div>
+                    <i class="fas fa-times-circle fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-1">Total transactions</h6>
+                        <h3 class="mb-0">{{ stats.total_transactions|default:"0" }}</h3>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i>Filtres</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">Tous</option>
+                    <option value="reussi" {% if filtres.statut == 'reussi' %}selected{% endif %}>Réussi</option>
+                    <option value="echoue" {% if filtres.statut == 'echoue' %}selected{% endif %}>Échoué</option>
+                    <option value="en_attente" {% if filtres.statut == 'en_attente' %}selected{% endif %}>En attente</option>
+                    <option value="rembourse" {% if filtres.statut == 'rembourse' %}selected{% endif %}>Remboursé</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Type</label>
+                <select name="type_transaction" class="form-select">
+                    <option value="">Tous</option>
+                    <option value="abonnement" {% if filtres.type_transaction == 'abonnement' %}selected{% endif %}>Abonnement</option>
+                    <option value="formation" {% if filtres.type_transaction == 'formation' %}selected{% endif %}>Formation</option>
+                    <option value="epreuve" {% if filtres.type_transaction == 'epreuve' %}selected{% endif %}>Épreuve</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Utilisateur</label>
+                <select name="utilisateur_id" class="form-select">
+                    <option value="">Tous</option>
+                    {% for u in utilisateurs %}
+                        <option value="{{ u.id }}" {% if filtres.utilisateur_id|stringformat:"s" == u.id|stringformat:"s" %}selected{% endif %}>
+                            {{ u.username }} - {{ u.email }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Date début</label>
+                <input type="date" name="date_debut" class="form-control" value="{{ filtres.date_debut }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-bold">Date fin</label>
+                <input type="date" name="date_fin" class="form-control" value="{{ filtres.date_fin }}">
+            </div>
+            <div class="col-md-9 d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>Filtrer
+                </button>
+                <a href="{% url 'logs_transactions' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>Réinitialiser
+                </a>
+                <a href="{% url 'export_transactions_csv' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+                    <i class="fas fa-download me-1"></i>Exporter CSV
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des transactions -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="fas fa-history me-2 text-primary"></i>Historique des transactions</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Utilisateur</th>
+                        <th>Type</th>
+                        <th>Montant</th>
+                        <th>Moyen paiement</th>
+                        <th>Référence</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for trans in transactions %}
+                    <tr>
+                        <td>{{ trans.id }}</td>
+                        <td>
+                            <strong>{{ trans.utilisateur.username }}</strong><br>
+                            <small class="text-muted">{{ trans.utilisateur.email }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                {{ trans.get_type_transaction_display }}
+                            </span>
+                        </td>
+                        <td class="fw-bold">{{ trans.montant }} FCFA</td>
+                        <td>
+                            {% if trans.moyen_paiement == 'orange_money' %}
+                                <i class="fas fa-phone-alt text-warning me-1"></i> Orange Money
+                            {% elif trans.moyen_paiement == 'mtn_money' %}
+                                <i class="fas fa-phone-alt text-success me-1"></i> MTN Money
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td><code>{{ trans.reference }}</code></td>
+                        <td>
+                            {% if trans.statut == 'reussi' %}
+                                <span class="badge bg-success">Réussi</span>
+                            {% elif trans.statut == 'echoue' %}
+                                <span class="badge bg-danger">Échoué</span>
+                            {% elif trans.statut == 'en_attente' %}
+                                <span class="badge bg-warning">En attente</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ trans.get_statut_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ trans.date_transaction|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'supprimer_transaction' trans.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cette transaction ?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <p>Aucune transaction trouvée.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if transactions.has_other_pages %}
+    <div class="card-footer bg-white">
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {% if transactions.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ transactions.previous_page_number }}{% for key, value in filtres.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Précédent</a></li>
+                {% endif %}
+                {% for num in transactions.paginator.page_range %}
+                    {% if transactions.number == num %}
+                        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > transactions.number|add:'-3' and num < transactions.number|add:'3' %}
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in filtres.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                {% if transactions.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ transactions.next_page_number }}{% for key, value in filtres.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Suivant</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

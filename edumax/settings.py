@@ -15,7 +15,7 @@ SECRET_KEY = 'django-insecure-@your-secret-key-here-change-this-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+WEBSITE_AUTO_CLEANUP_ENABLED = True
 # Configuration des hôtes autorisés
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
@@ -28,8 +28,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Notre application
+    'widget_tweaks',
     'website',
+    
 ]
 
 MIDDLEWARE = [
@@ -40,7 +41,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'website.middleware.AbonnementMiddleware',
 ]
+
 
 ROOT_URLCONF = 'edumax.urls'
 
@@ -55,6 +58,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'website.context_processors.messagerie_config',
+                
             ],
         },
     },
@@ -103,15 +108,10 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files (uploads)
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Authentication
-AUTH_USER_MODEL = 'website.Utilisateur'
 LOGIN_URL = 'connexion'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'accueil'
@@ -137,3 +137,5 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 # BigBlueButton Configuration
 BBB_URL = "https://test.bigbluebutton.org/bigbluebutton/"
 BBB_SECRET = "8cd8ef52e8e101574e400365b55e11a6"
+
+SITE_NAME = "Academia net"

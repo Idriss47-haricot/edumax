@@ -1,0 +1,473 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer QCM - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Configuration du QCM : {{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .question-card {
+        transition: all 0.2s ease;
+        border-left: 4px solid #0d6efd;
+    }
+    .question-card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+    }
+    .choice-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+    }
+    .choice-item.correct {
+        border: 1px solid #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    .reponse-item {
+        margin-bottom: 8px;
+    }
+    .nav-question {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin: 4px;
+        cursor: pointer;
+        background-color: #e9ecef;
+    }
+    .nav-question.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">{{ exercice.titre }}</h5>
+                        <small class="text-muted">{{ exercice.duree }} min • {{ exercice.points }} pts</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'exercice_modifier' exercice.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>{{ questions|length }} question(s)</strong> - 
+                    Total points: {{ exercice.total_points }}
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge {% if exercice.est_lance %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                        {% if exercice.est_lance %}✓ Publié{% else %}📝 Brouillon{% endif %}
+                    </span>
+                    <span class="badge bg-info fs-6">
+                        {% if exercice.melanger_questions %}🔀 Questions mélangées{% else %}📋 Ordre fixe{% endif %}
+                    </span>
+                    <span class="badge bg-info fs-6">
+                        {% if exercice.melanger_reponses %}🔀 Réponses mélangées{% else %}📋 Réponses fixes{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des questions -->
+        <div id="questions-list">
+            {% for question in questions %}
+            <div class="card shadow-sm border-0 rounded-4 mb-3 question-card" data-question-id="{{ question.id }}" id="question-{{ question.id }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                <span class="badge bg-primary fs-6">Q{{ question.ordre }}</span>
+                                <span class="badge bg-info">{{ question.points }} pts</span>
+                                <span class="badge bg-secondary">{{ question.get_type_question_display }}</span>
+                            </div>
+                            <p class="mb-3 fw-medium">{{ question.texte|linebreaks }}</p>
+                            
+                            <!-- Réponses -->
+                            <div class="ms-3">
+                                {% for reponse in question.reponses.all %}
+                                <div class="choice-item {% if reponse.est_correcte %}correct{% endif %}">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="{% if exercice.multi_reponse %}checkbox{% else %}radio{% endif %}" 
+                                                   {% if reponse.est_correcte %}checked{% endif %} disabled>
+                                        </div>
+                                        <span>{{ reponse.texte }}</span>
+                                        {% if reponse.est_correcte %}
+                                            <span class="badge bg-success ms-auto"><i class="fas fa-check"></i> Correcte</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if question.explication %}
+                            <div class="mt-2 text-muted small">
+                                <i class="fas fa-lightbulb text-warning me-1"></i>
+                                <em>{{ question.explication }}</em>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Boutons d'action -->
+                        <div class="d-flex flex-column gap-2 ms-3">
+                            <button class="btn btn-sm btn-outline-primary edit-question-btn" data-question-id="{{ question.id }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-question-btn" data-question-id="{{ question.id }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Aucune question. Utilisez le formulaire à droite pour ajouter des questions.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-plus-circle text-success me-2"></i>Ajouter une question</h5>
+            </div>
+            <div class="card-body">
+                <form id="question-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Énoncé *</label>
+                        <textarea id="question-texte" class="form-control" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Points</label>
+                            <input type="number" id="question-points" class="form-control" value="1" min="1">
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Type</label>
+                            <select id="question-type" class="form-select">
+                                <option value="qcm">QCM (1 réponse)</option>
+                                <option value="multi" {% if exercice.multi_reponse %}selected{% endif %}>Multi-réponses</option>
+                                <option value="vrai_faux">Vrai/Faux</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    <h6 class="fw-bold mb-3">Réponses</h6>
+                    
+                    <div id="reponses-list">
+                        <div class="reponse-item mb-2">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="correct-radio" class="correct-radio" value="0">
+                                </span>
+                                <input type="text" class="form-control reponse-texte" placeholder="Réponse 1">
+                                <button class="btn btn-outline-danger remove-reponse" type="button" style="display: none;">×</button>
+                            </div>
+                        </div>
+                        <div class="reponse-item mb-2">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <input type="radio" name="correct-radio" class="correct-radio" value="1">
+                                </span>
+                                <input type="text" class="form-control reponse-texte" placeholder="Réponse 2">
+                                <button class="btn btn-outline-danger remove-reponse" type="button" style="display: none;">×</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="add-reponse" class="btn btn-sm btn-outline-secondary w-100 mb-3">
+                        + Ajouter une réponse
+                    </button>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Explication (optionnel)</label>
+                        <textarea id="question-explication" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-save me-1"></i>Ajouter
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 rounded-4 mt-3">
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'exercice_lancer' exercice.id %}" class="btn {% if exercice.est_lance %}btn-warning{% else %}btn-success{% endif %}" 
+                       onclick="return confirm('{% if exercice.est_lance %}Arrêter l\'exercice ?{% else %}Publier l\'exercice ?{% endif %}')">
+                        <i class="fas {% if exercice.est_lance %}fa-stop{% else %}fa-play{% endif %} me-1"></i>
+                        {% if exercice.est_lance %}Arrêter{% else %}Publier{% endif %}
+                    </a>
+                    <a href="{% url 'exercice_tableau_resultats' exercice.id %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar me-1"></i>Résultats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Édition -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier la question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-question-id">
+                <div class="mb-3">
+                    <label class="form-label">Énoncé</label>
+                    <textarea id="edit-texte" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Points</label>
+                    <input type="number" id="edit-points" class="form-control" min="1">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Explication</label>
+                    <textarea id="edit-explication" class="form-control" rows="2"></textarea>
+                </div>
+                <hr>
+                <h6 class="fw-bold">Réponses</h6>
+                <div id="edit-reponses-list"></div>
+                <button type="button" id="edit-add-reponse" class="btn btn-sm btn-outline-secondary w-100 mt-2">+ Ajouter</button>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button id="save-edit" class="btn btn-primary">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const exerciceId = {{ exercice.id }};
+const isMulti = {{ exercice.multi_reponse|yesno:"true,false" }};
+let reponseCount = 2;
+
+// Mettre à jour les radios/checkboxes
+function updateCorrectInputs() {
+    document.querySelectorAll('.correct-radio').forEach(input => {
+        input.type = isMulti ? 'checkbox' : 'radio';
+    });
+}
+
+// Ajouter réponse
+document.getElementById('add-reponse').addEventListener('click', () => {
+    const newId = reponseCount++;
+    const container = document.getElementById('reponses-list');
+    const div = document.createElement('div');
+    div.className = 'reponse-item mb-2';
+    div.innerHTML = `
+        <div class="input-group">
+            <span class="input-group-text">
+                <input type="${isMulti ? 'checkbox' : 'radio'}" class="correct-radio" name="correct-radio" value="${newId}">
+            </span>
+            <input type="text" class="form-control reponse-texte" placeholder="Réponse ${newId + 1}">
+            <button class="btn btn-outline-danger remove-reponse" type="button">×</button>
+        </div>
+    `;
+    container.appendChild(div);
+    
+    // Afficher tous les boutons supprimer
+    document.querySelectorAll('.remove-reponse').forEach(btn => btn.style.display = 'block');
+});
+
+// Supprimer réponse
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-reponse')) {
+        const items = document.querySelectorAll('.reponse-item');
+        if (items.length > 2) {
+            e.target.closest('.reponse-item').remove();
+        } else {
+            alert('Minimum 2 réponses');
+        }
+    }
+});
+
+// Ajouter question (AJAX)
+document.getElementById('question-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const texte = document.getElementById('question-texte').value.trim();
+    if (!texte) return alert('Énoncé requis');
+    
+    const choix = [];
+    document.querySelectorAll('.reponse-texte').forEach(input => {
+        const val = input.value.trim();
+        if (val) choix.push(val);
+    });
+    
+    if (choix.length < 2) return alert('Minimum 2 réponses');
+    
+    const corrects = [];
+    document.querySelectorAll('.correct-radio:checked').forEach(cb => {
+        corrects.push(parseInt(cb.value));
+    });
+    
+    if (corrects.length === 0) return alert('Sélectionnez au moins une bonne réponse');
+    
+    const data = {
+        texte: texte,
+        choix: choix,
+        correct: isMulti ? corrects : corrects[0],
+        multi: isMulti,
+        explication: document.getElementById('question-explication').value,
+        points: parseInt(document.getElementById('question-points').value) || 1,
+        type_question: document.getElementById('question-type').value
+    };
+    
+    try {
+        const response = await fetch(`/qcm/question/ajouter/${exerciceId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            location.reload();
+        } else {
+            const err = await response.json();
+            alert('Erreur: ' + (err.error || 'Erreur serveur'));
+        }
+    } catch (err) {
+        alert('Erreur réseau');
+    }
+});
+
+// Supprimer question
+document.querySelectorAll('.delete-question-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        if (!confirm('Supprimer cette question ?')) return;
+        const qId = btn.dataset.questionId;
+        
+        try {
+            const response = await fetch(`/qcm/question/supprimer/${exerciceId}/${qId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value }
+            });
+            if (response.ok) location.reload();
+        } catch (err) {}
+    });
+});
+
+// Éditer question
+document.querySelectorAll('.edit-question-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const qId = btn.dataset.questionId;
+        const card = document.getElementById(`question-${qId}`);
+        
+        document.getElementById('edit-question-id').value = qId;
+        document.getElementById('edit-texte').value = card.querySelector('.fw-medium')?.textContent.trim() || '';
+        document.getElementById('edit-points').value = card.querySelector('.badge.bg-info')?.textContent.replace('pts', '').trim() || 1;
+        
+        const explicationSpan = card.querySelector('.fa-lightbulb')?.closest('div')?.querySelector('em');
+        document.getElementById('edit-explication').value = explicationSpan?.textContent || '';
+        
+        // Récupérer réponses
+        const reponses = [];
+        card.querySelectorAll('.choice-item').forEach(item => {
+            const span = item.querySelector('span');
+            const isCorrect = item.classList.contains('correct');
+            if (span) reponses.push({ texte: span.textContent.trim(), est_correcte: isCorrect });
+        });
+        
+        const editList = document.getElementById('edit-reponses-list');
+        editList.innerHTML = '';
+        reponses.forEach((r, idx) => {
+            const div = document.createElement('div');
+            div.className = 'edit-reponse-item mb-2';
+            div.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <input type="${isMulti ? 'checkbox' : 'radio'}" class="edit-correct-radio" ${r.est_correcte ? 'checked' : ''} data-idx="${idx}">
+                    </span>
+                    <input type="text" class="form-control edit-reponse-texte" value="${escapeHtml(r.texte)}">
+                    <button class="btn btn-outline-danger edit-remove-reponse" type="button">×</button>
+                </div>
+            `;
+            editList.appendChild(div);
+        });
+        
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    });
+});
+
+// Sauvegarder édition
+document.getElementById('save-edit').addEventListener('click', async () => {
+    const qId = document.getElementById('edit-question-id').value;
+    const texte = document.getElementById('edit-texte').value.trim();
+    const explication = document.getElementById('edit-explication').value;
+    const points = parseInt(document.getElementById('edit-points').value) || 1;
+    
+    const choix = [];
+    document.querySelectorAll('.edit-reponse-texte').forEach(input => {
+        const val = input.value.trim();
+        if (val) choix.push(val);
+    });
+    
+    const corrects = [];
+    document.querySelectorAll('.edit-correct-radio:checked').forEach(cb => {
+        corrects.push(parseInt(cb.dataset.idx));
+    });
+    
+    try {
+        const response = await fetch(`/qcm/question/modifier/${qId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ texte, choix, corrects, explication, points })
+        });
+        
+        if (response.ok) location.reload();
+        else alert('Erreur');
+    } catch (err) {}
+});
+
+// Helper
+function escapeHtml(text) {
+    return text.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]);
+}
+
+// Initialisation
+updateCorrectInputs();
+</script>
+{% endblock %}

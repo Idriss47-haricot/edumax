@@ -1,0 +1,176 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Corriger - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Correction : {{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">{{ exercice.titre }}</h5>
+                        <small class="text-muted">
+                            Étudiant : <strong>{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</strong>
+                        </small>
+                    </div>
+                    <div>
+                        <span class="badge {% if correction.est_corrigee %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                            {% if correction.est_corrigee %}✅ Corrigé{% else %}⏳ À corriger{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-file-alt text-primary me-2"></i>Instructions</h5>
+            </div>
+            <div class="card-body">
+                <div class="bg-light p-3 rounded">
+                    {{ exercice.depot_fichier.instructions|linebreaks }}
+                </div>
+                {% if exercice.depot_fichier.liste_extensions %}
+                <div class="mt-2">
+                    <small class="text-muted">📋 Formats acceptés : 
+                        {% for ext in exercice.depot_fichier.liste_extensions %}
+                            <span class="badge bg-secondary">{{ ext }}</span>
+                        {% endfor %}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Fichiers déposés -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-file-archive text-primary me-2"></i>Fichiers déposés</h5>
+            </div>
+            <div class="card-body">
+                {% for fichier in soumission.fichiers_deposes.all %}
+                <div class="border-bottom pb-2 mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-file text-primary me-2"></i>
+                            <strong>{{ fichier.nom_original }}</strong>
+                            <span class="text-muted ms-2">({{ fichier.taille|filesizeformat }})</span>
+                        </div>
+                        <a href="{{ fichier.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download me-1"></i>Télécharger
+                        </a>
+                    </div>
+                    <div class="text-muted small">Déposé le {{ fichier.date_depot|date:"d/m/Y H:i" }}</div>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">Aucun fichier</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Formulaire de correction -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-check-double text-success me-2"></i>Correction</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Note / {{ exercice.points }}</label>
+                        <input type="number" name="note_donnee" class="form-control" 
+                               value="{{ correction.note_donnee|default:'' }}" 
+                               step="0.5" min="0" max="{{ exercice.points }}" required>
+                        <small class="text-muted">Note sur {{ exercice.points }} points</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Commentaire (feedback)</label>
+                        <textarea name="commentaire" class="form-control" rows="5" 
+                                  placeholder="Saisissez votre feedback pour l'étudiant...">{{ correction.commentaire|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Fichier annoté (optionnel)</label>
+                        <input type="file" name="fichier_annote" class="form-control" accept=".pdf,.doc,.docx">
+                        {% if correction.fichier_annote %}
+                            <small class="text-muted">Actuel : <a href="{{ correction.fichier_annote.url }}" target="_blank">{{ correction.fichier_annote.name }}</a></small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'depot_fichier_liste_a_corriger' exercice.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour à la liste
+                        </a>
+                        <div>
+                            {% if correction.est_corrigee %}
+                            <button type="submit" class="btn btn-warning">
+                                <i class="fas fa-edit me-1"></i>Modifier la correction
+                            </button>
+                            {% else %}
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check me-1"></i>Valider la correction
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top" style="top: 20px;">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Informations</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>👤 Étudiant</strong>
+                        <p class="text-muted small">{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>📅 Déposé le</strong>
+                        <p class="text-muted small">{{ soumission.date_soumission|date:"d/m/Y H:i" }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>📁 Fichiers</strong>
+                        <p class="text-muted small">{{ soumission.fichiers_deposes.count }}</p>
+                    </li>
+                    {% if correction.est_corrigee %}
+                    <li class="mb-2">
+                        <strong>✅ Corrigé le</strong>
+                        <p class="text-muted small">{{ correction.date_correction|date:"d/m/Y H:i" }}</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>👨‍🏫 Par</strong>
+                        <p class="text-muted small">{{ correction.corrige_par.prenom }} {{ correction.corrige_par.username }}</p>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% if exercice.depot_fichier.grille_correction %}
+                <hr>
+                <strong class="small">📋 Grille de correction :</strong>
+                <ul class="small text-muted mt-1">
+                    {% for ligne in exercice.depot_fichier.grille_correction.splitlines %}
+                        {% if ligne.strip %}
+                        <li>{{ ligne }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

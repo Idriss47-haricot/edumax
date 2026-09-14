@@ -1,0 +1,575 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Gestion des épreuves - Admin{% endblock %}
+{% block page_title %}📚 Gestion des épreuves et concours{% endblock %}
+
+{% block content %}
+
+<style>
+    .stats-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-color);
+    }
+    .admin-table {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .btn-icon {
+        padding: 5px 10px;
+        margin: 0 2px;
+    }
+    .badge-serie {
+        background: #6f42c1;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+    }
+</style>
+
+<!-- Statistiques -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ stats.total_rubriques|default:"0" }}</div>
+            <div class="text-muted">Rubriques</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ stats.total_categories|default:"0" }}</div>
+            <div class="text-muted">Catégories</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ stats.total_epreuves|default:"0" }}</div>
+            <div class="text-muted">Épreuves</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="stats-number">{{ stats.ventes_total|default:"0" }}</div>
+            <div class="text-muted">Ventes totales</div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation rapide -->
+<ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#rubriques">
+            <i class="fas fa-folder me-2"></i>Rubriques
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#categories">
+            <i class="fas fa-tags me-2"></i>Catégories
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#epreuves">
+            <i class="fas fa-file-pdf me-2"></i>Épreuves
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#series">
+            <i class="fas fa-layer-group me-2"></i>Séries
+            <span class="badge bg-info ms-1">{{ stats.total_series|default:"0" }}</span>
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- ========== RUBRIQUES ========== -->
+    <div class="tab-pane fade show active" id="rubriques">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <h5 class="mb-0">Rubriques</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalRubrique">
+                    <i class="fas fa-plus"></i> Nouvelle rubrique
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr><th>Nom</th><th>Slug</th><th>Ordre</th><th>Actif</th><th>Catégories</th><th>Actions</th> </thead>
+                    <tbody>
+                        {% for r in rubriques %}
+                        <tr>
+                            <td><strong>{{ r.nom }}</strong></td>
+                            <td><code>{{ r.slug }}</code></td>
+                            <td>{{ r.ordre }}</td>
+                            <td>{% if r.actif %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-secondary">Inactif</span>{% endif %}</td>
+                            <td>{{ r.categories.count }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning btn-icon" onclick="editRubrique({{ r.id }}, '{{ r.nom }}', {{ r.ordre }}, {{ r.actif|yesno:'true,false' }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{% url 'admin_rubrique_supprimer' r.id %}" class="btn btn-sm btn-danger btn-icon" onclick="return confirm('Supprimer cette rubrique ?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">Aucune rubrique trouvée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== CATÉGORIES ========== -->
+    <div class="tab-pane fade" id="categories">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <h5 class="mb-0">Catégories</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalCategorie">
+                    <i class="fas fa-plus"></i> Nouvelle catégorie
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr><th>Rubrique</th><th>Nom</th><th>Prix du pack</th><th>Ordre</th><th>Actif</th><th>Épreuves</th><th>Actions</th> </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr>
+                            <td>{{ c.rubrique.nom }}</td>
+                            <td><strong>{{ c.nom }}</strong></td>
+                            <td>{{ c.prix_pack|floatformat:0 }} FCFA</td>
+                            <td class="text-center">{{ c.ordre }}</td>
+                            <td>{% if c.actif %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-secondary">Inactif</span>{% endif %}</td>
+                            <td>{{ c.epreuves.count }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning" onclick="editCategorie({{ c.id }}, {{ c.rubrique.id }}, '{{ c.nom }}', {{ c.ordre }}, {{ c.actif|yesno:'true,false' }})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <a href="{% url 'admin_categorie_supprimer' c.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cette catégorie ?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">Aucune catégorie trouvée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== ÉPREUVES ========== -->
+    <div class="tab-pane fade" id="epreuves">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between flex-wrap gap-2">
+                <h5 class="mb-0">Épreuves</h5>
+                <div>
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalEpreuve">
+                        <i class="fas fa-plus"></i> Nouvelle épreuve
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="importEpreuvesBtn">
+                        <i class="fas fa-upload"></i> Import CSV
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Catégorie</th>
+                            <th>Titre</th>
+                            <th>Année</th>
+                            <th>Série</th>
+                            <th>Prix</th>
+                            <th>Ventes</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in epreuves %}
+                        <tr>
+                            <td>{{ e.categorie.nom }}</td>
+                            <td>{{ e.titre|truncatechars:40 }}</td>
+                            <td>{{ e.annee|default:"-" }}</td>
+                            <td>
+                                {% if e.serie %}
+                                    <span class="badge-serie">{{ e.serie }}</span>
+                                {% else %}
+                                    <span class="text-muted">Toutes</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ e.prix|floatformat:0 }} FCFA</td>
+                            <td class="text-center">{{ e.nb_ventes }}</td>
+                            <td>
+                                {% if e.statut == 'publie' %}
+                                    <span class="badge bg-success">Publiée</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Brouillon</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_epreuve_modifier' e.id %}" class="btn btn-sm btn-warning btn-icon">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_epreuve_supprimer' e.id %}" class="btn btn-sm btn-danger btn-icon" onclick="return confirm('Supprimer cette épreuve ?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">Aucune épreuve trouvée</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== SÉRIES ========== -->
+    <div class="tab-pane fade" id="series">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between">
+                <h5 class="mb-0">Gestion des séries</h5>
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalAjouterSerie">
+                    <i class="fas fa-plus"></i> Nouvelle série
+                </button>
+            </div>
+            <div class="card-body">
+                {% if series_existantes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Nombre d'épreuves</th>
+                                    <th>Catégories associées</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for serie_code in series_existantes %}
+                                <tr>
+                                    <td>
+                                        <span class="badge-serie">{{ serie_code }}</span>
+                                    </td>
+                                    <td>
+                                        {% with count=epreuves|length %}
+                                            {{ epreuves|dictsort:"serie"|length }}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% for cat in categories %}
+                                            {% if cat.epreuves.filter.serie == serie_code %}
+                                                <span class="badge bg-secondary">{{ cat.nom }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-info btn-icon" 
+                                                onclick="modifierSerie('{{ serie_code }}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger btn-icon" 
+                                                onclick="supprimerSerie('{{ serie_code }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning text-center mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Aucune série définie. Cliquez sur "Nouvelle série" pour ajouter.
+                    </div>
+                {% endif %}
+                
+                <!-- Liste des séries prédéfinies disponibles -->
+                {% if series_choices %}
+                <div class="mt-4 pt-3 border-top">
+                    <h6 class="mb-3">
+                        <i class="fas fa-list me-2"></i>Séries disponibles dans le système :
+                    </h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for serie in series_choices %}
+                            <span class="badge bg-secondary p-2">
+                                {{ serie.code }} - {{ serie.nom }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MODALS ========== -->
+
+<!-- Modal Rubrique (Ajout) -->
+<div class="modal fade" id="modalRubrique" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_rubrique_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter une rubrique</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rubrique (Modification) -->
+<div class="modal fade" id="modalRubriqueEdit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_rubrique_modifier' 0 %}">
+                {% csrf_token %}
+                <input type="hidden" name="rubrique_id" id="rubrique_id">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modifier la rubrique</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" id="rubrique_nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" id="rubrique_ordre" class="form-control">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="actif" id="rubrique_actif" class="form-check-input">
+                        <label class="form-check-label">Actif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Modifier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Catégorie (Ajout) -->
+<div class="modal fade" id="modalCategorie" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_categorie_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter une catégorie</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rubrique</label>
+                        <select name="rubrique" class="form-select" required>
+                            <option value="">Sélectionner...</option>
+                            {% for r in rubriques %}
+                                <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Catégorie (Modification) -->
+<div class="modal fade" id="modalCategorieEdit" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_categorie_modifier' %}">
+                {% csrf_token %}
+                <input type="hidden" name="categorie_id" id="categorie_id">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modifier la catégorie</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rubrique</label>
+                        <select name="rubrique" id="categorie_rubrique" class="form-select" required>
+                            {% for r in rubriques %}
+                                <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" id="categorie_nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" id="categorie_ordre" class="form-control">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="actif" id="categorie_actif" class="form-check-input">
+                        <label class="form-check-label">Actif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Modifier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Série (Ajout) -->
+<div class="modal fade" id="modalAjouterSerie" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_serie_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Ajouter une nouvelle série</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Code de la série</label>
+                        <input type="text" name="code" class="form-control" placeholder="Ex: A, B, C, D, TI, etc." required>
+                        <small class="text-muted">Code unique pour identifier la série</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom de la série</label>
+                        <input type="text" name="nom" class="form-control" placeholder="Ex: Série A, Sciences, Littéraire, etc." required>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle"></i> 
+                            Note : Une série est un classement d'épreuves (ex: Série A, Série B, Série C, Littéraire, Scientifique, etc.)
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-info">Créer la série</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Série (Modification) -->
+<div class="modal fade" id="modalSerie" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" id="formSerie">
+                {% csrf_token %}
+                <input type="hidden" name="serie_id" id="serie_id">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Modifier la série</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Code de la série</label>
+                        <input type="text" name="code" id="serie_code" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom de la série</label>
+                        <input type="text" name="nom" id="serie_nom" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-info">Modifier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function editRubrique(id, nom, ordre, actif) {
+        document.getElementById('rubrique_id').value = id;
+        document.getElementById('rubrique_nom').value = nom;
+        document.getElementById('rubrique_ordre').value = ordre;
+        document.getElementById('rubrique_actif').checked = actif;
+        
+        // Mettre à jour l'action du formulaire
+        let form = document.querySelector('#modalRubriqueEdit form');
+        form.action = "{% url 'admin_rubrique_modifier' 0 %}".replace('/0/', '/' + id + '/');
+        
+        new bootstrap.Modal(document.getElementById('modalRubriqueEdit')).show();
+    }
+    
+    function editCategorie(id, rubriqueId, nom, ordre, actif) {
+        document.getElementById('categorie_id').value = id;
+        document.getElementById('categorie_rubrique').value = rubriqueId;
+        document.getElementById('categorie_nom').value = nom;
+        document.getElementById('categorie_ordre').value = ordre;
+        document.getElementById('categorie_actif').checked = actif;
+        new bootstrap.Modal(document.getElementById('modalCategorieEdit')).show();
+    }
+    
+    function modifierSerie(code) {
+        let url = "{% url 'admin_serie_modifier' 0 %}".replace('/0/', '/' + code + '/');
+        window.location.href = url;
+    }
+    
+    function supprimerSerie(code) {
+        if(confirm('Supprimer cette série ?')) {
+            let url = "{% url 'admin_serie_supprimer' 0 %}".replace('/0/', '/' + code + '/');
+            window.location.href = url;
+        }
+    }
+</script>
+
+{% endblock %}

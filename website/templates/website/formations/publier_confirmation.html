@@ -1,0 +1,74 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Publier - {{ formation.titre }}{% endblock %}
+{% block page_title %}Publication de la formation : {{ formation.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">Confirmation de publication</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Processus de validation (72h)</strong>
+                    <ul class="mt-2 mb-0">
+                        <li>Vos <strong>3 premières formations</strong> seront vérifiées manuellement par notre équipe</li>
+                        <li>Cette mesure garantit la qualité et la sécurité de la plateforme</li>
+                        <li>En cas de signalement excessif, la formation peut être suspendue et les clients remboursés</li>
+                        <li>Pour les 3 premières formations, les paiements sont bloqués pendant <strong>10 jours</strong> après l'achat</li>
+                        <li>Passé ce délai sans signalement valide, les fonds vous seront reversés</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Important :</strong> Toute formation frauduleuse ou non conforme sera supprimée et votre compte pourra être suspendu.
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Mode de publication :</strong>
+                    {% if auto_publication_active %}
+                        Votre formation sera automatiquement publiée dans <strong>1 heure</strong> sans validation manuelle.
+                    {% else %}
+                        Votre formation sera examinée par notre équipe sous <strong>72h</strong>.
+                    {% endif %}
+                </div>
+                <div class="border rounded p-3 mb-4 bg-light">
+                    <h6>Récapitulatif</h6>
+                    <p><strong>Titre :</strong> {{ formation.titre }}</p>
+                    <p><strong>Prix :</strong> {{ formation.prix }} FCFA</p>
+                    <p><strong>Commission plateforme :</strong> {{ commission_pourcentage|default:10 }}%</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3 form-check">
+                        {{ form.conditions_acceptees }}
+                        <label class="form-check-label">
+                            Je certifie que le contenu de cette formation est original et conforme aux règles
+                        </label>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'formation_ajouter_fichiers' formation.slug %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-paper-plane me-1"></i>Soumettre à validation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

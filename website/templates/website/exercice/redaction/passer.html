@@ -1,0 +1,323 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Rédaction - {{ exercice.titre }}{% endblock %}
+{% block page_title %}{{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timer-box {
+        font-size: 2rem;
+        font-weight: bold;
+        font-family: monospace;
+        background: #1a1a2e;
+        color: #00ff88;
+        padding: 10px 20px;
+        border-radius: 12px;
+        text-align: center;
+    }
+    .timer-box.warning {
+        color: #ff4444;
+        animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    .sujet-box {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        border-left: 5px solid #0d6efd;
+        white-space: pre-wrap;
+        line-height: 1.8;
+    }
+    .redaction-textarea {
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        padding: 16px;
+        font-size: 1rem;
+        transition: all 0.3s;
+        min-height: 300px;
+        line-height: 1.8;
+    }
+    .redaction-textarea:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        outline: none;
+    }
+    .word-count {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .word-count .count {
+        font-weight: bold;
+        color: #0d6efd;
+    }
+    .word-count .count.limit {
+        color: #dc3545;
+    }
+    .criteres-mini {
+        background: #fff3cd;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+    .saved-indicator {
+        font-size: 0.8rem;
+        color: #28a745;
+        display: none;
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-9">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h3 class="h5 mb-1">{{ exercice.titre }}</h3>
+                        <small class="text-muted">{{ exercice.points }} points • ✏️ Correction manuelle</small>
+                    </div>
+                    <div class="timer-box" id="timer">
+                        {{ temps_restant|default:exercice.duree }}:00
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ exercice.consignes }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sujet -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-pencil-alt text-primary me-2"></i>Sujet</h5>
+            </div>
+            <div class="card-body">
+                <div class="sujet-box">
+                    {{ consigne.sujet|linebreaks }}
+                </div>
+                
+                {% if consigne.nb_mots_min or consigne.nb_mots_max %}
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-font me-1"></i>
+                    {% if consigne.nb_mots_min and consigne.nb_mots_max %}
+                        <strong>{{ consigne.nb_mots_min }} - {{ consigne.nb_mots_max }}</strong> mots
+                    {% elif consigne.nb_mots_min %}
+                        Minimum <strong>{{ consigne.nb_mots_min }}</strong> mots
+                    {% elif consigne.nb_mots_max %}
+                        Maximum <strong>{{ consigne.nb_mots_max }}</strong> mots
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if consigne.document_ressource %}
+                <div class="mt-3">
+                    <a href="{{ consigne.document_ressource.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-file-download me-1"></i>Télécharger le document ressource
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <form id="exercice-form" method="post" action="{% url 'redaction_soumettre' exercice.id %}">
+            {% csrf_token %}
+            
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-white rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h5 class="mb-0"><i class="fas fa-edit text-primary me-2"></i>Votre rédaction</h5>
+                    <div class="word-count">
+                        <span class="count" id="word-count">0</span> mots
+                        {% if consigne.nb_mots_min %}
+                            <span class="text-muted">(min: {{ consigne.nb_mots_min }})</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <textarea name="texte_redige" 
+                              class="redaction-textarea w-100" 
+                              id="redaction-text"
+                              placeholder="Rédigez votre réponse ici..." 
+                              rows="12">{{ texte_sauvegarde|default:'' }}</textarea>
+                    
+                    {% if consigne.liste_criteres %}
+                    <div class="criteres-mini mt-3">
+                        <strong>📋 Critères d'évaluation :</strong>
+                        <ul class="mb-0 mt-1 ps-3">
+                            {% for critere in consigne.liste_criteres %}
+                            <li>{{ critere }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-4">
+                <button type="button" id="save-draft" class="btn btn-secondary">
+                    <i class="fas fa-save me-1"></i>Sauvegarder brouillon
+                </button>
+                <button type="submit" class="btn btn-success btn-lg" id="submit-btn">
+                    <i class="fas fa-paper-plane me-1"></i>Soumettre
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-3">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-info-circle text-primary me-2"></i>Informations</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>📝 Points</strong>
+                        <p class="text-muted small">{{ exercice.points }} pts maximum</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>✏️ Correction</strong>
+                        <p class="text-muted small">Correction manuelle par l'enseignant</p>
+                    </li>
+                    <li class="mb-2">
+                        <strong>⏱️ Temps</strong>
+                        <p class="text-muted small">{{ exercice.duree }} minutes</p>
+                    </li>
+                </ul>
+                <hr>
+                <div class="text-center">
+                    <span class="saved-indicator" id="saved-indicator">
+                        <i class="fas fa-check-circle"></i> Sauvegardé
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Timer
+let timeLeft = {{ temps_restant|default:exercice.duree }} * 60;
+const timerElement = document.getElementById('timer');
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (timeLeft <= 60) {
+        timerElement.classList.add('warning');
+    }
+    
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        alert('Temps écoulé ! Soumission automatique...');
+        document.getElementById('exercice-form').submit();
+    }
+    timeLeft--;
+}
+
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Compteur de mots
+const textarea = document.getElementById('redaction-text');
+const wordCount = document.getElementById('word-count');
+
+function updateWordCount() {
+    const text = textarea.value.trim();
+    const count = text ? text.split(/\s+/).length : 0;
+    wordCount.textContent = count;
+    
+    // Alerte si en dessous du minimum
+    const min = {{ consigne.nb_mots_min|default:0 }};
+    if (min > 0 && count > 0 && count < min) {
+        wordCount.classList.add('limit');
+    } else {
+        wordCount.classList.remove('limit');
+    }
+}
+
+textarea.addEventListener('input', updateWordCount);
+updateWordCount();
+
+// Sauvegarde automatique
+let saveTimeout;
+function autoSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        const texte = textarea.value;
+        
+        fetch("{% url 'redaction_sauvegarder' exercice.id %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ texte_redige: texte })
+        }).then(() => {
+            $('#saved-indicator').fadeIn(200).delay(1500).fadeOut(500);
+        });
+    }, 3000);
+}
+
+textarea.addEventListener('input', autoSave);
+
+// Sauvegarde manuelle
+document.getElementById('save-draft').addEventListener('click', () => {
+    const texte = textarea.value;
+    
+    fetch("{% url 'redaction_sauvegarder' exercice.id %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ texte_redige: texte })
+    }).then(() => {
+        $('#saved-indicator').fadeIn(200).delay(2000).fadeOut(500);
+        alert('Brouillon sauvegardé !');
+    });
+});
+
+// Confirmation avant soumission
+document.getElementById('submit-btn').addEventListener('click', (e) => {
+    const text = textarea.value.trim();
+    const min = {{ consigne.nb_mots_min|default:0 }};
+    const max = {{ consigne.nb_mots_max|default:0 }};
+    const count = text ? text.split(/\s+/).length : 0;
+    
+    if (!text) {
+        e.preventDefault();
+        return alert('Veuillez rédiger une réponse.');
+    }
+    
+    if (min > 0 && count < min) {
+        e.preventDefault();
+        return alert(`Votre rédaction est trop courte (${count} mots). Minimum requis : ${min} mots.`);
+    }
+    
+    if (max > 0 && count > max) {
+        e.preventDefault();
+        return alert(`Votre rédaction est trop longue (${count} mots). Maximum autorisé : ${max} mots.`);
+    }
+    
+    if (!confirm('Êtes-vous sûr de vouloir soumettre ? Vous ne pourrez plus modifier votre rédaction.')) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,382 @@
+<!-- ==================== MODAL AJOUTER RUBRIQUE ==================== -->
+<div class="modal fade" id="modalRubrique" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_rubrique_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Nouvelle rubrique</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" class="form-control" value="0">
+                        <small class="text-muted">Plus petit = plus haut dans l'affichage</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL MODIFIER RUBRIQUE ==================== -->
+<div class="modal fade" id="modalRubriqueModifier" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="" id="formRubriqueModifier">
+                {% csrf_token %}
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Modifier rubrique</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="rubrique_id" id="rubrique_id">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" id="rubrique_nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" id="rubrique_ordre" class="form-control">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="actif" id="rubrique_actif" class="form-check-input">
+                        <label class="form-check-label">Actif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL AJOUTER CATÉGORIE ==================== -->
+<div class="modal fade" id="modalCategorie" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_categorie_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Nouvelle catégorie</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Rubrique *</label>
+                        <select name="rubrique" class="form-control" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for r in rubriques %}
+                                <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prix du pack (FCFA)</label>
+                        <input type="number" name="prix_pack" class="form-control" value="0" step="100">
+                        <small class="text-muted">Prix pour acheter toutes les épreuves de cette catégorie</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL MODIFIER CATÉGORIE ==================== -->
+<div class="modal fade" id="modalCategorieModifier" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="" id="formCategorieModifier">
+                {% csrf_token %}
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Modifier catégorie</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="categorie_id" id="categorie_id">
+                    <div class="mb-3">
+                        <label class="form-label">Rubrique</label>
+                        <select name="rubrique" id="categorie_rubrique" class="form-control" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for r in rubriques %}
+                                <option value="{{ r.id }}">{{ r.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" id="categorie_nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" id="categorie_ordre" class="form-control">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="actif" id="categorie_actif" class="form-check-input">
+                        <label class="form-check-label">Actif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL AJOUTER SÉRIE ==================== -->
+<div class="modal fade" id="modalSerie" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_serie_ajouter' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Nouvelle série</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie *</label>
+                        <select name="categorie" class="form-control" required>
+                            <option value="">-- Sélectionner --</option>
+                            {% for c in categories %}
+                                <option value="{{ c.id }}">{{ c.rubrique.nom }} - {{ c.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" name="nom" class="form-control" required placeholder="Ex: Série D">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Code (optionnel)</label>
+                        <input type="text" name="code" class="form-control" placeholder="Ex: D">
+                        <small class="text-muted">Code court pour la série</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL MODIFIER SÉRIE ==================== -->
+<div class="modal fade" id="modalSerieModifier" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="" id="formSerieModifier">
+                {% csrf_token %}
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">Modifier série</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="serie_id" id="serie_id">
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie</label>
+                        <select name="serie" class="form-control" required>
+                            <option value="">-- Sélectionnez une série --</option>
+                            {% for serie in series %}
+                                <option value="{{ serie.id }}">{{ serie.categorie.rubrique.nom }} / {{ serie.categorie.nom }} / {{ serie.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" name="nom" id="serie_nom" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Code</label>
+                        <input type="text" name="code" id="serie_code" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre</label>
+                        <input type="number" name="ordre" id="serie_ordre" class="form-control">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="actif" id="serie_actif" class="form-check-input">
+                        <label class="form-check-label">Actif</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Épreuve -->
+<div class="modal fade" id="modalEpreuve" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'admin_epreuve_ajouter' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Nouvelle épreuve</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- CATÉGORIE -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Catégorie *</label>
+                                <select name="categorie" class="form-control" required>
+                                    <option value="">-- Sélectionnez une catégorie --</option>
+                                    {% for cat in categories %}
+                                        <option value="{{ cat.id }}">{{ cat.rubrique.nom }} / {{ cat.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Année</label>
+                                <input type="number" name="annee" class="form-control" placeholder="Ex: 2024">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- TITRE -->
+                    <div class="mb-3">
+                        <label class="form-label">Titre *</label>
+                        <input type="text" name="titre" class="form-control" required placeholder="Ex: Mathématiques Baccalauréat Série D">
+                    </div>
+                    
+                    <!-- DESCRIPTION -->
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <!-- SÉRIE (optionnelle) -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Série <span class="text-muted">(optionnel)</span></label>
+                                <select name="serie" class="form-control">
+                                    <option value="">-- Sans série / Toutes séries --</option>
+                                    <option value="A">Série A (Littéraire)</option>
+                                    <option value="B">Série B (Économique)</option>
+                                    <option value="C">Série C (Scientifique)</option>
+                                    <option value="D">Série D (Technologique)</option>
+                                    <option value="E">Série E (STI)</option>
+                                    <option value="TI">Série TI</option>
+                                </select>
+                                <small class="text-muted">Laisser vide si non applicable (concours, examens pro...)</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Statut</label>
+                                <select name="statut" class="form-control">
+                                    <option value="brouillon">Brouillon</option>
+                                    <option value="publie">Publié</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- PRIX -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Prix sujet (FCFA) *</label>
+                                <input type="number" name="prix" class="form-control" required step="100">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Prix corrigé (FCFA)</label>
+                                <input type="number" name="prix_corrige" class="form-control" step="100" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3 form-check mt-4">
+                                <input type="checkbox" name="est_populaire" class="form-check-input" id="est_populaire">
+                                <label class="form-check-label" for="est_populaire">Populaire</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- FICHIERS -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Fichier sujet (PDF) *</label>
+                                <input type="file" name="fichier_sujet" class="form-control" accept=".pdf" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Fichier corrigé (PDF)</label>
+                                <input type="file" name="fichier_corrige" class="form-control" accept=".pdf">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Aperçu (Image)</label>
+                                <input type="file" name="apercu" class="form-control" accept="image/*">
+                                <small class="text-muted">Uploader la première page en image</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Créer l'épreuve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    // Auto-slug pour catégorie
+    document.getElementById('categorie_nom')?.addEventListener('input', function() {
+        const slugField = document.getElementById('categorie_slug');
+        if(slugField && !slugField.value) {
+            slugField.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+    });
+    
+    // Auto-slug pour rubrique
+    document.getElementById('rubrique_nom')?.addEventListener('input', function() {
+        const slugField = document.getElementById('rubrique_slug');
+        if(slugField && !slugField.value) {
+            slugField.value = this.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+    });
+</script>

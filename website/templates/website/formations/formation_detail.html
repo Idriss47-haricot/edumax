@@ -1,0 +1,900 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}{{ formation.titre }} — {{ config.nom_site|default:"Academia Net" }}{% endblock %}
+
+{% block content %}
+<div class="fd-page">
+
+<!-- ══ BANDEAU HERO ═══════════════════════════════════════════════════ -->
+<div class="fd-hero">
+  <div class="fd-hero-overlay"></div>
+  <div class="container position-relative">
+
+    <!-- Breadcrumb -->
+    <nav class="fd-breadcrumb">
+      <a href="/">Accueil</a>
+      <i class="fas fa-chevron-right"></i>
+      <a href="{% url 'formations_liste' %}">Formations</a>
+      {% if formation.centres_interet.exists %}
+      <i class="fas fa-chevron-right"></i>
+      <a href="?centre={{ formation.centres_interet.first.slug }}">{{ formation.centres_interet.first.nom }}</a>
+      {% endif %}
+      <i class="fas fa-chevron-right"></i>
+      <span>{{ formation.titre|truncatechars:40 }}</span>
+    </nav>
+
+    <div class="fd-hero-content">
+      <!-- Colonne gauche : infos -->
+      <div class="fd-hero-left">
+        <!-- Badges top -->
+        <div class="fd-hero-badges">
+          {% if formation.mise_en_avant %}
+          <span class="fd-badge fd-b-vedette"><i class="fas fa-bolt me-1"></i>Vedette</span>
+          {% endif %}
+          {% if formation.certifiee %}
+          <span class="fd-badge fd-b-cert"><i class="fas fa-certificate me-1"></i>Certifiée</span>
+          {% endif %}
+          {% if formation.prix == 0 %}
+          <span class="fd-badge fd-b-free"><i class="fas fa-gift me-1"></i>Gratuit</span>
+          {% endif %}
+          {% if formation.niveau %}
+          <span class="fd-badge fd-b-level">{{ formation.get_niveau_display|default:formation.niveau }}</span>
+          {% endif %}
+        </div>
+
+        <h1 class="fd-hero-title">{{ formation.titre }}</h1>
+        <p class="fd-hero-desc">{{ formation.description_courte }}</p>
+
+        <!-- Étoiles & stats -->
+        <div class="fd-hero-meta">
+          <div class="fd-meta-stars">
+            {% with note=formation.note_moyenne|default:0 %}
+            {% for i in "12345" %}
+            <i class="fas fa-star {% if forloop.counter <= note %}filled{% endif %}"></i>
+            {% endfor %}
+            {% endwith %}
+            <span class="fd-star-score">{{ formation.note_moyenne|default:"—"|floatformat:1 }}</span>
+          </div>
+          <span class="fd-meta-sep">·</span>
+          <span class="fd-meta-item"><i class="fas fa-users me-1"></i>{{ formation.nb_ventes|default:0 }} apprenants</span>
+          <span class="fd-meta-sep">·</span>
+          <span class="fd-meta-item"><i class="fas fa-comment me-1"></i>{{ formation.nb_avis|default:0 }} avis</span>
+          {% if formation.duree %}
+          <span class="fd-meta-sep">·</span>
+          <span class="fd-meta-item"><i class="fas fa-clock me-1"></i>{{ formation.duree }}</span>
+          {% endif %}
+          {% if formation.nb_modules %}
+          <span class="fd-meta-sep">·</span>
+          <span class="fd-meta-item"><i class="fas fa-layer-group me-1"></i>{{ formation.nb_modules }} modules</span>
+          {% endif %}
+        </div>
+
+        <!-- Formateur -->
+        <div class="fd-hero-author">
+          <div class="fd-author-av-lg">
+            {% if formation.createur.photo %}
+            <img src="{{ formation.createur.photo.url }}" alt="{{ formation.createur.prenom }}">
+            {% else %}
+            <span>{{ formation.createur.prenom|first|upper }}</span>
+            {% endif %}
+          </div>
+          <div>
+            <div class="fd-author-by">Formateur</div>
+            <a href="{% url 'profil_public' formation.createur.id %}" class="fd-author-name">
+              {{ formation.createur.prenom }} {{ formation.createur.last_name }}
+            </a>
+            {% if formation.createur.certifie %}
+            <span class="fd-cert-badge"><i class="fas fa-certificate"></i> Certifié</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Dates + langue -->
+        <div class="fd-hero-footer-meta">
+          <span><i class="fas fa-calendar-alt me-1"></i>Créée le {{ formation.date_creation|date:"d/m/Y" }}</span>
+          {% if formation.date_publication %}
+          <span><i class="fas fa-sync me-1"></i>Mise à jour {{ formation.date_publication|date:"m/Y" }}</span>
+          {% endif %}
+          <span><i class="fas fa-globe me-1"></i>{{ formation.langue|default:"Français" }}</span>
+        </div>
+      </div>
+
+      <!-- Colonne droite : sidebar preview (desktop only, clone de la sidebar) -->
+      <div class="fd-hero-right d-none d-lg-block">
+        <!-- espace réservé — la sidebar réelle est sticky plus bas -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CORPS ════════════════════════════════════════════════════════ -->
+<div class="container fd-body">
+  <div class="fd-layout">
+
+    <!-- ── COLONNE PRINCIPALE ──────────────────────────────────────── -->
+    <div class="fd-main">
+
+      <!-- ① Vidéo de présentation -->
+      {% if formation.video_presentation %}
+      <div class="fd-section fd-video-wrap">
+        <h2 class="fd-section-title"><i class="fas fa-play-circle me-2 text-primary"></i>Aperçu de la formation</h2>
+        <div class="fd-video-player">
+          <video controls preload="metadata" class="fd-video">
+            <source src="{{ formation.video_presentation.url }}" type="video/mp4">
+          </video>
+          <div class="fd-video-overlay" onclick="playVideo(this)">
+            <div class="fd-play-btn"><i class="fas fa-play"></i></div>
+            <span>Regarder l'aperçu (gratuit)</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ② Ce que vous apprendrez -->
+      {% if formation.objectifs %}
+      <div class="fd-section">
+        <div class="fd-learn-card">
+          <h2 class="fd-section-title"><i class="fas fa-bullseye me-2"></i>Ce que vous allez apprendre</h2>
+          <div class="fd-learn-grid">
+            {% for obj in formation.objectifs_liste %}
+            <div class="fd-learn-item">
+              <i class="fas fa-check-circle"></i>
+              <span>{{ obj }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ③ Prérequis -->
+      {% if formation.prerequis %}
+      <div class="fd-section">
+        <h2 class="fd-section-title"><i class="fas fa-list-check me-2"></i>Prérequis</h2>
+        <ul class="fd-prereq-list">
+          {% for p in formation.prerequis_liste %}
+          <li><i class="fas fa-circle-dot me-2 text-primary"></i>{{ p }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- ④ Description complète -->
+      <div class="fd-section">
+        <h2 class="fd-section-title"><i class="fas fa-info-circle me-2"></i>À propos de cette formation</h2>
+        <div class="fd-desc-block" id="descBlock">
+          <div class="fd-desc-text" id="descText">
+            {{ formation.description_longue|linebreaks|default:formation.description_courte|linebreaks }}
+          </div>
+          <div class="fd-desc-fade" id="descFade"></div>
+        </div>
+        <button class="fd-desc-toggle" id="descToggle" onclick="toggleDesc()">
+          <i class="fas fa-chevron-down me-1"></i>Lire plus
+        </button>
+      </div>
+
+      <!-- ⑤ Contenu de la formation (curriculum) -->
+      {% if fichiers %}
+      <div class="fd-section">
+        <div class="fd-curriculum-header">
+          <h2 class="fd-section-title mb-0"><i class="fas fa-list-ul me-2"></i>Contenu de la formation</h2>
+          <div class="fd-curriculum-stats">
+            {{ fichiers|length }} ressource{{ fichiers|length|pluralize }} •
+            {% with total=0 %}{{ fichiers|length }}{% endwith %} fichiers
+          </div>
+        </div>
+
+        <div class="fd-curriculum-list">
+          {% for fichier in fichiers %}
+          <div class="fd-curriculum-item {% if not a_deja_achete and fichier.type_fichier == 'video' and not forloop.first %}locked{% endif %}">
+            <div class="fd-curr-left">
+              <div class="fd-curr-icon fd-curr-{{ fichier.type_fichier }}">
+                {% if fichier.type_fichier == 'video' %}<i class="fas fa-play"></i>
+                {% elif fichier.type_fichier == 'pdf' %}<i class="fas fa-file-pdf"></i>
+                {% else %}<i class="fas fa-file-alt"></i>{% endif %}
+              </div>
+              <div class="fd-curr-info">
+                <span class="fd-curr-titre">{{ fichier.titre }}</span>
+                <span class="fd-curr-type">{{ fichier.get_type_fichier_display }} • {{ fichier.taille|filesizeformat }}</span>
+              </div>
+            </div>
+            <div class="fd-curr-right">
+              {% if a_deja_achete %}
+              <a href="{{ fichier.fichier.url }}" class="fd-curr-dl" download title="Télécharger">
+                <i class="fas fa-download"></i>
+              </a>
+              {% elif forloop.first %}
+              <span class="fd-curr-preview">Aperçu</span>
+              {% else %}
+              <i class="fas fa-lock fd-curr-lock"></i>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if not a_deja_achete %}
+        <div class="fd-curriculum-note">
+          <i class="fas fa-lock me-2"></i>Le contenu complet sera disponible après achat
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- ⑥ Pour qui est cette formation -->
+      {% if formation.public_cible %}
+      <div class="fd-section">
+        <h2 class="fd-section-title"><i class="fas fa-users me-2"></i>Pour qui est cette formation ?</h2>
+        <ul class="fd-prereq-list">
+          {% for p in formation.public_cible_liste %}
+          <li><i class="fas fa-user-check me-2 text-success"></i>{{ p }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- ⑦ Formateur -->
+      <div class="fd-section">
+        <h2 class="fd-section-title"><i class="fas fa-chalkboard-teacher me-2"></i>Votre formateur</h2>
+        <div class="fd-formateur-card">
+          <div class="fd-fmt-top">
+            <div class="fd-fmt-avatar">
+              {% if formation.createur.photo %}
+              <img src="{{ formation.createur.photo.url }}" alt="{{ formation.createur.prenom }}">
+              {% else %}
+              <span>{{ formation.createur.prenom|first|upper }}</span>
+              {% endif %}
+            </div>
+            <div class="fd-fmt-info">
+              <h3 class="fd-fmt-name">
+                <a href="{% url 'profil_public' formation.createur.id %}">
+                  {{ formation.createur.prenom }} {{ formation.createur.last_name }}
+                </a>
+              </h3>
+              {% if formation.createur.bio %}
+              <p class="fd-fmt-bio-short">{{ formation.createur.bio|truncatechars:120 }}</p>
+              {% endif %}
+              <div class="fd-fmt-stats">
+                <span><i class="fas fa-graduation-cap me-1"></i>{{ formation.createur.nb_formations|default:1 }} formations</span>
+                <span><i class="fas fa-users me-1"></i>{{ formation.createur.nb_apprenants|default:0 }} apprenants</span>
+                {% if formation.createur.certifie %}
+                <span class="fd-cert-badge-sm"><i class="fas fa-certificate me-1"></i>Formateur certifié</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑧ Avis clients -->
+      <div class="fd-section" id="section-avis">
+        <div class="fd-reviews-header">
+          <h2 class="fd-section-title mb-0"><i class="fas fa-star me-2 text-warning"></i>Avis des apprenants</h2>
+          {% if a_deja_achete and user.is_authenticated %}
+          <a href="{% url 'formation_laisser_avis' formation.slug %}" class="fd-btn-avis">
+            <i class="fas fa-pen me-1"></i>Laisser un avis
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Résumé note globale -->
+        <div class="fd-rating-summary">
+          <div class="fd-rating-big">
+            <span class="fd-big-note">{{ formation.note_moyenne|default:"—"|floatformat:1 }}</span>
+            <div class="fd-big-stars">
+              {% with note=formation.note_moyenne|default:0 %}
+              {% for i in "12345" %}
+              <i class="fas fa-star {% if forloop.counter <= note %}filled{% endif %}"></i>
+              {% endfor %}
+              {% endwith %}
+            </div>
+            <span class="fd-big-label">Note globale</span>
+          </div>
+          <div class="fd-rating-bars">
+            {% for n in "54321" %}
+            <div class="fd-rbar-row">
+              <div class="fd-rbar-stars">
+                {% for i in "12345" %}
+                <i class="fas fa-star {% if forloop.parentloop.counter0|add:1 <= n|add:0 %}filled{% endif %} small"></i>
+                {% endfor %}
+              </div>
+              <div class="fd-rbar-track">
+                <div class="fd-rbar-fill" style="width:{{ repartition_notes|default:'0'|slice:forloop.counter0 }}%"></div>
+              </div>
+              <span class="fd-rbar-pct">{{ n }} ★</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Liste avis -->
+        <div class="fd-avis-list" id="avisList">
+          {% for avis in avis_list %}
+          <div class="fd-avis-item">
+            <div class="fd-avis-avatar">
+              {{ avis.utilisateur.prenom|first|upper }}
+            </div>
+            <div class="fd-avis-content">
+              <div class="fd-avis-top">
+                <div>
+                  <span class="fd-avis-author">{{ avis.utilisateur.prenom|default:avis.utilisateur.username }}</span>
+                  <span class="fd-avis-date">{{ avis.date_creation|date:"d M Y" }}</span>
+                </div>
+                <div class="fd-avis-stars-sm">
+                  {% for i in "12345" %}
+                  <i class="fas fa-star {% if forloop.counter <= avis.note %}filled{% else %}text-muted{% endif %}"></i>
+                  {% endfor %}
+                </div>
+              </div>
+              <p class="fd-avis-text">{{ avis.commentaire|default:"Aucun commentaire laissé."|linebreaks }}</p>
+            </div>
+          </div>
+          {% empty %}
+          <div class="fd-avis-empty">
+            <i class="far fa-comment-dots fa-2x mb-2 text-muted"></i>
+            <p>Aucun avis pour le moment. Soyez le premier à partager votre expérience !</p>
+            {% if a_deja_achete %}
+            <a href="{% url 'formation_laisser_avis' formation.slug %}" class="fd-btn-avis">Laisser un avis</a>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if avis_list.has_next %}
+        <button class="fd-load-more-avis" onclick="loadMoreAvis()">
+          <i class="fas fa-chevron-down me-2"></i>Voir plus d'avis
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- ⑨ Formations similaires -->
+      {% if formations_similaires %}
+      <div class="fd-section">
+        <h2 class="fd-section-title"><i class="fas fa-th-large me-2"></i>Formations similaires</h2>
+        <div class="fd-similaires-grid">
+          {% for f in formations_similaires %}
+          <a href="{% url 'formation_detail' f.slug %}" class="fd-sim-card">
+            <div class="fd-sim-img">
+              {% if f.image_cover %}
+              <img src="{{ f.image_cover.url }}" alt="{{ f.titre }}" loading="lazy">
+              {% else %}
+              <div class="fd-sim-placeholder"><i class="fas fa-graduation-cap"></i></div>
+              {% endif %}
+            </div>
+            <div class="fd-sim-body">
+              <h4>{{ f.titre|truncatechars:45 }}</h4>
+              <div class="fd-sim-meta">
+                <span class="fd-sim-stars">
+                  {% with note=f.note_moyenne|default:0 %}
+                  {% for i in "12345" %}<i class="fas fa-star {% if forloop.counter <= note %}filled{% endif %}"></i>{% endfor %}
+                  {% endwith %}
+                </span>
+                <span class="fd-sim-price">
+                  {% if f.prix == 0 %}Gratuit{% else %}{{ f.prix|floatformat:0 }} FCFA{% endif %}
+                </span>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── SIDEBAR ACHAT ───────────────────────────────────────────── -->
+    <aside class="fd-sidebar">
+      <div class="fd-sidebar-card" id="sidebarCard">
+
+        <!-- Aperçu image -->
+        <div class="fd-side-preview">
+          {% if formation.image_cover %}
+          <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}">
+          {% else %}
+          <div class="fd-side-placeholder">
+            <i class="fas fa-graduation-cap fa-3x"></i>
+          </div>
+          {% endif %}
+          {% if formation.video_presentation %}
+          <div class="fd-side-play" onclick="scrollToVideo()">
+            <div class="fd-play-btn-sm"><i class="fas fa-play"></i></div>
+            <span>Voir l'aperçu</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Prix -->
+        <div class="fd-side-price-block">
+          {% if formation.prix == 0 %}
+          <div class="fd-price-gratuit">Gratuit</div>
+          {% else %}
+          <div class="fd-price-main">{{ formation.prix|floatformat:0 }} <span class="fd-price-currency">FCFA</span></div>
+          {% if formation.prix_original and formation.prix_original > formation.prix %}
+          <div class="fd-price-row">
+            <span class="fd-price-old">{{ formation.prix_original|floatformat:0 }} FCFA</span>
+            <span class="fd-price-discount">
+              -{% widthratio formation.prix formation.prix_original 100 as pct %}{{ pct }}%
+            </span>
+          </div>
+          {% endif %}
+          {% endif %}
+        </div>
+
+        <!-- CTA principal -->
+        {% if a_deja_achete %}
+        <div class="fd-already-owned">
+          <i class="fas fa-check-circle me-2"></i>Vous avez déjà accès à cette formation
+        </div>
+        <a href="{% url 'mes_formations' %}" class="fd-btn-primary fd-btn-full">
+          <i class="fas fa-book-open me-2"></i>Accéder à ma formation
+        </a>
+
+        {% elif formation.prix == 0 %}
+        {% if user.is_authenticated %}
+        <a href="{% url 'formation_acheter' formation.slug %}" class="fd-btn-primary fd-btn-full">
+          <i class="fas fa-play me-2"></i>Commencer gratuitement
+        </a>
+        {% else %}
+        <a href="{% url 'inscription' %}?next={% url 'formation_detail' formation.slug %}" class="fd-btn-primary fd-btn-full">
+          <i class="fas fa-user-plus me-2"></i>S'inscrire et commencer
+        </a>
+        {% endif %}
+
+        {% else %}
+        {% if user.is_authenticated %}
+        <!-- Coupon -->
+        <div class="fd-coupon-block">
+          <div class="fd-coupon-input-wrap">
+            <input type="text" id="couponInput" placeholder="Code promo" class="fd-coupon-input">
+            <button onclick="appliquerCoupon()" class="fd-coupon-btn">Appliquer</button>
+          </div>
+          <div id="couponMsg" class="fd-coupon-msg" style="display:none;"></div>
+        </div>
+
+        <a href="{% url 'formation_acheter' formation.slug %}" class="fd-btn-primary fd-btn-full" id="btnAcheter">
+          <i class="fas fa-shopping-cart me-2"></i>Acheter maintenant
+        </a>
+        <button class="fd-btn-outline fd-btn-full" onclick="essayerGratuit()">
+          <i class="fas fa-eye me-2"></i>Prévisualiser le contenu
+        </button>
+        {% else %}
+        <a href="{% url 'connexion' %}?next={% url 'formation_detail' formation.slug %}" class="fd-btn-primary fd-btn-full">
+          <i class="fas fa-sign-in-alt me-2"></i>Se connecter pour acheter
+        </a>
+        {% endif %}
+        {% endif %}
+
+        <!-- Garanties -->
+        <div class="fd-garanties">
+          <div class="fd-garantie-item"><i class="fas fa-clock"></i><span>Accès immédiat après paiement</span></div>
+          <div class="fd-garantie-item"><i class="fas fa-infinity"></i><span>Accès à vie au contenu</span></div>
+          <div class="fd-garantie-item"><i class="fas fa-mobile-alt"></i><span>Accessible sur mobile et PC</span></div>
+          <div class="fd-garantie-item"><i class="fas fa-headset"></i><span>Support disponible 7j/7</span></div>
+          {% if formation.certifiee %}
+          <div class="fd-garantie-item"><i class="fas fa-certificate text-warning"></i><span>Certificat de completion</span></div>
+          {% endif %}
+        </div>
+
+        <!-- Paiements -->
+        <div class="fd-payment-methods">
+          <span class="fd-pay-label">Paiements acceptés</span>
+          <div class="fd-pay-icons">
+            <span class="fd-pay-chip fd-momo">MoMo</span>
+            <span class="fd-pay-chip fd-om">Orange</span>
+            <span class="fd-pay-chip fd-wave">Wave</span>
+          </div>
+        </div>
+
+        <!-- Partager -->
+        <div class="fd-share-block">
+          <span class="fd-share-label">Partager</span>
+          <div class="fd-share-btns">
+            <a href="https://wa.me/?text={{ formation.titre|urlencode }}%20—%20{{ request.build_absolute_uri }}"
+               target="_blank" class="fd-share-btn fd-share-wa" title="WhatsApp">
+              <i class="fab fa-whatsapp"></i>
+            </a>
+            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}"
+               target="_blank" class="fd-share-btn fd-share-fb" title="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ request.build_absolute_uri }}&title={{ formation.titre|urlencode }}"
+               target="_blank" class="fd-share-btn fd-share-li" title="LinkedIn">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+            <button onclick="copyLink()" class="fd-share-btn fd-share-copy" title="Copier le lien">
+              <i class="fas fa-link"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Signaler -->
+        {% if user.is_authenticated and user != formation.createur %}
+        <a href="{% url 'signaler_formation' formation.slug %}"
+           class="fd-signaler-link"
+           onclick="return confirm('Signaler cette formation ?')">
+          <i class="fas fa-flag me-1"></i>Signaler
+        </a>
+        {% endif %}
+
+      </div>
+    </aside>
+
+  </div>
+</div>
+</div>
+
+<!-- ══ BARRE MOBILE STICKY BAS ══════════════════════════════════════ -->
+<div class="fd-mobile-bar d-lg-none">
+  <div class="fd-mb-price">
+    {% if formation.prix == 0 %}Gratuit
+    {% else %}{{ formation.prix|floatformat:0 }} FCFA{% endif %}
+  </div>
+  {% if a_deja_achete %}
+  <a href="{% url 'mes_formations' %}" class="fd-mb-btn">Mes formations</a>
+  {% elif formation.prix == 0 %}
+  <a href="{% url 'formation_acheter' formation.slug %}" class="fd-mb-btn">Commencer</a>
+  {% else %}
+  <a href="{% url 'formation_acheter' formation.slug %}" class="fd-mb-btn">Acheter</a>
+  {% endif %}
+</div>
+
+<!-- ══ TOAST ══════════════════════════════════════════════════════════ -->
+<div id="toastMsg" class="fd-toast" style="display:none;"></div>
+
+<!-- ══ STYLES ════════════════════════════════════════════════════════ -->
+<style>
+:root {
+  --fd-primary: #1e3a8a;
+  --fd-primary-dark: #0f2b5e;
+  --fd-primary-light: #3b82f6;
+  --fd-accent: #f59e0b;
+  --fd-green: #10b981;
+  --fd-border: #e5e7eb;
+  --fd-bg: #f8faff;
+  --fd-text: #111827;
+  --fd-muted: #6b7280;
+  --fd-white: #ffffff;
+  --fd-radius: 16px;
+  --fd-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  --fd-shadow-lg: 0 12px 40px rgba(0,0,0,0.14);
+  --fd-transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+.fd-page { background:var(--fd-bg);min-height:100vh;padding-bottom:80px; }
+
+/* ── HERO ── */
+.fd-hero { background:linear-gradient(135deg,#050e2b 0%,#0f2b5e 50%,#1e3a8a 100%);padding:40px 0 50px;position:relative;overflow:hidden; }
+.fd-hero-overlay { position:absolute;inset:0;background-image:radial-gradient(circle at 2px 2px,rgba(255,255,255,0.03) 1px,transparent 0);background-size:28px 28px; }
+.fd-breadcrumb { display:flex;align-items:center;gap:8px;color:rgba(255,255,255,0.5);font-size:0.78rem;margin-bottom:24px;flex-wrap:wrap; }
+.fd-breadcrumb a { color:rgba(255,255,255,0.65);text-decoration:none; }
+.fd-breadcrumb a:hover { color:white; }
+.fd-breadcrumb i { font-size:0.55rem; }
+.fd-breadcrumb span { color:rgba(255,255,255,0.4); }
+
+.fd-hero-content { display:grid;grid-template-columns:1fr 420px;gap:40px; }
+@media(max-width:992px) { .fd-hero-content { grid-template-columns:1fr; } }
+
+.fd-hero-badges { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px; }
+.fd-badge { font-size:0.72rem;font-weight:700;padding:4px 12px;border-radius:50px;display:inline-flex;align-items:center; }
+.fd-b-vedette { background:var(--fd-accent);color:#7c3a00; }
+.fd-b-cert { background:#7c3aed;color:white; }
+.fd-b-free { background:var(--fd-green);color:white; }
+.fd-b-level { background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9);border:1px solid rgba(255,255,255,0.2); }
+
+.fd-hero-title { font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;color:white;line-height:1.2;margin-bottom:14px; }
+.fd-hero-desc { color:rgba(255,255,255,0.82);font-size:1rem;line-height:1.6;margin-bottom:18px;max-width:620px; }
+
+.fd-hero-meta { display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:16px;font-size:0.85rem;color:rgba(255,255,255,0.75); }
+.fd-meta-stars { display:flex;align-items:center;gap:3px; }
+.fd-meta-stars .fa-star { font-size:0.78rem;color:rgba(255,255,255,0.3); }
+.fd-meta-stars .fa-star.filled { color:var(--fd-accent); }
+.fd-star-score { font-weight:700;color:var(--fd-accent);margin-left:4px; }
+.fd-meta-sep { opacity:0.4; }
+.fd-meta-item { display:flex;align-items:center;gap:3px; }
+
+.fd-hero-author { display:flex;align-items:center;gap:12px;margin-bottom:16px; }
+.fd-author-av-lg { width:48px;height:48px;border-radius:50%;background:var(--fd-primary-light);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:1.2rem;font-weight:700;color:white;border:2px solid rgba(255,255,255,0.3);flex-shrink:0; }
+.fd-author-av-lg img { width:100%;height:100%;object-fit:cover; }
+.fd-author-by { font-size:0.72rem;color:rgba(255,255,255,0.5);margin-bottom:2px; }
+.fd-author-name { color:rgba(255,255,255,0.9);font-weight:600;font-size:0.9rem;text-decoration:none; }
+.fd-author-name:hover { color:var(--fd-accent); }
+.fd-cert-badge { background:rgba(245,158,11,0.2);color:var(--fd-accent);border:1px solid rgba(245,158,11,0.4);border-radius:50px;padding:2px 10px;font-size:0.7rem;font-weight:700;margin-left:8px; }
+
+.fd-hero-footer-meta { display:flex;flex-wrap:wrap;gap:16px;font-size:0.8rem;color:rgba(255,255,255,0.5); }
+.fd-hero-footer-meta span { display:flex;align-items:center;gap:5px; }
+
+/* ── BODY LAYOUT ── */
+.fd-body { padding:36px 0 40px; }
+.fd-layout { display:grid;grid-template-columns:1fr 380px;gap:32px;align-items:start; }
+@media(max-width:992px) { .fd-layout { grid-template-columns:1fr; } }
+
+/* ── SECTIONS MAIN ── */
+.fd-section { background:var(--fd-white);border-radius:var(--fd-radius);border:1.5px solid var(--fd-border);padding:28px;margin-bottom:20px; }
+.fd-section-title { font-size:1.15rem;font-weight:800;color:var(--fd-text);margin-bottom:20px; }
+
+/* Vidéo */
+.fd-video-wrap { }
+.fd-video-player { position:relative;border-radius:12px;overflow:hidden;background:#000; }
+.fd-video { width:100%;display:block;border-radius:12px; }
+.fd-video-overlay { position:absolute;inset:0;background:rgba(0,0,0,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:var(--fd-transition); }
+.fd-video-overlay:hover { background:rgba(0,0,0,0.55); }
+.fd-video-overlay span { color:white;font-weight:600;font-size:0.95rem; }
+.fd-play-btn { width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.2);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:white;border:2px solid rgba(255,255,255,0.4);transition:var(--fd-transition); }
+.fd-video-overlay:hover .fd-play-btn { background:var(--fd-accent);border-color:var(--fd-accent);transform:scale(1.1); }
+
+/* Ce qu'on apprend */
+.fd-learn-card { background:linear-gradient(135deg,#f0f7ff,#e8f4ff);border-radius:12px;padding:24px; }
+.fd-learn-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+@media(max-width:640px) { .fd-learn-grid { grid-template-columns:1fr; } }
+.fd-learn-item { display:flex;align-items:flex-start;gap:10px;font-size:0.88rem;color:var(--fd-text);line-height:1.4; }
+.fd-learn-item .fa-check-circle { color:var(--fd-green);margin-top:2px;flex-shrink:0; }
+
+/* Prérequis */
+.fd-prereq-list { list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px; }
+.fd-prereq-list li { font-size:0.9rem;color:var(--fd-text);display:flex;align-items:flex-start;gap:8px;line-height:1.5; }
+
+/* Description */
+.fd-desc-block { position:relative; }
+.fd-desc-text { font-size:0.92rem;color:var(--fd-text);line-height:1.8;max-height:200px;overflow:hidden;transition:max-height 0.4s ease; }
+.fd-desc-text.expanded { max-height:2000px; }
+.fd-desc-fade { position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(transparent,white);pointer-events:none;transition:opacity 0.3s; }
+.fd-desc-fade.hidden { opacity:0; }
+.fd-desc-toggle { background:none;border:none;color:var(--fd-primary);font-weight:700;font-size:0.9rem;cursor:pointer;padding:10px 0 0;display:flex;align-items:center;gap:6px;transition:var(--fd-transition); }
+.fd-desc-toggle:hover { text-decoration:underline; }
+
+/* Curriculum */
+.fd-curriculum-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px; }
+.fd-curriculum-stats { font-size:0.82rem;color:var(--fd-muted); }
+.fd-curriculum-list { display:flex;flex-direction:column;gap:4px; }
+.fd-curriculum-item { display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:10px;background:#f9fafb;border:1px solid var(--fd-border);transition:var(--fd-transition); }
+.fd-curriculum-item:hover { background:#f0f4ff;border-color:var(--fd-primary-light); }
+.fd-curriculum-item.locked { opacity:0.65; }
+.fd-curr-left { display:flex;align-items:center;gap:12px; }
+.fd-curr-icon { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0; }
+.fd-curr-video { background:#fee2e2;color:#dc2626; }
+.fd-curr-pdf { background:#fef3c7;color:#d97706; }
+.fd-curr-document { background:#dbeafe;color:var(--fd-primary); }
+.fd-curr-autre { background:#f3f4f6;color:var(--fd-muted); }
+.fd-curr-titre { font-size:0.88rem;font-weight:600;color:var(--fd-text);display:block; }
+.fd-curr-type { font-size:0.75rem;color:var(--fd-muted); }
+.fd-curr-dl { color:var(--fd-primary);font-size:1rem;transition:var(--fd-transition); }
+.fd-curr-dl:hover { color:var(--fd-primary-dark);transform:scale(1.2); }
+.fd-curr-preview { background:#dbeafe;color:var(--fd-primary);font-size:0.72rem;font-weight:700;padding:3px 10px;border-radius:50px; }
+.fd-curr-lock { color:var(--fd-muted);font-size:0.9rem; }
+.fd-curriculum-note { background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:0.82rem;color:#92400e;margin-top:12px;display:flex;align-items:center;gap:8px; }
+
+/* Formateur */
+.fd-formateur-card { background:#f8faff;border-radius:14px;padding:24px; }
+.fd-fmt-top { display:flex;align-items:flex-start;gap:16px; }
+.fd-fmt-avatar { width:80px;height:80px;border-radius:50%;background:var(--fd-primary);display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:2rem;font-weight:700;color:white;flex-shrink:0; }
+.fd-fmt-avatar img { width:100%;height:100%;object-fit:cover; }
+.fd-fmt-name { font-size:1.1rem;font-weight:800;margin-bottom:6px; }
+.fd-fmt-name a { color:var(--fd-text);text-decoration:none; }
+.fd-fmt-name a:hover { color:var(--fd-primary); }
+.fd-fmt-bio-short { font-size:0.85rem;color:var(--fd-muted);margin-bottom:10px;line-height:1.5; }
+.fd-fmt-stats { display:flex;gap:16px;flex-wrap:wrap;font-size:0.82rem;color:var(--fd-muted); }
+.fd-cert-badge-sm { background:#fef3c7;color:#92400e;border-radius:50px;padding:2px 10px;font-size:0.72rem;font-weight:700; }
+
+/* Avis */
+.fd-reviews-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px; }
+.fd-btn-avis { background:var(--fd-primary);color:white;padding:8px 18px;border-radius:8px;text-decoration:none;font-weight:600;font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;transition:var(--fd-transition); }
+.fd-btn-avis:hover { background:var(--fd-primary-dark);color:white; }
+.fd-rating-summary { display:flex;gap:32px;align-items:center;background:#fffbeb;border-radius:14px;padding:20px 24px;margin-bottom:24px;flex-wrap:wrap; }
+.fd-rating-big { text-align:center; }
+.fd-big-note { font-size:3.5rem;font-weight:900;color:var(--fd-primary);display:block;line-height:1; }
+.fd-big-stars { display:flex;gap:4px;justify-content:center;margin:6px 0; }
+.fd-big-stars .fa-star { color:rgba(245,158,11,0.3); }
+.fd-big-stars .fa-star.filled { color:var(--fd-accent); }
+.fd-big-label { font-size:0.8rem;color:var(--fd-muted); }
+.fd-rating-bars { flex:1;display:flex;flex-direction:column;gap:6px;min-width:200px; }
+.fd-rbar-row { display:flex;align-items:center;gap:10px; }
+.fd-rbar-stars { display:flex;gap:2px;width:80px;justify-content:flex-end; }
+.fd-rbar-stars .fa-star.small { font-size:0.65rem; }
+.fd-rbar-track { flex:1;height:8px;background:#e5e7eb;border-radius:50px;overflow:hidden; }
+.fd-rbar-fill { height:100%;background:var(--fd-accent);border-radius:50px;transition:width 0.6s ease; }
+.fd-rbar-pct { font-size:0.75rem;color:var(--fd-muted);width:28px;text-align:right; }
+.fd-avis-list { display:flex;flex-direction:column;gap:20px; }
+.fd-avis-item { display:flex;gap:14px; }
+.fd-avis-avatar { width:44px;height:44px;border-radius:50%;background:var(--fd-primary);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:white;flex-shrink:0; }
+.fd-avis-content { flex:1; }
+.fd-avis-top { display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px; }
+.fd-avis-author { font-weight:700;font-size:0.9rem;color:var(--fd-text); }
+.fd-avis-date { font-size:0.78rem;color:var(--fd-muted);margin-left:8px; }
+.fd-avis-stars-sm { display:flex;gap:2px; }
+.fd-avis-stars-sm .fa-star { font-size:0.75rem;color:#d1d5db; }
+.fd-avis-stars-sm .fa-star.filled { color:var(--fd-accent); }
+.fd-avis-text { font-size:0.88rem;color:var(--fd-text);line-height:1.6; }
+.fd-avis-empty { text-align:center;padding:30px;color:var(--fd-muted); }
+.fd-load-more-avis { display:flex;align-items:center;margin:16px auto 0;background:none;border:1.5px solid var(--fd-border);border-radius:10px;padding:10px 24px;color:var(--fd-primary);font-weight:600;cursor:pointer;transition:var(--fd-transition); }
+.fd-load-more-avis:hover { border-color:var(--fd-primary);background:#f0f4ff; }
+
+/* Similaires */
+.fd-similaires-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px; }
+.fd-sim-card { text-decoration:none;color:inherit;background:white;border-radius:12px;border:1.5px solid var(--fd-border);overflow:hidden;transition:var(--fd-transition);display:block; }
+.fd-sim-card:hover { border-color:var(--fd-primary-light);box-shadow:var(--fd-shadow);transform:translateY(-3px); }
+.fd-sim-img { height:100px;overflow:hidden;background:#f0f4ff; }
+.fd-sim-img img { width:100%;height:100%;object-fit:cover; }
+.fd-sim-placeholder { height:100%;display:flex;align-items:center;justify-content:center;color:var(--fd-primary);font-size:1.8rem;opacity:0.3; }
+.fd-sim-body { padding:10px; }
+.fd-sim-body h4 { font-size:0.82rem;font-weight:700;color:var(--fd-text);margin-bottom:6px;line-height:1.3; }
+.fd-sim-meta { display:flex;align-items:center;justify-content:space-between; }
+.fd-sim-stars .fa-star { font-size:0.65rem;color:#d1d5db; }
+.fd-sim-stars .fa-star.filled { color:var(--fd-accent); }
+.fd-sim-price { font-size:0.8rem;font-weight:700;color:var(--fd-primary); }
+
+/* ── SIDEBAR CARD ── */
+.fd-sidebar { position:sticky;top:80px; }
+.fd-sidebar-card { background:var(--fd-white);border-radius:20px;border:1.5px solid var(--fd-border);overflow:hidden;box-shadow:var(--fd-shadow-lg); }
+.fd-side-preview { position:relative;height:200px;background:#1e3a8a;overflow:hidden; }
+.fd-side-preview img { width:100%;height:100%;object-fit:cover; }
+.fd-side-placeholder { height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3); }
+.fd-side-play { position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:var(--fd-transition); }
+.fd-side-play:hover { background:rgba(0,0,0,0.5); }
+.fd-side-play span { color:white;font-size:0.85rem;font-weight:600; }
+.fd-play-btn-sm { width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;color:white;font-size:1.1rem;border:2px solid rgba(255,255,255,0.4); }
+
+.fd-side-price-block { padding:20px 20px 8px; }
+.fd-price-gratuit { font-size:2.2rem;font-weight:900;color:var(--fd-green); }
+.fd-price-main { font-size:2.2rem;font-weight:900;color:var(--fd-primary);line-height:1; }
+.fd-price-currency { font-size:1rem; }
+.fd-price-row { display:flex;align-items:center;gap:10px;margin-top:4px; }
+.fd-price-old { color:var(--fd-muted);text-decoration:line-through;font-size:0.9rem; }
+.fd-price-discount { background:#fee2e2;color:#dc2626;border-radius:6px;padding:2px 8px;font-size:0.8rem;font-weight:700; }
+
+.fd-already-owned { background:#d1fae5;color:#065f46;border-radius:10px;padding:10px 14px;font-size:0.85rem;font-weight:600;text-align:center;margin:0 20px 10px;display:flex;align-items:center;justify-content:center;gap:8px; }
+
+.fd-btn-primary { display:flex;align-items:center;justify-content:center;background:var(--fd-accent);color:#1a2b00;padding:14px;border-radius:12px;font-weight:800;font-size:1rem;text-decoration:none;transition:var(--fd-transition);cursor:pointer;border:none; }
+.fd-btn-primary:hover { background:#d97706;color:white;transform:translateY(-1px); }
+.fd-btn-outline { display:flex;align-items:center;justify-content:center;background:white;color:var(--fd-primary);padding:12px;border-radius:12px;font-weight:700;font-size:0.9rem;border:1.5px solid var(--fd-primary);text-decoration:none;transition:var(--fd-transition);cursor:pointer; }
+.fd-btn-outline:hover { background:#f0f4ff; }
+.fd-btn-full { margin:0 20px 10px;display:flex; }
+
+.fd-coupon-block { margin:0 20px 10px; }
+.fd-coupon-input-wrap { display:flex;gap:8px; }
+.fd-coupon-input { flex:1;border:1.5px solid var(--fd-border);border-radius:10px;padding:9px 12px;font-size:0.85rem;outline:none; }
+.fd-coupon-input:focus { border-color:var(--fd-primary); }
+.fd-coupon-btn { background:var(--fd-primary);color:white;border:none;border-radius:10px;padding:9px 14px;font-weight:700;font-size:0.8rem;cursor:pointer;transition:var(--fd-transition);white-space:nowrap; }
+.fd-coupon-btn:hover { background:var(--fd-primary-dark); }
+.fd-coupon-msg { margin-top:6px;font-size:0.8rem;border-radius:8px;padding:6px 10px; }
+.fd-coupon-msg.success { background:#d1fae5;color:#065f46; }
+.fd-coupon-msg.error { background:#fee2e2;color:#991b1b; }
+
+.fd-garanties { padding:16px 20px;border-top:1px solid var(--fd-border); }
+.fd-garantie-item { display:flex;align-items:center;gap:10px;padding:5px 0;font-size:0.82rem;color:var(--fd-text); }
+.fd-garantie-item i { color:var(--fd-green);width:16px;text-align:center;flex-shrink:0; }
+
+.fd-payment-methods { padding:12px 20px;border-top:1px solid var(--fd-border); }
+.fd-pay-label { font-size:0.78rem;color:var(--fd-muted);display:block;margin-bottom:8px; }
+.fd-pay-icons { display:flex;gap:8px; }
+.fd-pay-chip { font-size:0.72rem;font-weight:800;padding:4px 12px;border-radius:6px; }
+.fd-momo { background:#f59e0b;color:white; }
+.fd-om { background:#ff6600;color:white; }
+.fd-wave { background:#0066cc;color:white; }
+
+.fd-share-block { padding:12px 20px;border-top:1px solid var(--fd-border); }
+.fd-share-label { font-size:0.78rem;color:var(--fd-muted);display:block;margin-bottom:8px; }
+.fd-share-btns { display:flex;gap:8px; }
+.fd-share-btn { width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:0.9rem;color:white;transition:var(--fd-transition);border:none;cursor:pointer; }
+.fd-share-btn:hover { transform:scale(1.1); }
+.fd-share-wa { background:#25d366; }
+.fd-share-fb { background:#1877f2; }
+.fd-share-li { background:#0a66c2; }
+.fd-share-copy { background:#6b7280; }
+
+.fd-signaler-link { display:block;text-align:center;color:var(--fd-muted);font-size:0.78rem;padding:10px;text-decoration:none;border-top:1px solid var(--fd-border); }
+.fd-signaler-link:hover { color:#dc2626; }
+
+/* ── MOBILE BAR ── */
+.fd-mobile-bar { position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid var(--fd-border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;z-index:1000;box-shadow:0 -4px 20px rgba(0,0,0,0.1); }
+.fd-mb-price { font-size:1.2rem;font-weight:900;color:var(--fd-primary); }
+.fd-mb-btn { background:var(--fd-accent);color:#1a2b00;padding:12px 28px;border-radius:12px;font-weight:800;text-decoration:none;font-size:1rem;transition:var(--fd-transition); }
+.fd-mb-btn:hover { background:#d97706;color:white; }
+
+/* ── TOAST ── */
+.fd-toast { position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#111827;color:white;padding:12px 24px;border-radius:50px;font-size:0.88rem;font-weight:600;z-index:9999;box-shadow:var(--fd-shadow-lg);animation:fd-fade-in 0.3s ease; }
+@keyframes fd-fade-in { from { opacity:0;transform:translateX(-50%) translateY(10px); } to { opacity:1;transform:translateX(-50%) translateY(0); } }
+
+/* Étoiles globales */
+.fa-star { color:#d1d5db; }
+.fa-star.filled { color:var(--fd-accent); }
+
+@media(max-width:768px) {
+  .fd-page { padding-bottom:80px; }
+  .fd-section { padding:20px; }
+  .fd-hero-title { font-size:1.5rem; }
+  .fd-rating-summary { flex-direction:column;gap:16px; }
+  .fd-similaires-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+
+<!-- ══ SCRIPTS ═══════════════════════════════════════════════════════ -->
+<script>
+// ── Lire plus/moins description ──
+function toggleDesc() {
+  const text = document.getElementById('descText');
+  const fade = document.getElementById('descFade');
+  const btn = document.getElementById('descToggle');
+  const expanded = text.classList.toggle('expanded');
+  if (fade) fade.classList.toggle('hidden', expanded);
+  btn.innerHTML = expanded
+    ? '<i class="fas fa-chevron-up me-1"></i>Réduire'
+    : '<i class="fas fa-chevron-down me-1"></i>Lire plus';
+}
+
+// ── Lancer la vidéo ──
+function playVideo(overlay) {
+  const video = overlay.previousElementSibling;
+  if (video?.tagName === 'VIDEO') {
+    overlay.style.display = 'none';
+    video.play();
+  }
+}
+
+// ── Scroll vers vidéo ──
+function scrollToVideo() {
+  const el = document.querySelector('.fd-video-wrap');
+  if (el) { el.scrollIntoView({ behavior:'smooth', block:'center' }); }
+}
+
+// ── Copier le lien ──
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => showToast('Lien copié !'));
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toastMsg');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 2500);
+}
+
+// ── Coupon ──
+function appliquerCoupon() {
+  const code = document.getElementById('couponInput')?.value.trim();
+  const msg = document.getElementById('couponMsg');
+  if (!code) return;
+  fetch(`/formations/coupon/verifier/?code=${encodeURIComponent(code)}`, {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    msg.style.display = 'block';
+    if (data.valide) {
+      msg.className = 'fd-coupon-msg success';
+      msg.textContent = `✓ Coupon valide — ${data.description}`;
+      // Mettre à jour le lien d'achat
+      const btn = document.getElementById('btnAcheter');
+      if (btn) btn.href += `?coupon=${code}`;
+    } else {
+      msg.className = 'fd-coupon-msg error';
+      msg.textContent = `✗ ${data.message || 'Code invalide ou expiré'}`;
+    }
+  })
+  .catch(() => {
+    msg.style.display = 'block';
+    msg.className = 'fd-coupon-msg error';
+    msg.textContent = 'Erreur lors de la vérification.';
+  });
+}
+
+// ── Essayer aperçu ──
+function essayerGratuit() {
+  const curr = document.querySelector('.fd-curriculum-item .fd-curr-preview');
+  if (curr) curr.scrollIntoView({ behavior:'smooth', block:'center' });
+}
+
+// ── Animer les barres de notes au chargement ──
+const barFills = document.querySelectorAll('.fd-rbar-fill');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.width = e.target.getAttribute('style').match(/width:([^;]+)/)?.[1] || '0%';
+      observer.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.4 });
+barFills.forEach(b => observer.observe(b));
+</script>
+
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Résultat - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Résultat : {{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Résumé -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4 text-center">
+            <div class="card-body py-5">
+                {% if afficher_note %}
+                <div class="mb-4">
+                    <div class="display-1 fw-bold {% if soumission.pourcentage >= 75 %}text-success{% elif soumission.pourcentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ soumission.note|floatformat:1 }}/{{ soumission.note_sur|floatformat:0 }}
+                    </div>
+                    <div class="h5">
+                        <span class="badge bg-{{ soumission.mention_color }} fs-6">
+                            {{ soumission.mention }} ({{ soumission.pourcentage }}%)
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-clock me-2"></i>
+                    Les résultats seront publiés prochainement par votre enseignant.
+                </div>
+                {% endif %}
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Date de soumission</div>
+                            <div class="fw-bold">{{ soumission.date_soumission|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Tentative n°</div>
+                            <div class="fw-bold">{{ soumission.nb_tentative }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Statut</div>
+                            <div class="fw-bold text-success">Terminé</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Détail des réponses -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-list-check text-primary me-2"></i>Détail des réponses</h5>
+            </div>
+            <div class="card-body">
+                {% for reponse in reponses %}
+                <div class="border-bottom pb-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-primary">Q{{ reponse.question.ordre }}</span>
+                                <span class="badge {% if reponse.est_correcte %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if reponse.est_correcte %}+{{ reponse.points_obtenus }} pts{% else %}0 pt{% endif %}
+                                </span>
+                            </div>
+                            <p class="mb-2">{{ reponse.question.texte }}</p>
+                            
+                            <!-- Réponse donnée -->
+                            <div class="ms-3 mb-2">
+                                <div class="small text-muted">Votre réponse :</div>
+                                <div class="bg-light p-2 rounded">
+                                    {% if reponse.reponse_choisie %}
+                                        {{ reponse.reponse_choisie.texte }}
+                                    {% elif reponse.reponses_choisies.all %}
+                                        {% for r in reponse.reponses_choisies.all %}
+                                            <div>{{ r.texte }}</div>
+                                        {% endfor %}
+                                    {% elif reponse.reponse_texte %}
+                                        {{ reponse.reponse_texte|linebreaks }}
+                                    {% else %}
+                                        <em class="text-muted">Non répondue</em>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Correction -->
+                            {% if afficher_correction %}
+                            <div class="ms-3">
+                                <div class="small text-success">✅ Bonne réponse :</div>
+                                <div class="bg-success bg-opacity-10 p-2 rounded">
+                                    {% for bonne in reponse.question.bonnes_reponses %}
+                                        <div>{{ bonne.texte }}</div>
+                                    {% empty %}
+                                        {% with bonne=reponse.question.bonne_reponse %}
+                                            {% if bonne %}{{ bonne.texte }}{% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </div>
+                                {% if reponse.question.explication %}
+                                <div class="small text-info mt-2">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    {{ reponse.question.explication }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour à la séance
+            </a>
+            {% if exercice.nb_tentatives_max == 0 or soumission.nb_tentative < exercice.nb_tentatives_max %}
+            <a href="{% url 'exercice_passer' exercice.id %}" class="btn btn-primary">
+                <i class="fas fa-redo me-1"></i>Refaire l'exercice
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

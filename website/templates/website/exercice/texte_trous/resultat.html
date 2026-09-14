@@ -1,0 +1,143 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Résultat - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Résultat : {{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .trou-result {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 4px;
+        font-weight: bold;
+        margin: 0 2px;
+    }
+    .trou-result.correct {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #28a745;
+    }
+    .trou-result.incorrect {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #dc3545;
+    }
+    .trou-result .reponse-donnee {
+        text-decoration: underline;
+    }
+    .trou-result .reponse-attendue {
+        font-weight: normal;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Résumé -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4 text-center">
+            <div class="card-body py-5">
+                {% if afficher_note %}
+                <div class="mb-4">
+                    <div class="display-1 fw-bold {% if soumission.pourcentage >= 75 %}text-success{% elif soumission.pourcentage >= 50 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ soumission.note|floatformat:1 }}/{{ soumission.note_sur|floatformat:0 }}
+                    </div>
+                    <div class="h5">
+                        <span class="badge bg-{{ soumission.mention_color }} fs-6">
+                            {{ soumission.mention }} ({{ soumission.pourcentage }}%)
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-clock me-2"></i>
+                    Les résultats seront publiés prochainement par votre enseignant.
+                </div>
+                {% endif %}
+                
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Date de soumission</div>
+                            <div class="fw-bold">{{ soumission.date_soumission|date:"d/m/Y H:i" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Tentative n°</div>
+                            <div class="fw-bold">{{ soumission.nb_tentative }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <div class="text-muted small">Trous</div>
+                            <div class="fw-bold">{{ reponses|length }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Détail -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-list-check text-primary me-2"></i>Détail des réponses</h5>
+            </div>
+            <div class="card-body">
+                <div class="texte-segments">
+                    {% for segment in segments %}
+                        <span class="segment">{{ segment }}</span>
+                        {% if forloop.counter <= reponses|length %}
+                            {% with reponse=reponses|slice:forloop.counter|last %}
+                            <span class="trou-result {% if reponse.est_correcte %}correct{% else %}incorrect{% endif %}">
+                                <span class="reponse-donnee">{{ reponse.reponse_donnee|default:"(vide)" }}</span>
+                                {% if afficher_correction and not reponse.est_correcte %}
+                                    <span class="reponse-attendue">→ {{ reponse.trou.liste_reponses|join:", " }}</span>
+                                {% endif %}
+                                <span class="badge {% if reponse.est_correcte %}bg-success{% else %}bg-danger{% endif %} ms-1">
+                                    {% if reponse.est_correcte %}+{{ reponse.points_obtenus }}{% else %}0{% endif %}
+                                </span>
+                            </span>
+                            {% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                {% if afficher_correction %}
+                <hr>
+                <div class="mt-3">
+                    <h6 class="fw-bold"><i class="fas fa-lightbulb text-warning me-2"></i>Correction</h6>
+                    {% for reponse in reponses %}
+                    <div class="mb-2">
+                        <strong>Trou #{{ reponse.trou.numero }} :</strong>
+                        <span class="{% if reponse.est_correcte %}text-success{% else %}text-danger{% endif %}">
+                            {% if reponse.est_correcte %}✅ Correct{% else %}❌ Incorrect{% endif %}
+                        </span>
+                        <span class="text-muted ms-2">
+                            Réponses acceptées : {{ reponse.trou.liste_reponses|join:", " }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+            {% if exercice.nb_tentatives_max == 0 or soumission.nb_tentative < exercice.nb_tentatives_max %}
+            <a href="{% url 'texte_trous_passer' exercice.id %}" class="btn btn-primary">
+                <i class="fas fa-redo me-1"></i>Refaire
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

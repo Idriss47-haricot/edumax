@@ -1,217 +1,309 @@
 {% extends 'website/base_dashboard.html' %}
+{% load static %}
 
-{% block title %}Dashboard Admin - {{ ecole.nom }}{% endblock %}
+{% block title %}Dashboard — {{ ecole.nom }}{% endblock %}
 {% block page_title %}{{ ecole.nom }}{% endblock %}
 
 {% block content %}
 
-<div class="row">
-    <!-- Carte de l'école -->
-    <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm border-0 rounded-4">
-            <div class="position-relative">
-                <!-- Bannière/Couverture -->
-                <div class="cover-photo" style="height: 120px; background: linear-gradient(135deg, #1e3a8a, #3b82f6); border-radius: 16px 16px 0 0;">
-                    {% if ecole.banniere %}
-                        <img src="{{ ecole.banniere.url }}" class="w-100 h-100 rounded-top" style="object-fit: cover;">
-                    {% endif %}
-                </div>
-                <!-- Logo -->
-                <div class="profile-photo text-center mt-3">
-                    <div class="position-relative d-inline-block">
-                        {% if ecole.logo %}
-                            <img src="{{ ecole.logo.url }}" class="rounded-circle border border-4 border-white shadow" width="100" height="100" style="object-fit: cover;">
-                        {% else %}
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" style="width: 100px; height: 100px;">
-                                <i class="fas fa-school fa-3x"></i>
-                            </div>
-                        {% endif %}
-                        <button class="btn btn-sm btn-light rounded-circle position-absolute bottom-0 end-0" data-bs-toggle="modal" data-bs-target="#logoModal">
-                            <i class="fas fa-camera"></i>
-                        </button>
-                    </div>
-                    <a href="{% url 'admin_ecole_modifier' %}" class="btn btn-sm btn-outline-primary mt-3">
-                        <i class="fas fa-edit me-1"></i>Modifier le profil
-                    </a>
-                </div>
-            </div>
-            <div class="card-body text-center">
-                <h3 class="h4 mb-1">{{ ecole.nom }}</h3>
-                <p class="text-muted small">
-                    <i class="fas fa-map-marker-alt me-1"></i>{{ ecole.ville }}, {{ ecole.pays }}
-                </p>
-                <p class="small">{{ ecole.description|truncatechars:100 }}</p>
-                
-                <!-- Réseaux sociaux -->
-                <div class="social-links mb-3">
-                    {% if ecole.facebook %}<a href="{{ ecole.facebook }}" target="_blank" class="me-2"><i class="fab fa-facebook-f"></i></a>{% endif %}
-                    {% if ecole.twitter %}<a href="{{ ecole.twitter }}" target="_blank" class="me-2"><i class="fab fa-twitter"></i></a>{% endif %}
-                    {% if ecole.instagram %}<a href="{{ ecole.instagram }}" target="_blank" class="me-2"><i class="fab fa-instagram"></i></a>{% endif %}
-                    {% if ecole.youtube %}<a href="{{ ecole.youtube }}" target="_blank" class="me-2"><i class="fab fa-youtube"></i></a>{% endif %}
-                </div>
-                
-                <!-- Statistiques -->
-                <div class="row mt-3 pt-3 border-top">
-                    <div class="col-4">
-                        <h5 class="mb-0">{{ enseignants|length }}</h5>
-                        <small class="text-muted">Enseignants</small>
-                    </div>
-                    <div class="col-4">
-                        <h5 class="mb-0">{{ etudiants|length }}</h5>
-                        <small class="text-muted">Étudiants</small>
-                    </div>
-                    <div class="col-4">
-                        <h5 class="mb-0">{{ cours_count }}</h5>
-                        <small class="text-muted">Cours</small>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- ══ PROFIL ÉCOLE ════════════════════════════════════════════════ -->
+<div class="ae-profile-card">
+  <div class="ae-banniere" style="{% if ecole.banniere %}background-image:url('{{ ecole.banniere.url }}');background-size:cover;background-position:center;{% else %}background:linear-gradient(135deg,#1e3a8a,#3b82f6);{% endif %}">
+    <div class="ae-banniere-overlay"></div>
+  </div>
+  <div class="ae-profile-body">
+    <div class="ae-logo-wrap">
+      {% if ecole.logo %}
+      <img src="{{ ecole.logo.url }}" alt="{{ ecole.nom }}">
+      {% else %}
+      <div class="ae-logo-placeholder"><i class="fas fa-school fa-2x"></i></div>
+      {% endif %}
+      <a href="#" class="ae-logo-btn" data-bs-toggle="modal" data-bs-target="#logoModal">
+        <i class="fas fa-camera"></i>
+      </a>
     </div>
-
-    <!-- Actions rapides -->
-    <div class="col-lg-8">
-        <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-users fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Gérer les utilisateurs</h5>
-                        <p class="card-text text-muted small">Ajouter, modifier ou supprimer des enseignants et étudiants</p>
-                        <a href="{% url 'admin_ecole_utilisateurs' %}" class="btn btn-outline-primary">Gérer</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-chalkboard-user fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Enseignants</h5>
-                        <p class="card-text text-muted small">Gérer les enseignants de l'école</p>
-                        <a href="/admin-ecole/enseignants/" class="btn btn-outline-primary">Gérer</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Étudiants</h5>
-                        <p class="card-text text-muted small">Gérer les étudiants de l'école</p>
-                        <a href="{% url 'admin_ecole_etudiants' %}" class="btn btn-outline-primary">Gérer</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-folder-tree fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Filières & Spécialités</h5>
-                        <p class="card-text text-muted small">Créer et gérer les formations</p>
-                        <a href="{% url 'admin_ecole_filiere_liste' %}" class="btn btn-outline-primary">Gérer</a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-tags fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Spécialités</h5>
-                        <p class="card-text text-muted small">Gérer les spécialités et leurs cours</p>
-                        <a href="{% url 'admin_ecole_specialites_liste' %}" class="btn btn-outline-primary">Accéder</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-book-open fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Galerie photos</h5>
-                        <p class="card-text text-muted small">Ajouter des photos de l'école</p>
-                        <a href="{% url 'admin_ecole_galerie' %}" class="btn btn-outline-primary">Gérer</a>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-6 mb-4">
-                <div class="card shadow-sm border-0 rounded-4 h-100">
-                    <div class="card-body text-center">
-                        <i class="fas fa-key fa-3x text-primary mb-3"></i>
-                        <h5 class="card-title">Générer des clés</h5>
-                        <p class="card-text text-muted small">Créer des clés d'inscription pour enseignants et étudiants</p>
-                        <a href="{% url 'admin_ecole_generer_cle' %}" class="btn btn-outline-primary">Générer</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="ae-info-block">
+      <h2 class="ae-nom">{{ ecole.nom }}</h2>
+      <p class="ae-lieu"><i class="fas fa-map-marker-alt me-1"></i>{{ ecole.ville }}, {{ ecole.pays }}</p>
+      {% if ecole.numero_agrement %}
+      <span class="ae-agrement"><i class="fas fa-certificate me-1"></i>Agréée — {{ ecole.numero_agrement }}</span>
+      {% endif %}
+      <div class="ae-social">
+        {% if ecole.facebook %}<a href="{{ ecole.facebook }}" target="_blank"><i class="fab fa-facebook-f"></i></a>{% endif %}
+        {% if ecole.twitter %}<a href="{{ ecole.twitter }}" target="_blank"><i class="fab fa-twitter"></i></a>{% endif %}
+        {% if ecole.instagram %}<a href="{{ ecole.instagram }}" target="_blank"><i class="fab fa-instagram"></i></a>{% endif %}
+        {% if ecole.youtube %}<a href="{{ ecole.youtube }}" target="_blank"><i class="fab fa-youtube"></i></a>{% endif %}
+      </div>
     </div>
+    <div class="ae-profile-actions">
+      <a href="{% url 'admin_ecole_modifier' %}" class="ae-btn-edit">
+        <i class="fas fa-edit me-1"></i>Modifier le profil
+      </a>
+      <a href="{% url 'ecole_detail' ecole.slug %}" target="_blank" class="ae-btn-view">
+        <i class="fas fa-external-link-alt me-1"></i>Voir la page publique
+      </a>
+    </div>
+  </div>
+  <!-- Stats rapides dans le profil -->
+  <div class="ae-profile-stats">
+    <div class="ae-pstat">
+      <span class="ae-pstat-n">{{ enseignants|length }}</span>
+      <span class="ae-pstat-l">Enseignants</span>
+    </div>
+    <div class="ae-pstat-div"></div>
+    <div class="ae-pstat">
+      <span class="ae-pstat-n">{{ etudiants|length }}</span>
+      <span class="ae-pstat-l">Étudiants</span>
+    </div>
+    <div class="ae-pstat-div"></div>
+    <div class="ae-pstat">
+      <span class="ae-pstat-n">{{ cours_count }}</span>
+      <span class="ae-pstat-l">Cours actifs</span>
+    </div>
+    <div class="ae-pstat-div"></div>
+    <div class="ae-pstat">
+      <span class="ae-pstat-n">{{ filieres_count|default:0 }}</span>
+      <span class="ae-pstat-l">Filières</span>
+    </div>
+  </div>
 </div>
 
-<!-- Statistiques avancées -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card shadow-sm border-0 rounded-4">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Statistiques de l'école</h5>
-            </div>
-            <div class="card-body">
-                <canvas id="schoolStats" height="200"></canvas>
-            </div>
-        </div>
+<!-- ══ MODULES DE GESTION ═════════════════════════════════════════ -->
+<h6 class="ae-section-label">Gestion de l'école</h6>
+<div class="ae-modules-grid">
+
+  <a href="{% url 'admin_ecole_utilisateurs' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);">
+      <i class="fas fa-users"></i>
     </div>
+    <div class="ae-module-info">
+      <strong>Utilisateurs</strong>
+      <span>Enseignants & étudiants</span>
+    </div>
+    <span class="ae-module-count">{{ enseignants|length|add:etudiants|length }}</span>
+  </a>
+
+  <a href="{% url 'admin_ecole_filiere_liste' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
+      <i class="fas fa-folder-tree"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Filières & Spécialités</strong>
+      <span>Structure pédagogique</span>
+    </div>
+    <span class="ae-module-count">{{ filieres_count|default:0 }}</span>
+  </a>
+
+  <a href="{% url 'admin_ecole_specialites_liste' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+      <i class="fas fa-tags"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Spécialités & Cours</strong>
+      <span>Organisation des cours</span>
+    </div>
+    <span class="ae-module-count">{{ cours_count }}</span>
+  </a>
+
+  <a href="{% url 'admin_ecole_generer_cle' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#059669,#10b981);">
+      <i class="fas fa-key"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Clés d'inscription</strong>
+      <span>Inviter enseignants/étudiants</span>
+    </div>
+  </a>
+
+  <a href="{% url 'admin_ecole_etudiants' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#0891b2,#06b6d4);">
+      <i class="fas fa-user-graduate"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Étudiants</strong>
+      <span>Liste, notes, progression</span>
+    </div>
+    <span class="ae-module-count">{{ etudiants|length }}</span>
+  </a>
+
+  <a href="/admin-ecole/enseignants/" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#dc2626,#ef4444);">
+      <i class="fas fa-chalkboard-teacher"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Enseignants</strong>
+      <span>Affectations & cours</span>
+    </div>
+    <span class="ae-module-count">{{ enseignants|length }}</span>
+  </a>
+
+  <a href="{% url 'admin_ecole_galerie' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#475569,#64748b);">
+      <i class="fas fa-images"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Galerie photos</strong>
+      <span>Photos de l'établissement</span>
+    </div>
+  </a>
+
+  <a href="{% url 'admin_ecole_modifier' %}" class="ae-module">
+    <div class="ae-module-icon" style="background:linear-gradient(135deg,#be185d,#ec4899);">
+      <i class="fas fa-cog"></i>
+    </div>
+    <div class="ae-module-info">
+      <strong>Paramètres école</strong>
+      <span>Infos, contacts, réseaux</span>
+    </div>
+  </a>
+
 </div>
 
-<!-- Modal pour changer le logo -->
-<div class="modal fade" id="logoModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Changer le logo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" enctype="multipart/form-data" action="{% url 'admin_ecole_changer_logo' %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Nouveau logo</label>
-                        <input type="file" name="logo" class="form-control" accept="image/*" required>
-                        <small class="text-muted">Formats acceptés : JPG, PNG, GIF. Taille recommandée : 500x500px</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                </div>
-            </form>
-        </div>
+<!-- ══ CONTENU BAS DE PAGE ════════════════════════════════════════ -->
+<div class="ae-bottom-grid">
+
+  <!-- Enseignants récents -->
+  <div class="ae-panel">
+    <div class="ae-panel-header">
+      <span><i class="fas fa-chalkboard-teacher me-2"></i>Enseignants récents</span>
+      <a href="/admin-ecole/enseignants/" class="ae-panel-link">Tous voir</a>
     </div>
+    {% for ens in enseignants|slice:":5" %}
+    <div class="ae-list-item">
+      <div class="ae-list-av">
+        {% if ens.photo %}<img src="{{ ens.photo.url }}" alt="">
+        {% else %}<span>{{ ens.prenom|first|upper }}</span>{% endif %}
+      </div>
+      <div class="ae-list-info">
+        <strong>{{ ens.prenom }} {{ ens.last_name }}</strong>
+        <span>{{ ens.email }}</span>
+      </div>
+    </div>
+    {% empty %}
+    <p class="ae-empty">Aucun enseignant pour le moment.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Étudiants récents -->
+  <div class="ae-panel">
+    <div class="ae-panel-header">
+      <span><i class="fas fa-user-graduate me-2"></i>Étudiants récents</span>
+      <a href="{% url 'admin_ecole_etudiants' %}" class="ae-panel-link">Tous voir</a>
+    </div>
+    {% for etud in etudiants|slice:":5" %}
+    <div class="ae-list-item">
+      <div class="ae-list-av">
+        {% if etud.photo %}<img src="{{ etud.photo.url }}" alt="">
+        {% else %}<span>{{ etud.prenom|first|upper }}</span>{% endif %}
+      </div>
+      <div class="ae-list-info">
+        <strong>{{ etud.prenom }} {{ etud.last_name }}</strong>
+        <span>{{ etud.email }}</span>
+      </div>
+    </div>
+    {% empty %}
+    <p class="ae-empty">Aucun étudiant pour le moment.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Abonnement actuel -->
+  <div class="ae-panel">
+    <div class="ae-panel-header">
+      <span><i class="fas fa-star me-2 text-warning"></i>Abonnement actuel</span>
+    </div>
+    <div class="ae-abo-body">
+      {% if ecole.abonnement %}
+      <div class="ae-abo-name">{{ ecole.abonnement.nom }}</div>
+      <div class="ae-abo-limits">
+        <div class="ae-limit-row">
+          <span>Étudiants</span>
+          <div class="ae-limit-bar">
+            <div class="ae-limit-fill" style="width:{% widthratio etudiants|length ecole.abonnement.max_etudiants 100 %}%;"></div>
+          </div>
+          <span>{{ etudiants|length }} / {{ ecole.abonnement.max_etudiants }}</span>
+        </div>
+        <div class="ae-limit-row">
+          <span>Cours</span>
+          <div class="ae-limit-bar">
+            <div class="ae-limit-fill ae-fill-yellow" style="width:{% widthratio cours_count ecole.abonnement.max_cours 100 %}%;"></div>
+          </div>
+          <span>{{ cours_count }} / {{ ecole.abonnement.max_cours }}</span>
+        </div>
+      </div>
+      {% else %}
+      <p class="ae-empty">Aucun abonnement actif.<br>Contactez l'administration.</p>
+      {% endif %}
+    </div>
+  </div>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('schoolStats').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Enseignants', 'Étudiants', 'Cours', 'Filières'],
-            datasets: [{
-                label: 'Nombre',
-                data: [{{ enseignants|length }}, {{ etudiants|length }}, {{ cours_count }}, {{ filieres_count }}],
-                backgroundColor: '#1e3a8a',
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: { legend: { display: false } }
-        }
-    });
-</script>
+<!-- ══ STYLES ═════════════════════════════════════════════════════ -->
+<style>
+/* Profil */
+.ae-profile-card { background:white; border-radius:20px; border:1.5px solid #e5e7eb; overflow:hidden; margin-bottom:28px; }
+.ae-banniere { height:120px; position:relative; }
+.ae-banniere-overlay { position:absolute; inset:0; background:rgba(15,43,94,0.4); }
+.ae-profile-body { padding:16px 24px; display:flex; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+.ae-logo-wrap { position:relative; margin-top:-44px; flex-shrink:0; }
+.ae-logo-wrap img, .ae-logo-placeholder { width:88px; height:88px; border-radius:50%; border:4px solid white; box-shadow:0 4px 14px rgba(0,0,0,0.15); object-fit:cover; background:#e0e7ff; display:flex; align-items:center; justify-content:center; color:#1e3a8a; }
+.ae-logo-btn { position:absolute; bottom:2px; right:2px; width:26px; height:26px; border-radius:50%; background:#1e3a8a; color:white; font-size:0.65rem; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+.ae-info-block { flex:1; min-width:200px; }
+.ae-nom { font-size:1.3rem; font-weight:800; color:#111827; margin-bottom:4px; }
+.ae-lieu { font-size:0.85rem; color:#6b7280; margin-bottom:6px; }
+.ae-agrement { font-size:0.75rem; background:#d1fae5; color:#065f46; border-radius:50px; padding:3px 12px; font-weight:700; display:inline-block; margin-bottom:8px; }
+.ae-social { display:flex; gap:10px; }
+.ae-social a { color:#6b7280; font-size:0.9rem; text-decoration:none; transition:color 0.2s; }
+.ae-social a:hover { color:#1e3a8a; }
+.ae-profile-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.ae-btn-edit { background:#1e3a8a; color:white; padding:9px 18px; border-radius:10px; font-weight:600; font-size:0.85rem; text-decoration:none; transition:all 0.2s; display:inline-flex; align-items:center; }
+.ae-btn-edit:hover { background:#0f2b5e; color:white; }
+.ae-btn-view { background:white; color:#1e3a8a; border:1.5px solid #1e3a8a; padding:8px 16px; border-radius:10px; font-weight:600; font-size:0.85rem; text-decoration:none; display:inline-flex; align-items:center; transition:all 0.2s; }
+.ae-btn-view:hover { background:#f0f4ff; }
+.ae-profile-stats { display:flex; align-items:center; border-top:1px solid #f3f4f6; }
+.ae-pstat { flex:1; text-align:center; padding:16px 8px; }
+.ae-pstat-n { display:block; font-size:1.5rem; font-weight:900; color:#1e3a8a; }
+.ae-pstat-l { font-size:0.72rem; color:#6b7280; font-weight:500; }
+.ae-pstat-div { width:1px; height:40px; background:#f3f4f6; }
+
+/* Section label */
+.ae-section-label { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#9ca3af; margin:0 0 14px; }
+
+/* Modules */
+.ae-modules-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:28px; }
+@media(max-width:900px) { .ae-modules-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:500px) { .ae-modules-grid { grid-template-columns:1fr; } }
+.ae-module { display:flex; align-items:center; gap:12px; background:white; border-radius:14px; border:1.5px solid #e5e7eb; padding:14px; text-decoration:none; color:#111827; transition:all 0.2s; }
+.ae-module:hover { border-color:#1e3a8a; box-shadow:0 4px 14px rgba(30,58,138,0.1); transform:translateY(-2px); }
+.ae-module-icon { width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; font-size:1rem; flex-shrink:0; }
+.ae-module-info { flex:1; min-width:0; }
+.ae-module-info strong { display:block; font-size:0.85rem; font-weight:700; color:#111827; }
+.ae-module-info span { display:block; font-size:0.72rem; color:#6b7280; }
+.ae-module-count { background:#f0f4ff; color:#1e3a8a; border-radius:50px; padding:2px 10px; font-size:0.72rem; font-weight:700; flex-shrink:0; }
+
+/* Bottom grid */
+.ae-bottom-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; }
+@media(max-width:900px) { .ae-bottom-grid { grid-template-columns:1fr; } }
+.ae-panel { background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; }
+.ae-panel-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f3f4f6; font-weight:600; font-size:0.88rem; }
+.ae-panel-link { font-size:0.78rem; color:#1e3a8a; font-weight:600; text-decoration:none; }
+.ae-list-item { display:flex; align-items:center; gap:10px; padding:10px 18px; border-bottom:1px solid #f9fafb; }
+.ae-list-item:last-child { border:none; }
+.ae-list-av { width:34px; height:34px; border-radius:50%; background:#e0e7ff; color:#1e3a8a; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; overflow:hidden; flex-shrink:0; }
+.ae-list-av img { width:100%; height:100%; object-fit:cover; }
+.ae-list-info strong { display:block; font-size:0.82rem; font-weight:600; color:#111827; }
+.ae-list-info span { display:block; font-size:0.72rem; color:#6b7280; }
+.ae-empty { text-align:center; padding:20px; color:#9ca3af; font-size:0.82rem; }
+
+/* Abonnement */
+.ae-abo-body { padding:16px 18px; }
+.ae-abo-name { font-size:1.1rem; font-weight:800; color:#1e3a8a; margin-bottom:16px; }
+.ae-limit-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; font-size:0.78rem; color:#374151; }
+.ae-limit-row span:first-child { width:60px; flex-shrink:0; }
+.ae-limit-row span:last-child { width:60px; text-align:right; flex-shrink:0; font-weight:600; }
+.ae-limit-bar { flex:1; height:8px; background:#f3f4f6; border-radius:50px; overflow:hidden; }
+.ae-limit-fill { height:100%; background:#1e3a8a; border-radius:50px; transition:width 0.6s; }
+.ae-fill-yellow { background:#f59e0b; }
+</style>
 
 {% endblock %}

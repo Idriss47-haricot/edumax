@@ -1,0 +1,151 @@
+{% load seance_extras %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-download me-2 text-info"></i>
+            Contenu de la séance
+        </h5>
+        {% if est_enseignant %}
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#ajouterRessourceModal">
+                <i class="fas fa-plus me-1"></i>Ajouter une ressource
+            </button>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if ressources %}
+            <div class="list-group">
+                {% for ressource in ressources %}
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            {% if ressource.type_ressource == 'fichier' %}
+                                <i class="fas fa-file-{% if ressource.format_fichier == 'pdf' %}pdf{% elif ressource.format_fichier in 'doc,docx' %}word{% elif ressource.format_fichier in 'mp4,avi,mkv,webm' %}video{% else %}alt{% endif %} fa-2x me-3 text-secondary"></i>
+                            {% else %}
+                                <i class="fas fa-link fa-2x me-3 text-primary"></i>
+                            {% endif %}
+                            
+                            <div class="d-inline-block align-middle">
+                                <strong>
+                                    {% if ressource.type_ressource == 'fichier' %}
+                                        {{ ressource.nom_fichier }}
+                                    {% else %}
+                                        {{ ressource.titre|default:ressource.url|truncatechars:50 }}
+                                    {% endif %}
+                                </strong>
+                                <br>
+                                <small class="text-muted">
+                                    {% if ressource.type_ressource == 'fichier' %}
+                                        {{ ressource.format_fichier|upper }} • {{ ressource.taille_fichier|filesizeformat }}
+                                    {% else %}
+                                        Lien externe
+                                    {% endif %}
+                                    • Ajouté le {{ ressource.date_ajout|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                        </div>
+                        <div>
+                            {% if ressource.type_ressource == 'fichier' %}
+                                <a href="{{ ressource.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Voir
+                                </a>
+                                <a href="{{ ressource.fichier.url }}" download class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            {% else %}
+                                <a href="{{ ressource.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i> Ouvrir
+                                </a>
+                            {% endif %}
+                            
+                            {% if est_enseignant %}
+                                <a href="{% url 'seance_asynchrone_ressource_supprimer' ressource.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette ressource ?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                <p>Aucune ressource pour le moment.</p>
+                {% if est_enseignant %}
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajouterRessourceModal">
+                        <i class="fas fa-plus me-1"></i>Ajouter la première ressource
+                    </button>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Ajouter Ressource -->
+{% if est_enseignant %}
+<div class="modal fade" id="ajouterRessourceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter une ressource</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'seance_asynchrone_config' seance.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Type de ressource</label>
+                        <select name="type_ressource" class="form-control" id="ressourceType">
+                            <option value="fichier">Fichier (PDF, DOC, vidéo...)</option>
+                            <option value="lien">Lien externe (YouTube, etc.)</option>
+                        </select>
+                    </div>
+                    
+                    <div id="fichierFields">
+                        <div class="mb-3">
+                            <label class="form-label">Fichier</label>
+                            <input type="file" name="fichier" class="form-control" accept=".pdf,.doc,.docx,.txt,.mp4,.avi,.mkv,.webm,.jpg,.png">
+                            <small class="text-muted">PDF, DOC, DOCX, TXT, MP4, AVI, MKV, WEBM, JPG, PNG</small>
+                        </div>
+                    </div>
+                    
+                    <div id="lienFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">URL</label>
+                            <input type="url" name="url" class="form-control" placeholder="https://...">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Titre (optionnel)</label>
+                            <input type="text" name="titre" class="form-control" placeholder="Titre du lien">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ressourceType = document.getElementById('ressourceType');
+    const fichierFields = document.getElementById('fichierFields');
+    const lienFields = document.getElementById('lienFields');
+    
+    function toggleRessourceFields() {
+        if (ressourceType.value === 'fichier') {
+            fichierFields.style.display = 'block';
+            lienFields.style.display = 'none';
+        } else {
+            fichierFields.style.display = 'none';
+            lienFields.style.display = 'block';
+        }
+    }
+    
+    ressourceType.addEventListener('change', toggleRessourceFields);
+    toggleRessourceFields();
+</script>
+{% endif %}

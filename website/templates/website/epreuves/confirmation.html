@@ -1,0 +1,86 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Confirmation - EduMax{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-5">
+                    {% if achat.statut == 'confirme' %}
+                        <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                        <h1 class="text-success">Paiement confirmé !</h1>
+                        <p class="lead">Votre paiement a été confirmé avec succès.</p>
+                        <p>Vous avez maintenant accès à vos épreuves.</p>
+                        <div class="mt-4">
+                            <a href="{% url 'mes_epreuves' %}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-download me-2"></i>Voir mes épreuves
+                            </a>
+                        </div>
+                    {% elif achat.statut == 'en_attente' %}
+                        <i class="fas fa-clock fa-5x text-warning mb-4"></i>
+                        <h1 class="text-warning">Paiement en attente</h1>
+                        <p class="lead">Votre paiement est en cours de vérification.</p>
+                        <p>Vous recevrez une confirmation par email dès qu'il sera validé.</p>
+                        <p class="text-muted">Référence : <strong>{{ achat.reference_paiement }}</strong></p>
+                        <div class="mt-4">
+                            <a href="{% url 'epreuves_accueil' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-shopping-bag me-1"></i>Continuer vos achats
+                            </a>
+                        </div>
+                    {% else %}
+                        <i class="fas fa-times-circle fa-5x text-danger mb-4"></i>
+                        <h1 class="text-danger">Paiement échoué</h1>
+                        <p class="lead">Une erreur est survenue lors du paiement.</p>
+                        <p>Veuillez réessayer ou contacter le support.</p>
+                        <div class="mt-4">
+                            <a href="{% url 'epreuves_panier' %}" class="btn btn-primary">
+                                <i class="fas fa-redo me-1"></i>Réessayer
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Détail de l'achat -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Détail de votre commande</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Référence :</strong> {{ achat.reference_paiement|default:"-" }}</p>
+                    <p><strong>Date :</strong> {{ achat.date_achat|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Total payé :</strong> {{ achat.prix_total }} FCFA</p>
+                    <p><strong>Mode de paiement :</strong> 
+                        {% if achat.type_paiement == 'orange' %}Orange Money
+                        {% elif achat.type_paiement == 'mtn' %}MTN Mobile Money
+                        {% else %}{{ achat.type_paiement }}{% endif %}
+                    </p>
+                    <hr>
+                    <h6>Épreuves achetées :</h6>
+                    <ul class="list-unstyled">
+                        {% for epreuve in achat.epreuves.all %}
+                            <li><i class="fas fa-file-pdf text-danger me-2"></i>{{ epreuve.titre }} ({{ epreuve.prix }} FCFA)</li>
+                        {% endfor %}
+                        {% for categorie in achat.categories.all %}
+                            <li><i class="fas fa-folder-open text-primary me-2"></i>Pack {{ categorie.nom }} ({{ categorie.prix_pack }} FCFA)
+                                <ul class="ms-4 mt-1">
+                                    {% for serie in categorie.series.all %}
+                                        {% for epreuve in serie.epreuves.all %}
+                                            <li><i class="fas fa-file-pdf text-danger me-2"></i>{{ epreuve.titre }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

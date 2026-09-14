@@ -1,0 +1,75 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Conditions de vente{% endblock %}
+{% block page_title %}Conditions de vente des formations{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">Commission sur les ventes</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    La commission est un pourcentage prélevé par la plateforme sur chaque vente.
+                    <br>Exemple : 10% de commission sur une formation à 20 000 FCFA = 2 000 FCFA pour la plateforme.
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Commission (%)</label>
+                        <div class="input-group">
+                            <input type="number" name="commission_pourcentage" class="form-control form-control-lg" step="0.5" value="{{ condition.commission_pourcentage|default:10 }}" required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted">
+                            Pourcentage prélevé par la plateforme sur chaque vente.
+                            Le créateur reçoit le reste.
+                        </small>
+                    </div>
+                    
+                    <div class="card bg-light p-3 mb-3">
+                        <h6 class="mb-2">Simulation</h6>
+                        <p class="mb-1">Pour une formation à <strong id="simulationPrix">20 000</strong> FCFA :</p>
+                        <p class="mb-0">
+                            Commission plateforme : <strong id="simulationCommission">2 000</strong> FCFA<br>
+                            Revenu créateur : <strong id="simulationCreateur">18 000</strong> FCFA
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'super_admin_ecole_liste' %}" class="btn btn-secondary">Annuler</a>
+                        <button type="submit" class="btn btn-primary">Enregistrer la commission</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const commissionInput = document.querySelector('input[name="commission_pourcentage"]');
+    const prixInput = document.getElementById('simulationPrix');
+    
+    function updateSimulation() {
+        const commission = parseFloat(commissionInput.value) || 0;
+        const prix = 20000;
+        const montantCommission = (prix * commission) / 100;
+        const montantCreateur = prix - montantCommission;
+        
+        document.getElementById('simulationCommission').textContent = Math.round(montantCommission);
+        document.getElementById('simulationCreateur').textContent = Math.round(montantCreateur);
+    }
+    
+    commissionInput.addEventListener('input', updateSimulation);
+    updateSimulation();
+</script>
+
+{% endblock %}

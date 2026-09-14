@@ -1,0 +1,142 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Confirmation de paiement{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:620px;">
+  <div class="confirm-card">
+
+    <!-- Icône statut -->
+    <div class="confirm-icon-wrap">
+      {% if achat.statut == 'confirme' %}
+      <div class="confirm-icon confirm-success">
+        <i class="fas fa-check"></i>
+      </div>
+      {% else %}
+      <div class="confirm-icon confirm-pending">
+        <i class="fas fa-clock"></i>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Titre -->
+    {% if achat.statut == 'confirme' %}
+    <h2 class="confirm-title">Paiement confirmé !</h2>
+    <p class="confirm-sub">Votre accès à la formation a été activé immédiatement.</p>
+    {% else %}
+    <h2 class="confirm-title">Paiement en attente</h2>
+    <p class="confirm-sub">
+      Votre demande de paiement a été initiée.
+      Vous recevrez une confirmation dès que le paiement sera validé.
+    </p>
+    {% endif %}
+
+    <!-- Référence -->
+    <div class="confirm-ref-box">
+      <span class="confirm-ref-label">Référence de transaction</span>
+      <span class="confirm-ref-code">{{ achat.reference_paiement }}</span>
+    </div>
+
+    <!-- Détails -->
+    <div class="confirm-details">
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-label">Formation</span>
+        <span class="confirm-detail-value">{{ achat.formation.titre|truncatechars:40 }}</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-label">Montant payé</span>
+        <span class="confirm-detail-value fw-700">{{ achat.prix_net|floatformat:0 }} FCFA</span>
+      </div>
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-label">Mode de paiement</span>
+        <span class="confirm-detail-value">{{ achat.get_type_paiement_display|default:achat.type_paiement }}</span>
+      </div>
+      {% if achat.date_confirmation %}
+      <div class="confirm-detail-row">
+        <span class="confirm-detail-label">Date de confirmation</span>
+        <span class="confirm-detail-value">{{ achat.date_confirmation|date:"d/m/Y à H:i" }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Prochaines étapes -->
+    {% if achat.statut == 'en_attente' %}
+    <div class="confirm-steps">
+      <h6 class="confirm-steps-title">Prochaines étapes</h6>
+      <div class="confirm-step">
+        <div class="confirm-step-num">1</div>
+        <div>Validez le paiement sur votre application Mobile Money</div>
+      </div>
+      <div class="confirm-step">
+        <div class="confirm-step-num">2</div>
+        <div>Vous recevrez un SMS de confirmation de votre opérateur</div>
+      </div>
+      <div class="confirm-step">
+        <div class="confirm-step-num">3</div>
+        <div>Votre accès à la formation sera activé automatiquement</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="confirm-actions">
+      {% if achat.statut == 'confirme' %}
+      <a href="{% url 'mes_formations' %}" class="confirm-btn-primary">
+        <i class="fas fa-book-open me-2"></i>Accéder à ma formation
+      </a>
+      {% else %}
+      <a href="{% url 'mes_formations' %}" class="confirm-btn-primary">
+        <i class="fas fa-clock me-2"></i>Suivre mon paiement
+      </a>
+      {% endif %}
+      <a href="{% url 'formations_liste' %}" class="confirm-btn-secondary">
+        <i class="fas fa-th-large me-2"></i>Voir d'autres formations
+      </a>
+    </div>
+
+    <!-- Support -->
+    <p class="confirm-support">
+      Un problème ?
+      <a href="mailto:{{ config.footer_email_contact|default:'contact@academienet.cm' }}">
+        Contacter le support
+      </a>
+    </p>
+  </div>
+</div>
+
+<style>
+.confirm-card { background:white; border-radius:24px; border:1.5px solid #e5e7eb; padding:40px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.08); }
+.confirm-icon-wrap { margin-bottom:24px; }
+.confirm-icon { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto; }
+.confirm-success { background:#d1fae5; color:#059669; }
+.confirm-pending { background:#fef3c7; color:#d97706; }
+.confirm-title { font-size:1.6rem; font-weight:900; color:#111827; margin-bottom:8px; }
+.confirm-sub { color:#6b7280; margin-bottom:28px; line-height:1.6; }
+
+.confirm-ref-box { background:#f0f4ff; border-radius:12px; padding:16px; margin-bottom:24px; }
+.confirm-ref-label { display:block; font-size:0.78rem; color:#6b7280; margin-bottom:4px; }
+.confirm-ref-code { font-size:1.1rem; font-weight:800; color:#1e3a8a; letter-spacing:2px; font-family:monospace; }
+
+.confirm-details { border:1px solid #f3f4f6; border-radius:12px; overflow:hidden; margin-bottom:24px; text-align:left; }
+.confirm-detail-row { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #f9fafb; font-size:0.88rem; }
+.confirm-detail-row:last-child { border:none; }
+.confirm-detail-label { color:#6b7280; }
+.confirm-detail-value { color:#111827; font-weight:500; }
+.fw-700 { font-weight:700; }
+
+.confirm-steps { background:#fffbeb; border-radius:12px; padding:20px; margin-bottom:24px; text-align:left; }
+.confirm-steps-title { font-size:0.9rem; font-weight:700; color:#92400e; margin-bottom:14px; }
+.confirm-step { display:flex; align-items:flex-start; gap:12px; margin-bottom:10px; font-size:0.85rem; color:#374151; }
+.confirm-step:last-child { margin:0; }
+.confirm-step-num { width:24px; height:24px; border-radius:50%; background:#f59e0b; color:white; font-size:0.72rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+
+.confirm-actions { display:flex; flex-direction:column; gap:12px; margin-bottom:16px; }
+.confirm-btn-primary { background:#1e3a8a; color:white; padding:14px; border-radius:12px; font-weight:700; text-decoration:none; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.confirm-btn-primary:hover { background:#0f2b5e; color:white; }
+.confirm-btn-secondary { background:white; color:#1e3a8a; border:1.5px solid #1e3a8a; padding:13px; border-radius:12px; font-weight:600; text-decoration:none; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+.confirm-btn-secondary:hover { background:#f0f4ff; }
+.confirm-support { font-size:0.8rem; color:#9ca3af; }
+.confirm-support a { color:#1e3a8a; }
+</style>
+{% endblock %}

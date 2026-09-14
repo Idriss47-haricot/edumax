@@ -1,0 +1,453 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Forums - {{ ecole.nom }}{% endblock %}
+{% block page_title %}🏫 Forums de {{ ecole.nom }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#forums">
+                <i class="fas fa-list me-2"></i>Mes forums
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#creer">
+                <i class="fas fa-plus me-2"></i>Créer un forum
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#signalements">
+                <i class="fas fa-flag me-2"></i>Signalements
+                {% if signalements %}<span class="badge bg-warning ms-2">{{ signalements|length }}</span>{% endif %}
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#bloques">
+                <i class="fas fa-ban me-2"></i>Utilisateurs bloqués
+                {% if bloques %}<span class="badge bg-danger ms-2">{{ bloques|length }}</span>{% endif %}
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content">
+        
+        <!-- LISTE DES FORUMS -->
+        <div class="tab-pane fade show active" id="forums">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Forums de votre école</h5>
+                </div>
+                <div class="card-body">
+                    
+                    <h6 class="fw-bold text-primary">📚 Forums école</h6>
+                    {% if forums_ecole %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr><th>Forum</th><th>Messages</th><th>Statut</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for forum in forums_ecole %}
+                                <tr>
+                                    <td><i class="{{ forum.icone }} me-2"></i><strong>{{ forum.nom }}</strong><br><small>{{ forum.description|truncatechars:50 }}</small></td>
+                                    <td>{{ forum.messages.count }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="toggle_forum">
+                                            <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                                            <button type="submit" class="btn btn-sm {% if forum.actif %}btn-success{% else %}btn-secondary{% endif %}">
+                                                {% if forum.actif %}Actif{% else %}Inactif{% endif %}
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'forum_detail' forum.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalModifier{{ forum.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalParticipants{{ forum.id }}">
+                                                <i class="fas fa-users"></i>
+                                            </button>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('Supprimer ce forum ?')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="supprimer_forum">
+                                                <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">Aucun forum école.</div>
+                    {% endif %}
+                    
+                    <h6 class="fw-bold text-primary mt-4">🎓 Forums par spécialité</h6>
+                    {% if forums_specialites %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr><th>Forum</th><th>Spécialité</th><th>Messages</th><th>Statut</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for forum in forums_specialites %}
+                                <tr>
+                                    <td><i class="{{ forum.icone }} me-2"></i><strong>{{ forum.nom }}</strong></td>
+                                    <td>{{ forum.specialite.nom }}</td>
+                                    <td>{{ forum.messages.count }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="toggle_forum">
+                                            <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                                            <button type="submit" class="btn btn-sm {% if forum.actif %}btn-success{% else %}btn-secondary{% endif %}">
+                                                {% if forum.actif %}Actif{% else %}Inactif{% endif %}
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'forum_detail' forum.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#modalModifier{{ forum.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalParticipants{{ forum.id }}">
+                                                <i class="fas fa-users"></i>
+                                            </button>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('Supprimer ce forum ?')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="supprimer_forum">
+                                                <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">Aucun forum par spécialité.</div>
+                    {% endif %}
+                    
+                </div>
+            </div>
+        </div>
+        
+        <!-- CRÉER UN FORUM -->
+        <div class="tab-pane fade" id="creer">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Créer un forum</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="creer_forum">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Type de forum *</label>
+                                    <select name="type_forum" class="form-select" required>
+                                        <option value="ecole">Forum d'école (toute l'école)</option>
+                                        <option value="specialite">Forum de spécialité</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6" id="specialiteDiv" style="display:none;">
+                                <div class="mb-3">
+                                    <label class="form-label">Spécialité *</label>
+                                    <select name="specialite_id" class="form-select">
+                                        <option value="">-- Choisir --</option>
+                                        {% for spec in specialites %}
+                                        <option value="{{ spec.id }}">{{ spec.filiere.nom }} → {{ spec.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Nom du forum *</label>
+                            <input type="text" name="nom" class="form-control" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Icône</label>
+                                <input type="text" name="icone" class="form-control" value="fas fa-comments">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Couleur</label>
+                                <input type="color" name="couleur" class="form-control" value="#1e3a8a">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Ordre</label>
+                                <input type="number" name="ordre" class="form-control" value="0">
+                            </div>
+                            <div class="col-md-2 mt-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="moderation" class="form-check-input" id="moderation">
+                                    <label class="form-check-label">Modération</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success mt-3">Créer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SIGNALEMENTS -->
+        <div class="tab-pane fade" id="signalements">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h5 class="mb-0"><i class="fas fa-flag me-2"></i>Signalements</h5>
+                </div>
+                <div class="card-body">
+                    {% if signalements %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="table-light">
+                                <tr><th>Message</th><th>Auteur</th><th>Motif</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for sig in signalements %}
+                                <tr>
+                                    <td>{{ sig.message.contenu|truncatechars:80 }}</td>
+                                    <td>{{ sig.message.auteur.username }}</td>
+                                    <td>{{ sig.motif }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="traiter_signalement">
+                                            <input type="hidden" name="signalement_id" value="{{ sig.id }}">
+                                            <button type="submit" class="btn btn-sm btn-success">Traiter</button>
+                                        </form>
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="masquer_message">
+                                            <input type="hidden" name="message_id" value="{{ sig.message.id }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">Masquer</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Aucun signalement</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- BLOQUÉS -->
+        <div class="tab-pane fade" id="bloques">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-ban me-2"></i>Utilisateurs bloqués</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-secondary">
+                        <form method="post" class="row g-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="bloquer">
+                            <div class="col-5">
+                                <select name="utilisateur_id" class="form-select" required>
+                                    <option value="">-- Utilisateur --</option>
+                                    {% for u in utilisateurs %}
+                                    <option value="{{ u.id }}">{{ u.username }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-4">
+                                <select name="forum_id" class="form-select" required>
+                                    <option value="">-- Forum --</option>
+                                    {% for forum in tous_forums %}
+                                    <option value="{{ forum.id }}">{{ forum.nom }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-3">
+                                <button type="submit" class="btn btn-danger w-100">Bloquer</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    {% if bloques %}
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="table-light">
+                                <tr><th>Utilisateur</th><th>Forum</th><th>Motif</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for b in bloques %}
+                                <tr>
+                                    <td>{{ b.utilisateur.username }}</td>
+                                    <td>{{ b.forum.nom }}</td>
+                                    <td>{{ b.motif|default:'-' }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="debloquer">
+                                            <input type="hidden" name="blocage_id" value="{{ b.id }}">
+                                            <button type="submit" class="btn btn-sm btn-success">Débloquer</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center">Aucun utilisateur bloqué</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<!-- MODALES MODIFICATION -->
+{% for forum in forums_ecole %}
+<div class="modal fade" id="modalModifier{{ forum.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="modifier_forum">
+                <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Modifier {{ forum.nom }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Nom</label>
+                        <input type="text" name="nom" class="form-control" value="{{ forum.nom }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="3">{{ forum.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label>Icône</label>
+                        <input type="text" name="icone" class="form-control" value="{{ forum.icone }}">
+                    </div>
+                    <div class="mb-3">
+                        <label>Couleur</label>
+                        <input type="color" name="couleur" class="form-control" value="{{ forum.couleur }}">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="moderation" class="form-check-input" id="moderation{{ forum.id }}" {% if forum.moderation %}checked{% endif %}>
+                        <label class="form-check-label">Modération activée</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODALE PARTICIPANTS -->
+<div class="modal fade" id="modalParticipants{{ forum.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Participants - {{ forum.nom }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="fw-bold">Membres ({{ forum.participants|length }})</h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr><th>Utilisateur</th><th>Rôle</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for participant in forum.participants %}
+                            <tr>
+                                <td>{{ participant.username }}</td>
+                                <td>{{ participant.role }}</td>
+                                <td>
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="supprimer_participant">
+                                        <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                                        <input type="hidden" name="utilisateur_id" value="{{ participant.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Retirer</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center text-muted">Aucun participant</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <h6 class="fw-bold">Ajouter un participant</h6>
+                <form method="post" class="row g-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="ajouter_participant">
+                    <input type="hidden" name="forum_id" value="{{ forum.id }}">
+                    <div class="col-8">
+                        <select name="utilisateur_id" class="form-select" required>
+                            <option value="">-- Choisir --</option>
+                            {% for u in utilisateurs %}
+                            <option value="{{ u.id }}">{{ u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-success w-100">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% for forum in forums_specialites %}
+<!-- Mêmes modales pour les forums spécialités -->
+<div class="modal fade" id="modalModifier{{ forum.id }}" tabindex="-1">...</div>
+<div class="modal fade" id="modalParticipants{{ forum.id }}" tabindex="-1">...</div>
+{% endfor %}
+
+<script>
+document.querySelector('select[name="type_forum"]').addEventListener('change', function() {
+    document.getElementById('specialiteDiv').style.display = this.value === 'specialite' ? 'block' : 'none';
+});
+</script>
+{% endblock %}

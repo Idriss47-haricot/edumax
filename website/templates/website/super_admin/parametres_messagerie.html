@@ -1,0 +1,222 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Paramètres messagerie{% endblock %}
+{% block page_title %}⚙️ Paramètres de la messagerie{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <!-- Statistiques -->
+    <div class="col-md-12 mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <h6 class="mb-0">Messages aujourd'hui</h6>
+                        <h2 class="mb-0">{{ stats.messages_aujourdhui }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="mb-0">Messages total</h6>
+                        <h2 class="mb-0">{{ stats.messages_total }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h6 class="mb-0">Conversations</h6>
+                        <h2 class="mb-0">{{ stats.conversations_total }}</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark">
+                    <div class="card-body">
+                        <h6 class="mb-0">Intervalle actuel</h6>
+                        <h2 class="mb-0">{{ stats.intervalle_actuel }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuration du polling intelligent</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Section 1: Général -->
+                    <h6 class="border-bottom pb-2 mb-3">📡 Général</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.polling_actif }}
+                                <label class="form-check-label fw-bold">Polling actif</label>
+                                <small class="text-muted d-block">Désactiver en cas de forte charge serveur</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold">Intervalle de rafraîchissement</label>
+                            {{ form.intervalle_polling }}
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Nettoyage automatique -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">🗑️ Nettoyage automatique</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold">Supprimer messages après (jours)</label>
+                            {{ form.supprimer_messages_apres_jours }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold">Supprimer conversations vides après (jours)</label>
+                            {{ form.supprimer_conversations_vides_apres_jours }}
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Optimisations -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">⚡ Optimisations</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.pause_polling_onglet_inactif }}
+                                <label class="form-check-label fw-bold">Pause si onglet inactif</label>
+                                <small class="text-muted d-block">Arrête le polling quand l'utilisateur n'est pas sur l'onglet</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                {{ form.pause_polling_apres_heure }}
+                                <label class="form-check-label fw-bold">Pause nocturne active</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold">Début pause nocturne</label>
+                            {{ form.heure_debut_pause }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold">Fin pause nocturne</label>
+                            {{ form.heure_fin_pause }}
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Sécurité -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">🔒 Sécurité</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold">Max messages par requête</label>
+                            {{ form.max_messages_par_requete }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold">Délai min entre envois (secondes)</label>
+                            {{ form.rate_limit_secondes }}
+                        </div>
+                    </div>
+
+                    <!-- Section 5: Adaptation automatique -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">🤖 Adaptation automatique</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                {{ form.adaptation_auto_intervalle }}
+                                <label class="form-check-label fw-bold">Adapter automatiquement l'intervalle selon la charge serveur</label>
+                                <small class="text-muted d-block">Augmente l'intervalle si beaucoup d'utilisateurs, le réduit si charge faible</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="fw-bold">Intervalle minimal (secondes)</label>
+                            {{ form.min_intervalle_polling }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="fw-bold">Intervalle maximal (secondes)</label>
+                            {{ form.max_intervalle_polling }}
+                        </div>
+                    </div>
+
+                    <!-- Section 6: Message utilisateur -->
+                    <h6 class="border-bottom pb-2 mb-3 mt-4">💬 Affichage utilisateur</h6>
+                    <div class="mb-3">
+                        <label class="fw-bold">Message si polling désactivé</label>
+                        {{ form.message_polling_desactive }}
+                    </div>
+
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Retour</a>
+                        <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar aide -->
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>À propos</h5>
+            </div>
+            <div class="card-body small">
+                <p><strong>Polling intelligent</strong> = requêtes régulières pour vérifier les nouveaux messages.</p>
+                <hr>
+                <p><strong>Recommandations :</strong></p>
+                <ul>
+                    <li><strong>Charge faible</strong> (< 1000 utilisateurs) : 10-20s</li>
+                    <li><strong>Charge moyenne</strong> (1000-10000) : 30-45s</li>
+                    <li><strong>Charge élevée</strong> (> 10000) : 60-90s ou désactiver</li>
+                </ul>
+                <div class="alert alert-warning mt-2 mb-0">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Désactiver le polling en cas de forte charge serveur !
+                </div>
+            </div>
+        </div>
+        
+        <!-- État actuel -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>État actuel</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Polling :</strong> 
+                    {% if config.polling_actif %}
+                        <span class="badge bg-success">Actif ({{ config.intervalle_polling }}s)</span>
+                    {% else %}
+                        <span class="badge bg-danger">Désactivé</span>
+                    {% endif %}
+                </p>
+                <p><strong>Pause nocturne :</strong> 
+                    {% if config.pause_polling_apres_heure %}
+                        <span class="badge bg-info">{{ config.heure_debut_pause|time:"H:i" }} - {{ config.heure_fin_pause|time:"H:i" }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Désactivée</span>
+                    {% endif %}
+                </p>
+                <p><strong>Adaptation auto :</strong>
+                    {% if config.adaptation_auto_intervalle %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </p>
+                <p><strong>Dernière modif :</strong> {{ config.date_modification|date:"d/m/Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

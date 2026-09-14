@@ -1,0 +1,81 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ action }} un témoignage{% endblock %}
+{% block page_title %}{{ action }} un témoignage{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>{{ action }} un témoignage</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nom *</label>
+                            <input type="text" name="nom" class="form-control" value="{{ temoignage.nom|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Rôle/Fonction</label>
+                            <input type="text" name="role" class="form-control" value="{{ temoignage.role|default:'' }}">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Témoignage *</label>
+                            <textarea name="texte" class="form-control" rows="4" required>{{ temoignage.texte|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Note (1-5)</label>
+                                    <select name="note" class="form-select">
+                                        <option value="5" {% if temoignage.note == 5 %}selected{% endif %}>★★★★★ (5)</option>
+                                        <option value="4" {% if temoignage.note == 4 %}selected{% endif %}>★★★★☆ (4)</option>
+                                        <option value="3" {% if temoignage.note == 3 %}selected{% endif %}>★★★☆☆ (3)</option>
+                                        <option value="2" {% if temoignage.note == 2 %}selected{% endif %}>★★☆☆☆ (2)</option>
+                                        <option value="1" {% if temoignage.note == 1 %}selected{% endif %}>★☆☆☆☆ (1)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Ordre</label>
+                                    <input type="number" name="ordre" class="form-control" value="{{ temoignage.ordre|default:0 }}">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    <input type="checkbox" name="actif" class="form-check-input" id="actif" {% if temoignage.actif or not temoignage %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold" for="actif">Actif</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Avatar (optionnel)</label>
+                            {% if temoignage.avatar %}
+                            <div class="mb-2">
+                                <img src="{{ temoignage.avatar.url }}" style="height:60px; width:60px; border-radius:50%; object-fit:cover;">
+                            </div>
+                            {% endif %}
+                            <input type="file" name="avatar" class="form-control" accept="image/*">
+                        </div>
+                        
+                        <div class="mt-4 text-end">
+                            <a href="{% url 'super_admin_configuration' %}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Ajouter une séance - {{ cours.titre }}{% endblock %}
+{% block page_title %}Ajouter une séance à "{{ cours.titre }}"{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-plus-circle me-2 text-primary"></i>
+                    Nouvelle séance
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="seanceForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre de la séance *</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Objectifs pédagogiques</label>
+                        {{ form.objectifs }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Type de séance *</label>
+                        {{ form.type_seance }}
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle"></i> 
+                            <span id="typeDescription"></span>
+                        </small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ordre d'affichage</label>
+                            {{ form.ordre }}
+                            <small class="text-muted">Plus petit = plus haut</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Durée estimée (minutes)</label>
+                            {{ form.duree_estimee }}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'cours_detail_superadmin' cours.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Créer la séance
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const typeSelect = document.getElementById('id_type_seance');
+    const typeDescription = document.getElementById('typeDescription');
+    
+    const descriptions = {
+        'visio': 'Visioconférence en direct avec BigBlueButton. Enregistrement automatique disponible 15 jours.',
+        'asynchrone': 'Séance asynchrone : ajoutez des fichiers (PDF, DOC, vidéo) ou des liens externes. Les étudiants consultent à leur rythme.',
+        'integration': 'Activité d\'intégration : créez des exercices avec correction intégrée. Suivi de progression.',
+        'correction': 'Séance dédiée à la correction des devoirs et exercices. Feedback individuel ou collectif.'
+    };
+    
+    function updateDescription() {
+        const type = typeSelect.value;
+        typeDescription.textContent = descriptions[type] || 'Sélectionnez un type pour voir la description.';
+    }
+    
+    typeSelect.addEventListener('change', updateDescription);
+    updateDescription();
+</script>
+
+{% endblock %}

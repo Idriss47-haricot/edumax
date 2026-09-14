@@ -1,0 +1,702 @@
+Structure du dossier
+Le num‚ro de s‚rie du volume est 1466-2A2A
+C:.
+|   arborescence.txt
+|   db.sqlite3
+|   manage.py
+|   projet_complet.txt
+|   python
+|   
++---.vscode
+|       settings.json
+|       
++---edumax
+|   |   settings.py
+|   |   urls.py
+|   |   wsgi.py
+|   |   __init__.py
+|   |   
+|   +---static
+|   |   \---website
+|   |       \---js
+|   \---__pycache__
+|           settings.cpython-312.pyc
+|           urls.cpython-312.pyc
+|           wsgi.cpython-312.pyc
+|           __init__.cpython-312.pyc
+|           
++---edumax_app
+|   |   admin.py
+|   |   apps.py
+|   |   models.py
+|   |   tests.py
+|   |   views.py
+|   |   __init__.py
+|   |   
+|   +---migrations
+|   |       __init__.py
+|   |       
+|   \---__pycache__
++---main
+|   |   admin.py
+|   |   apps.py
+|   |   models.py
+|   |   tests.py
+|   |   views.py
+|   |   __init__.py
+|   |   
+|   +---migrations
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   \---__pycache__
++---media
+|   +---ecoles
+|   |   +---bannieres
+|   |   |       IMG-20250111-WA0014.jpg
+|   |   |       IMG-20250111-WA0014_7mQ6pb5.jpg
+|   |   |       IMG-20250111-WA0014_CydsXJz.jpg
+|   |   |       IMG-20250111-WA0014_Jh6h0OA.jpg
+|   |   |       IMG-20250111-WA0014_rJs5Xar.jpg
+|   |   |       IMG-20250111-WA0014_VJkRkt3.jpg
+|   |   |       IMG-20250422-WA0010.jpg
+|   |   |       IMG-20250422-WA0010_CtrOSnV.jpg
+|   |   |       logo-minefop.png
+|   |   |       logo-minefop_0eVO5Wa.png
+|   |   |       logo-minefop_crqArn5.png
+|   |   |       logo-minefop_mXqPItM.png
+|   |   |       logo-minefop_SxvCx4c.png
+|   |   |       
+|   |   \---galerie
+|   |           logo-minefop.png
+|   |           OIP.webp
+|   |           
+|   +---epreuves
+|   |   \---sujets
+|   |           chap_1.pdf
+|   |           
+|   +---formations
+|   |   +---covers
+|   |   |       Black_and_White_Simple_Online_Course_Flyer_A4.png
+|   |   |       Black_and_White_Simple_Online_Course_Flyer_A4_bvDHZZT.png
+|   |   |       Blue_and_White_Illustrative_Artificial_Intelligence_Poster_1.png
+|   |   |       Blue_and_White_Illustrative_Artificial_Intelligence_Poster_1_1GGA2Le.png
+|   |   |       Blue_and_White_Illustrative_Artificial_Intelligence_Poster_1_bky8LtT.png
+|   |   |       Blue_and_White_Illustrative_Artificial_Intelligence_Poster_1_j4ulaye.png
+|   |   |       Blue_and_White_Illustrative_Artificial_Intelligence_Poster_1_qx5Yz65.png
+|   |   |       Blue_and_White_Modern_Recruitment_Job_Opportunity_Flyer.png
+|   |   |       Blue_and_White_Modern_Recruitment_Job_Opportunity_Flyer_4CfSwLw.png
+|   |   |       Blue_and_White_Modern_Recruitment_Job_Opportunity_Flyer_DtuONTi.png
+|   |   |       Blue_and_White_Modern_Recruitment_Job_Opportunity_Flyer_ekw2apd.png
+|   |   |       Blue_and_White_Modern_Recruitment_Job_Opportunity_Flyer_vfwA21y.png
+|   |   |       Blue_and_White_Modern_Recruitment_Job_Opportunity_Flyer_yCirJWx.png
+|   |   |       Capture_d‚cran_2.png
+|   |   |       Capture_d‚cran_23.png
+|   |   |       IMG-20250804-WA0009.jpg
+|   |   |       Very_important.png
+|   |   |       Very_important_DxP4W1R.png
+|   |   |       Very_important_ewq7wFh.png
+|   |   |       Very_important_JOrx71z.png
+|   |   |       Very_important_KSDTKbB.png
+|   |   |       Very_important_v7GCvz9.png
+|   |   |       
+|   |   \---fichiers
+|   |           0129.mp4
+|   |           0413.mp4
+|   |           1-pfSense_c_est_quoi_-_Tuto_Video0.mp4
+|   |           1-pfSense_c_est_quoi_-_Tuto_Video0_6yUJ83f.mp4
+|   |           1-pfSense_c_est_quoi_-_Tuto_Video0_CM5H87b.mp4
+|   |           1-Vid‚o_pr‚sentation_de_la_formation_pfSense_Tome_010.mp4
+|   |           2-Le_mode_d_administration_pfSense_-_Tuto_Vid‚o0.mp4
+|   |           Acan.mp3
+|   |           Black_and_Orange_Modern_Lyrics_Youtube_Video.mp4
+|   |           Blue_and_White_Illustrative_Artificial_Intelligence_Poster_1.png
+|   |           cours_FibreOptique.pdf
+|   |           Purple_Orange_Sunset_Simple_Easter_Greeting_Instagram_Reels_1.mp4
+|   |           Purple_Orange_Sunset_Simple_Easter_Greeting_Instagram_Reels_1_1vW0Afy.mp4
+|   |           Purple_Orange_Sunset_Simple_Easter_Greeting_Instagram_Reels_1_CaKTdv6.mp4
+|   |           Purple_Orange_Sunset_Simple_Easter_Greeting_Instagram_Reels_1_kRF0QCH.mp4
+|   |           Purple_Orange_Sunset_Simple_Easter_Greeting_Instagram_Reels_1_sHQD0Iv.mp4
+|   |           Purple_Orange_Sunset_Simple_Easter_Greeting_Instagram_Reels_1_YAeBGrJ.mp4
+|   |           REFRAIN_d‚but.mp3
+|   |           testdisk-7.2.win64.zip
+|   |           tutorial.mp4
+|   |           Very_important.png
+|   |           
+|   +---hero
+|   |   \---slides
+|   |           IMG-20250111-WA0014.jpg
+|   |           
+|   +---logos
+|   |       IMG-20250111-WA0014.jpg
+|   |       IMG-20250111-WA0014_5Ihjcd7.jpg
+|   |       IMG-20250111-WA0014_5jslYQO.jpg
+|   |       IMG-20250111-WA0014_Fk5V44W.jpg
+|   |       IMG-20250111-WA0014_hkN739b.jpg
+|   |       IMG-20250111-WA0014_sGgmxtz.jpg
+|   |       IMG-20250422-WA0010.jpg
+|   |       IMG-20250422-WA0010_cXzXPM7.jpg
+|   |       logo-minefop.png
+|   |       logo-minefop_KjxmzmH.png
+|   |       logo-minefop_Q21Ihpt.png
+|   |       logo-minefop_UmlujBB.png
+|   |       logo-minefop_zhzum94.png
+|   |       
+|   \---temoignages
+|       \---avatars
+|               logo-minefop.png
+|               
++---plateforme
+|   |   admin.py
+|   |   apps.py
+|   |   models.py
+|   |   tests.py
+|   |   views.py
+|   |   __init__.py
+|   |   
+|   +---migrations
+|   |   |   __init__.py
+|   |   |   
+|   |   \---__pycache__
+|   \---__pycache__
++---static
+|   +---css
+|   |       all.min.css
+|   |       bootstrap.min.css
+|   |       chart.min.css
+|   |       pdf_style.css
+|   |       style.css
+|   |       
+|   +---images
+|   +---js
+|   |       bootstrap.bundle.min.js
+|   |       chart-init.js
+|   |       chart.min.js
+|   |       charts.js
+|   |       reports.js
+|   |       script.js
+|   |       
+|   \---website
+|       \---js
+|               polling_intelligent.js
+|               
++---staticfiles
+|   +---admin
+|   |   +---css
+|   |   |   |   autocomplete.css
+|   |   |   |   base.css
+|   |   |   |   changelists.css
+|   |   |   |   dark_mode.css
+|   |   |   |   dashboard.css
+|   |   |   |   forms.css
+|   |   |   |   login.css
+|   |   |   |   nav_sidebar.css
+|   |   |   |   responsive.css
+|   |   |   |   responsive_rtl.css
+|   |   |   |   rtl.css
+|   |   |   |   unusable_password_field.css
+|   |   |   |   widgets.css
+|   |   |   |   
+|   |   |   \---vendor
+|   |   |       \---select2
+|   |   |               LICENSE-SELECT2.md
+|   |   |               select2.css
+|   |   |               select2.min.css
+|   |   |               
+|   |   +---img
+|   |   |       calendar-icons.svg
+|   |   |       icon-addlink.svg
+|   |   |       icon-alert-dark.svg
+|   |   |       icon-alert.svg
+|   |   |       icon-calendar.svg
+|   |   |       icon-changelink.svg
+|   |   |       icon-clock.svg
+|   |   |       icon-debug-dark.svg
+|   |   |       icon-debug.svg
+|   |   |       icon-deletelink.svg
+|   |   |       icon-hidelink.svg
+|   |   |       icon-info-dark.svg
+|   |   |       icon-info.svg
+|   |   |       icon-no-dark.svg
+|   |   |       icon-no.svg
+|   |   |       icon-unknown-alt.svg
+|   |   |       icon-unknown.svg
+|   |   |       icon-viewlink.svg
+|   |   |       icon-yes-dark.svg
+|   |   |       icon-yes.svg
+|   |   |       inline-delete.svg
+|   |   |       README.md
+|   |   |       search.svg
+|   |   |       selector-icons.svg
+|   |   |       sorting-icons.svg
+|   |   |       tooltag-add.svg
+|   |   |       tooltag-arrowright.svg
+|   |   |       
+|   |   \---js
+|   |       |   actions.js
+|   |       |   autocomplete.js
+|   |       |   calendar.js
+|   |       |   cancel.js
+|   |       |   change_form.js
+|   |       |   core.js
+|   |       |   filters.js
+|   |       |   inlines.js
+|   |       |   jquery.init.js
+|   |       |   nav_sidebar.js
+|   |       |   popup_response.js
+|   |       |   prepopulate.js
+|   |       |   prepopulate_init.js
+|   |       |   SelectBox.js
+|   |       |   SelectFilter2.js
+|   |       |   theme.js
+|   |       |   urlify.js
+|   |       |   
+|   |       +---admin
+|   |       |       DateTimeShortcuts.js
+|   |       |       RelatedObjectLookups.js
+|   |       |       
+|   |       \---vendor
+|   |           +---jquery
+|   |           |       jquery.js
+|   |           |       jquery.min.js
+|   |           |       LICENSE.txt
+|   |           |       
+|   |           +---select2
+|   |           |   |   LICENSE.md
+|   |           |   |   select2.full.js
+|   |           |   |   select2.full.min.js
+|   |           |   |   
+|   |           |   \---i18n
+|   |           |           af.js
+|   |           |           ar.js
+|   |           |           az.js
+|   |           |           bg.js
+|   |           |           bn.js
+|   |           |           bs.js
+|   |           |           ca.js
+|   |           |           cs.js
+|   |           |           da.js
+|   |           |           de.js
+|   |           |           dsb.js
+|   |           |           el.js
+|   |           |           en.js
+|   |           |           es.js
+|   |           |           et.js
+|   |           |           eu.js
+|   |           |           fa.js
+|   |           |           fi.js
+|   |           |           fr.js
+|   |           |           gl.js
+|   |           |           he.js
+|   |           |           hi.js
+|   |           |           hr.js
+|   |           |           hsb.js
+|   |           |           hu.js
+|   |           |           hy.js
+|   |           |           id.js
+|   |           |           is.js
+|   |           |           it.js
+|   |           |           ja.js
+|   |           |           ka.js
+|   |           |           km.js
+|   |           |           ko.js
+|   |           |           lt.js
+|   |           |           lv.js
+|   |           |           mk.js
+|   |           |           ms.js
+|   |           |           nb.js
+|   |           |           ne.js
+|   |           |           nl.js
+|   |           |           pl.js
+|   |           |           ps.js
+|   |           |           pt-BR.js
+|   |           |           pt.js
+|   |           |           ro.js
+|   |           |           ru.js
+|   |           |           sk.js
+|   |           |           sl.js
+|   |           |           sq.js
+|   |           |           sr-Cyrl.js
+|   |           |           sr.js
+|   |           |           sv.js
+|   |           |           th.js
+|   |           |           tk.js
+|   |           |           tr.js
+|   |           |           uk.js
+|   |           |           vi.js
+|   |           |           zh-CN.js
+|   |           |           zh-TW.js
+|   |           |           
+|   |           \---xregexp
+|   |                   LICENSE.txt
+|   |                   xregexp.js
+|   |                   xregexp.min.js
+|   |                   
+|   +---css
+|   |       all.min.css
+|   |       bootstrap.min.css
+|   |       chart.min.css
+|   |       pdf_style.css
+|   |       style.css
+|   |       
+|   +---js
+|   |       bootstrap.bundle.min.js
+|   |       chart-init.js
+|   |       chart.min.js
+|   |       charts.js
+|   |       reports.js
+|   |       script.js
+|   |       
+|   \---website
+|       \---css
+|               dashboard.css
+|               style.css
+|               
+\---website
+    |   admin.py
+    |   admin_accueil.py
+    |   apps.py
+    |   bbb_service.py
+    |   context_processors.py
+    |   decorators.py
+    |   forms.py
+    |   middleware.py
+    |   models.py
+    |   seed_data.py
+    |   signals.py
+    |   urls.py
+    |   views.py
+    |   __init__.py
+    |   
+    +---management
+    |   \---commands
+    |       |   peupler_donnees.py
+    |       |   supprimer_anciens_enregistrements.py
+    |       |   
+    |       \---__pycache__
+    |               peupler_donnees.cpython-312.pyc
+    |               
+    +---migrations
+    |   |   0001_initial.py
+    |   |   0002_configurationplateforme_auto_publication_delai_minutes_and_more.py
+    |   |   0003_configurationplateforme_nb_ecoles_accueil.py
+    |   |   0004_alter_configurationplateforme_options_and_more.py
+    |   |   0005_utilisateurbloqueforum.py
+    |   |   0006_rename_raison_utilisateurbloqueforum_motif_and_more.py
+    |   |   0007_configurationmessagerie_sujet_jour_actif.py
+    |   |   0008_configurationmessagerie_forum_messages_par_page.py
+    |   |   0009_utilisateur_paiement_desactive_abonnementutilisateur_and_more.py
+    |   |   0010_alter_answer_options_alter_exercice_options_and_more.py
+    |   |   0011_choixsousquestionetudecas_consignedepotfichier_and_more.py
+    |   |   0012_alter_ressourceseance_options_and_more.py
+    |   |   __init__.py
+    |   |   
+    |   \---__pycache__
+    |           0001_initial.cpython-312.pyc
+    |           0002_configurationplateforme_auto_publication_delai_minutes_and_more.cpython-312.pyc
+    |           0003_configurationplateforme_nb_ecoles_accueil.cpython-312.pyc
+    |           0004_alter_configurationplateforme_options_and_more.cpython-312.pyc
+    |           0005_utilisateurbloqueforum.cpython-312.pyc
+    |           0006_rename_raison_utilisateurbloqueforum_motif_and_more.cpython-312.pyc
+    |           0007_configurationmessagerie_sujet_jour_actif.cpython-312.pyc
+    |           0008_configurationmessagerie_forum_messages_par_page.cpython-312.pyc
+    |           0009_utilisateur_ate_inscription_and_more.cpython-312.pyc
+    |           0009_utilisateur_paiement_desactive_abonnementutilisateur_and_more.cpython-312.pyc
+    |           0010_alter_answer_options_alter_exercice_options_and_more.cpython-312.pyc
+    |           0011_choixsousquestionetudecas_consignedepotfichier_and_more.cpython-312.pyc
+    |           0012_alter_ressourceseance_options_and_more.cpython-312.pyc
+    |           __init__.cpython-312.pyc
+    |           
+    +---services
+    |   |   bbb_service.py
+    |   |   paiement_service.py
+    |   |   
+    |   \---__pycache__
+    |           paiement_service.cpython-312.pyc
+    |           
+    +---static
+    |   \---website
+    |       +---css
+    |       |       dashboard.css
+    |       |       style.css
+    |       |       
+    |       \---js
+    |               forum_polling.js
+    |               
+    +---templates
+    |   \---website
+    |       |   accueil.html
+    |       |   base.html
+    |       |   base_dashboard.html
+    |       |   connexion.html
+    |       |   inscription.html
+    |       |   mot_de_passe_oublie.html
+    |       |   profil_public.html
+    |       |   reinitialisation_email.html
+    |       |   
+    |       +---admin_ecole
+    |       |   |   dashboard.html
+    |       |   |   enseignants.html
+    |       |   |   etudiants.html
+    |       |   |   forums.html
+    |       |   |   mes_cours.html
+    |       |   |   parametres.html
+    |       |   |   specialites_liste.html
+    |       |   |   
+    |       |   +---ecole
+    |       |   |       galerie.html
+    |       |   |       modifier.html
+    |       |   |       
+    |       |   +---filieres
+    |       |   |       creer.html
+    |       |   |       liste.html
+    |       |   |       modifier.html
+    |       |   |       
+    |       |   +---specialites
+    |       |   |       creer.html
+    |       |   |       liste.html
+    |       |   |       modifier.html
+    |       |   |       
+    |       |   \---utilisateurs
+    |       |           generer_cle.html
+    |       |           liste.html
+    |       |           modifier.html
+    |       |           
+    |       +---cours
+    |       |       creer.html
+    |       |       detail.html
+    |       |       modifier.html
+    |       |       
+    |       +---devoir
+    |       |       ajouter.html
+    |       |       configurer.html
+    |       |       soumettre.html
+    |       |       voir_correction.html
+    |       |       
+    |       +---ecoles
+    |       |       detail.html
+    |       |       liste.html
+    |       |       
+    |       +---enseignant
+    |       |       cours_creer.html
+    |       |       cours_detail.html
+    |       |       dashboard.html
+    |       |       mes_cours.html
+    |       |       mes_cours_assignes.html
+    |       |       
+    |       +---epreuves
+    |       |       accueil.html
+    |       |       confirmation.html
+    |       |       detail.html
+    |       |       mes_epreuves.html
+    |       |       panier.html
+    |       |       recherche.html
+    |       |       rubrique.html
+    |       |       
+    |       +---etudiant
+    |       |       cours_detail.html
+    |       |       dashboard.html
+    |       |       inscription_cle.html
+    |       |       mes_cours.html
+    |       |       specialite_detail.html
+    |       |       
+    |       +---exercice
+    |       |   |   ajouter.html
+    |       |   |   configurer.html
+    |       |   |   modifier.html
+    |       |   |   
+    |       |   +---depot_fichier
+    |       |   |       configurer.html
+    |       |   |       corriger.html
+    |       |   |       liste_a_corriger.html
+    |       |   |       passer.html
+    |       |   |       resultat.html
+    |       |   |       tableau_resultats.html
+    |       |   |       
+    |       |   +---etude_cas
+    |       |   |       configurer.html
+    |       |   |       passer.html
+    |       |   |       resultat.html
+    |       |   |       tableau_resultats.html
+    |       |   |       
+    |       |   +---qcm
+    |       |   |       configurer.html
+    |       |   |       passer.html
+    |       |   |       resultat.html
+    |       |   |       tableau_resultats.html
+    |       |   |       
+    |       |   +---redaction
+    |       |   |       configurer.html
+    |       |   |       corriger.html
+    |       |   |       liste_a_corriger.html
+    |       |   |       passer.html
+    |       |   |       resultat.html
+    |       |   |       tableau_resultats.html
+    |       |   |       
+    |       |   +---reponse_courte
+    |       |   |       configurer.html
+    |       |   |       corriger.html
+    |       |   |       passer.html
+    |       |   |       resultat.html
+    |       |   |       tableau_resultats.html
+    |       |   |       
+    |       |   +---texte_trous
+    |       |   |       configurer.html
+    |       |   |       passer.html
+    |       |   |       resultat.html
+    |       |   |       tableau_resultats.html
+    |       |   |       
+    |       |   \---vrai_faux
+    |       |           configurer.html
+    |       |           
+    |       +---formations
+    |       |   |   ajouter_fichiers.html
+    |       |   |   confirmation.html
+    |       |   |   creer.html
+    |       |   |   en_attente.html
+    |       |   |   formations_liste.html
+    |       |   |   formation_detail.html
+    |       |   |   laisser_avis.html
+    |       |   |   liste.html
+    |       |   |   mes_formations.html
+    |       |   |   paiement.html
+    |       |   |   publier_confirmation.html
+    |       |   |   signaler.html
+    |       |   |   
+    |       |   \---includes
+    |       |           card_formation.html
+    |       |           
+    |       +---forum
+    |       |   |   detail.html
+    |       |   |   liste.html
+    |       |   |   sujet_jour.html
+    |       |   |   
+    |       |   \---partials
+    |       |           forum_card.html
+    |       |           
+    |       +---gestion
+    |       |       creer_ecole.html
+    |       |       devenir_formateur.html
+    |       |       mes_demandes.html
+    |       |       
+    |       +---messages
+    |       |       liste.html
+    |       |       
+    |       +---paiement
+    |       |       choix_abonnement.html
+    |       |       mon_abonnement.html
+    |       |       simulation.html
+    |       |       
+    |       +---seance
+    |       |   |   ajouter.html
+    |       |   |   asynchrone_config.html
+    |       |   |   correction_config.html
+    |       |   |   correction_devoir.html
+    |       |   |   detail.html
+    |       |   |   integration_config.html
+    |       |   |   modifier.html
+    |       |   |   visio_config.html
+    |       |   |   
+    |       |   \---partials
+    |       |           asynchrone_content.html
+    |       |           correction_content.html
+    |       |           integration_content.html
+    |       |           visio_content.html
+    |       |           
+    |       +---specialite
+    |       |       detail.html
+    |       |       
+    |       \---super_admin
+    |           |   banniere_form.html
+    |           |   configuration.html
+    |           |   dashboard.html
+    |           |   demandes_formateur.html
+    |           |   forums_parametres.html
+    |           |   gerer_formations.html
+    |           |   logs_transactions.html
+    |           |   mes_cours.html
+    |           |   modifier.html
+    |           |   parametres_messagerie.html
+    |           |   parametres_site.html
+    |           |   refuser_demande.html
+    |           |   slide_form.html
+    |           |   temoignage_form.html
+    |           |   voir_demande.html
+    |           |   
+    |           +---abonnements
+    |           |       creer.html
+    |           |       liste.html
+    |           |       modifier.html
+    |           |       
+    |           +---cles
+    |           |       generer.html
+    |           |       
+    |           +---cours
+    |           |       liste.html
+    |           |       
+    |           +---ecoles
+    |           |       cours.html
+    |           |       creer.html
+    |           |       detail.html
+    |           |       filiere_creer.html
+    |           |       galerie.html
+    |           |       generer_cle.html
+    |           |       liste.html
+    |           |       modifier.html
+    |           |       specialite_creer.html
+    |           |       utilisateurs.html
+    |           |       utilisateur_ajouter.html
+    |           |       
+    |           +---epreuves
+    |           |       dashboard.html
+    |           |       epreuve_modifier.html
+    |           |       modals.html
+    |           |       
+    |           +---formations
+    |           |   |   conditions.html
+    |           |   |   coupons.html
+    |           |   |   regles.html
+    |           |   |   regle_form.html
+    |           |   |   
+    |           |   \---tabs
+    |           |           Centre_interet.html
+    |           |           certification.html
+    |           |           commission.html
+    |           |           coupons.html
+    |           |           dashboard.html
+    |           |           formations.html
+    |           |           regles.html
+    |           |           signalements.html
+    |           |           stats.html
+    |           |           validations.html
+    |           |           
+    |           \---utilisateurs
+    |                   ajouter.html
+    |                   liste.html
+    |                   modifier.html
+    |                   
+    +---templatetags
+    |   |   custom_filters.py
+    |   |   messagerie_tags.py
+    |   |   quiz_extras.py
+    |   |   seance_extras.py
+    |   |   
+    |   \---__pycache__
+    |           custom_filters.cpython-312.pyc
+    |           messagerie_tags.cpython-312.pyc
+    |           quiz_extras.cpython-312.pyc
+    |           seance_extras.cpython-312.pyc
+    |           
+    \---__pycache__
+            admin.cpython-312.pyc
+            apps.cpython-312.pyc
+            context_processors.cpython-312.pyc
+            decorators.cpython-312.pyc
+            forms.cpython-312.pyc
+            middleware.cpython-312.pyc
+            models.cpython-312.pyc
+            signals.cpython-312.pyc
+            urls.cpython-312.pyc
+            views.cpython-312.pyc
+            __init__.cpython-312.pyc
+            

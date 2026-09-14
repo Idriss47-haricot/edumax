@@ -1,0 +1,31 @@
+{% extends 'website/base_dashboard.html' %}
+{% block title %}Formations en attente{% endblock %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5>Validations de formations</h5>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr><th>Titre</th><th>Créateur</th><th>Date</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for f in formations %}
+                <tr>
+                    <td>{{ f.titre }}</td>
+                    <td>{{ f.createur.username }}</td>
+                    <td>{{ f.date_creation|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'valider_formation' f.id %}" class="btn btn-sm btn-success">Valider</a>
+                        <a href="{% url 'certifier_formation' f.id %}" class="btn btn-sm btn-info">Certifier (badge)</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4">Aucune formation en attente.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

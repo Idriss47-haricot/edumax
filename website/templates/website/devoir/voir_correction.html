@@ -1,0 +1,33 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Correction - {{ devoir.titre }}{% endblock %}
+{% block page_title %}Correction du devoir{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">{{ devoir.titre }}</h5>
+            </div>
+            <div class="card-body">
+                {% if soumission.note is not None %}
+                    <div class="alert alert-success">
+                        <strong>Note :</strong> {{ soumission.note }}/20
+                    </div>
+                {% endif %}
+                {% if soumission.feedback %}
+                    <div class="alert alert-secondary">
+                        <strong>Feedback :</strong><br>{{ soumission.feedback|linebreaks }}
+                    </div>
+                {% endif %}
+                {% if soumission.fichier_corrige %}
+                    <a href="{{ soumission.fichier_corrige.url }}" class="btn btn-outline-primary" download>Télécharger le corrigé</a>
+                {% endif %}
+                <hr>
+                <a href="{% url 'seance_detail' devoir.seance.id %}" class="btn btn-secondary">Retour</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

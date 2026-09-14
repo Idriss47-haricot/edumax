@@ -1,37 +1,18 @@
-# Python
+# Environnement Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.egg
-*.egg-info/
-dist/
-build/
-
-# Django
-db.sqlite3
-*.log
-*.pot
-*.pyc
-local_settings.py
-/staticfiles/
-/media/
-
-# Environnement virtuel
+*.py[cod]
+*$py.class
 venv/
 env/
-ENV/
-.venv/
+.env
 
-# IDE
+# Fichiers Django et base locale
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Fichiers IDE / Éditeur
 .vscode/
 .idea/
 *.swp
-*.swo
-
-# Fichiers sensibles
-.env
-*.key
-*.pem

@@ -1,0 +1,18 @@
+<div class="card">
+    <div class="card-header bg-white">
+        <h5>Codes promotionnels</h5>
+    </div>
+    <div class="card-body">
+        <a href="#" class="btn btn-primary mb-3">+ Nouveau coupon</a>
+        <table class="table">
+            <thead><tr><th>Code</th><th>Réduction</th><th>Valable du</th><th>au</th><th>Utilisations</th></tr></thead>
+            <tbody>
+                {% for coupon in coupons %}
+                <tr><td>{{ coupon.code }}</td><td>{{ coupon.reduction_pourcentage }}%</td><td>{{ coupon.validite_debut|date:"d/m/Y" }}</td><td>{{ coupon.validite_fin|date:"d/m/Y" }}</td><td>{{ coupon.utilisations_count }}/{{ coupon.utilisations_max }}</td></tr>
+                {% empty %}
+                <tr><td colspan="5">Aucun coupon</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

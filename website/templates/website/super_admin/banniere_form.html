@@ -1,0 +1,59 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ action }} une bannière{% endblock %}
+{% block page_title %}{{ action }} une bannière{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bullhorn me-2"></i>{{ action }} une bannière</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Texte de la bannière *</label>
+                            <input type="text" name="texte" class="form-control" value="{{ banniere.texte|default:'' }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Lien du bouton</label>
+                            <input type="text" name="lien" class="form-control" value="{{ banniere.lien|default:'' }}">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Couleur de fond</label>
+                                    <input type="color" name="couleur_fond" class="form-control" value="{{ banniere.couleur_fond|default:'#f59e0b' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Couleur du texte</label>
+                                    <input type="color" name="couleur_texte" class="form-control" value="{{ banniere.couleur_texte|default:'#1e3a8a' }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="actif" class="form-check-input" id="actif" {% if banniere.actif or not banniere %}checked{% endif %}>
+                            <label class="form-check-label fw-bold" for="actif">Actif (remplace les autres bannières)</label>
+                        </div>
+                        
+                        <div class="mt-4 text-end">
+                            <a href="{% url 'super_admin_configuration' %}" class="btn btn-secondary">Annuler</a>
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer Rédaction - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Configuration de la Rédaction : {{ exercice.titre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .criteres-list {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    .criteres-list .critere-item {
+        padding: 6px 12px;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .criteres-list .critere-item:last-child {
+        border-bottom: none;
+    }
+    .preview-sujet {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 20px;
+        min-height: 100px;
+        white-space: pre-wrap;
+    }
+    .sticky-top {
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">{{ exercice.titre }}</h5>
+                        <small class="text-muted">{{ exercice.duree }} min • {{ exercice.points }} pts</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'exercice_modifier' exercice.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                        <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    La rédaction est un exercice à <strong>correction manuelle</strong>. 
+                    Vous devrez corriger chaque copie individuellement.
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge {% if exercice.est_lance %}bg-success{% else %}bg-secondary{% endif %} fs-6">
+                        {% if exercice.est_lance %}✓ Publié{% else %}📝 Brouillon{% endif %}
+                    </span>
+                    <span class="badge bg-warning text-dark fs-6">
+                        ✏️ Correction manuelle
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulaire de configuration -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-edit text-primary me-2"></i>Configurer le sujet</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Sujet de la rédaction *</label>
+                        <textarea name="sujet" class="form-control" rows="6" 
+                                  placeholder="Ex: Rédigez une dissertation sur le thème de la liberté..." 
+                                  required>{{ consigne.sujet|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre de mots minimum</label>
+                            <input type="number" name="nb_mots_min" class="form-control" 
+                                   value="{{ consigne.nb_mots_min|default:0 }}" min="0">
+                            <small class="text-muted">0 = pas de minimum</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre de mots maximum</label>
+                            <input type="number" name="nb_mots_max" class="form-control" 
+                                   value="{{ consigne.nb_mots_max|default:0 }}" min="0">
+                            <small class="text-muted">0 = pas de maximum</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Critères d'évaluation</label>
+                        <textarea name="criteres_evaluation" class="form-control" rows="4" 
+                                  placeholder="Ex:&#10;Orthographe et grammaire (4 pts)&#10;Structure et organisation (3 pts)&#10;Pertinence des arguments (3 pts)">{{ consigne.criteres_evaluation|default:'' }}</textarea>
+                        <small class="text-muted">Un critère par ligne</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Document ressource (optionnel)</label>
+                        <input type="file" name="document_ressource" class="form-control" accept=".pdf,.doc,.docx,.txt">
+                        {% if consigne.document_ressource %}
+                            <small class="text-muted">Actuel : <a href="{{ consigne.document_ressource.url }}" target="_blank">{{ consigne.document_ressource.name }}</a></small>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer le sujet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Prévisualisation -->
+        {% if consigne.sujet %}
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-eye text-info me-2"></i>Prévisualisation du sujet</h5>
+            </div>
+            <div class="card-body">
+                <div class="preview-sujet">
+                    {{ consigne.sujet|linebreaks }}
+                </div>
+                {% if consigne.nb_mots_min or consigne.nb_mots_max %}
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-font me-1"></i>
+                    {% if consigne.nb_mots_min and consigne.nb_mots_max %}
+                        {{ consigne.nb_mots_min }} - {{ consigne.nb_mots_max }} mots
+                    {% elif consigne.nb_mots_min %}
+                        Minimum {{ consigne.nb_mots_min }} mots
+                    {% elif consigne.nb_mots_max %}
+                        Maximum {{ consigne.nb_mots_max }} mots
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% if consigne.liste_criteres %}
+                <div class="mt-3">
+                    <small class="text-muted fw-bold">📋 Critères d'évaluation :</small>
+                    <div class="criteres-list">
+                        {% for critere in consigne.liste_criteres %}
+                        <div class="critere-item">{{ critere }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i>Astuces</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <strong>📝 Sujet</strong>
+                        <p class="text-muted small">Formulez un sujet clair et précis. Les étudiants doivent comprendre exactement ce qui est attendu.</p>
+                    </li>
+                    <li class="mb-3">
+                        <strong>📏 Longueur</strong>
+                        <p class="text-muted small">Définissez un nombre de mots pour guider les étudiants et faciliter la correction.</p>
+                    </li>
+                    <li class="mb-3">
+                        <strong>📋 Critères</strong>
+                        <p class="text-muted small">Définissez des critères d'évaluation clairs pour une correction cohérente.</p>
+                    </li>
+                    <li class="mb-3">
+                        <strong>✏️ Correction</strong>
+                        <p class="text-muted small">Les réponses sont corrigées manuellement. Vous pouvez attribuer une note et un commentaire.</p>
+                    </li>
+                </ul>
+                <hr>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'exercice_lancer' exercice.id %}" class="btn {% if exercice.est_lance %}btn-warning{% else %}btn-success{% endif %}" 
+                       onclick="return confirm('{% if exercice.est_lance %}Arrêter l\'exercice ?{% else %}Publier l\'exercice ?{% endif %}')">
+                        <i class="fas {% if exercice.est_lance %}fa-stop{% else %}fa-play{% endif %} me-1"></i>
+                        {% if exercice.est_lance %}Arrêter{% else %}Publier{% endif %}
+                    </a>
+                    <a href="{% url 'redaction_liste_a_corriger' exercice.id %}" class="btn btn-warning">
+                        <i class="fas fa-check-double me-1"></i>Corriger les copies
+                        <span class="badge bg-danger ms-1" id="nb-a-corriger">0</span>
+                    </a>
+                    <a href="{% url 'redaction_tableau_resultats' exercice.id %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar me-1"></i>Résultats
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Compter les copies à corriger
+fetch(`/api/redaction/a-corriger/${exercice.id}/`)
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('nb-a-corriger').textContent = data.nb_a_corriger || 0;
+    });
+</script>

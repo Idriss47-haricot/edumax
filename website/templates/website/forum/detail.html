@@ -1,0 +1,765 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ forum.nom }} — Forum{% endblock %}
+{% block page_title %}{{ forum.nom }}{% endblock %}
+
+{% block content %}
+
+<!-- Configuration pour le polling -->
+<div id="forum-config" 
+     data-forum-id="{{ forum.id }}"
+     data-polling-actif="{{ config.forum_polling_actif|default:'true' }}"
+     data-intervalle="{{ config.forum_intervalle_polling|default:15 }}"
+     data-dernier-message-id="{{ dernier_message_id }}"
+     data-csrf-token="{{ csrf_token }}">
+</div>
+
+<!-- ══ EN-TÊTE DU FORUM ════════════════════════════════════════════ -->
+<div class="forum-header">
+  <div class="forum-header-left">
+    <div class="forum-icon" style="background:{{ forum.couleur|default:'#1e3a8a' }};">
+      <i class="{{ forum.icone|default:'fas fa-comments' }}"></i>
+    </div>
+    <div>
+      <div class="forum-breadcrumb">
+        <a href="{% url 'forum_liste' %}">Forums</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>{{ forum.nom }}</span>
+      </div>
+      <h4 class="forum-nom">{{ forum.nom }}</h4>
+      {% if forum.description %}
+      <p class="forum-desc">{{ forum.description }}</p>
+      {% endif %}
+      <div class="forum-meta">
+        <span><i class="fas fa-comment me-1"></i>{{ forum.messages_forum.count }} message{{ forum.messages_forum.count|pluralize }}</span>
+        {% if forum.lecture_seule %}<span class="forum-badge-lock"><i class="fas fa-lock me-1"></i>Lecture seule</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="forum-header-actions">
+    {% if peut_moderer %}
+    <a href="{% url 'super_admin_forums' %}" class="forum-btn-mod">
+      <i class="fas fa-cog me-1"></i>Modérer
+    </a>
+    {% endif %}
+    {% if user.role == 'super_admin' %}
+    <a href="{% url 'forum_sujet_jour' forum.id %}" class="forum-btn-sujet">
+      <i class="fas fa-calendar-day me-1"></i>Sujet du jour
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ══ SUJET DU JOUR ═══════════════════════════════════════════════ -->
+{% if sujet_jour and config.sujet_jour_actif %}
+<div class="forum-sujet-jour">
+  <div class="sujet-jour-icon">
+    <i class="fas fa-calendar-alt"></i>
+  </div>
+  <div class="sujet-jour-content">
+    <div class="sujet-jour-label">
+      <i class="fas fa-star-of-life"></i> SUJET DU JOUR — {{ sujet_jour.date|date:"d/m/Y" }}
+    </div>
+    <h5 class="sujet-jour-titre">{{ sujet_jour.titre }}</h5>
+    {% if sujet_jour.description %}
+    <p class="sujet-jour-desc">{{ sujet_jour.description }}</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ MESSAGES DU CHAT ════════════════════════════════════════════ -->
+<!-- ✅ UNE SEULE FOIS : La section des messages est ici -->
+<div class="forum-messages-container" id="forum-messages-container">
+  <div class="forum-messages" id="forum-messages">
+    {% for msg in forum_messages %}
+    <div class="forum-message {% if msg.auteur == user %}my-message{% endif %}" data-message-id="{{ msg.id }}" data-auteur-id="{{ msg.auteur.id }}">
+      
+      <!-- Avatar -->
+      <div class="message-avatar">
+        {% if msg.auteur.photo %}
+        <img src="{{ msg.auteur.photo.url }}" alt="{{ msg.auteur.username }}">
+        {% else %}
+        <div class="avatar-placeholder" style="background:{% cycle '#1e3a8a' '#3b82f6' '#10b981' '#f59e0b' '#ef4444' %}">
+          {{ msg.auteur.prenom|first|default:msg.auteur.username|first|upper }}
+        </div>
+        {% endif %}
+      </div>
+      
+      <!-- Contenu -->
+      <div class="message-content">
+        <div class="message-header">
+          <span class="message-author">{{ msg.auteur.prenom|default:msg.auteur.username }} {{ msg.auteur.nom|default:'' }}</span>
+          <span class="message-role">
+            {% if msg.auteur.role == 'super_admin' %}
+              <i class="fas fa-crown"></i> Admin
+            {% elif msg.auteur.role == 'admin_ecole' %}
+              <i class="fas fa-school"></i> Admin école
+            {% elif msg.auteur.role == 'enseignant' %}
+              <i class="fas fa-chalkboard-user"></i> Enseignant
+            {% else %}
+              <i class="fas fa-user-graduate"></i> Étudiant
+            {% endif %}
+          </span>
+          <span class="message-date">{{ msg.date_creation|date:"H:i" }}</span>
+        </div>
+        <div class="message-body">
+          {{ msg.contenu|linebreaksbr }}
+        </div>
+        <div class="message-footer">
+          <button class="message-signaler" data-message-id="{{ msg.id }}" title="Signaler">
+            <i class="fas fa-flag"></i> Signaler
+          </button>
+          {% if user.role == 'super_admin' or peut_moderer %}
+          <button class="message-masquer" data-message-id="{{ msg.id }}" data-auteur-id="{{ msg.auteur.id }}" title="Masquer/Modérer">
+            <i class="fas fa-eye-slash"></i> Masquer
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="forum-empty">
+      <i class="fas fa-comment-dots fa-3x text-muted mb-3"></i>
+      <h5>Aucun message pour le moment</h5>
+      <p class="text-muted">Soyez le premier à envoyer un message !</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Pagination (chargement plus ancien) -->
+{% if forum_messages.has_previous %}
+<div class="forum-load-more">
+  <a href="?page={{ forum_messages.previous_page_number }}" class="load-more-btn">
+    <i class="fas fa-arrow-up me-2"></i>Voir les messages plus anciens
+  </a>
+</div>
+{% endif %}
+
+<!-- ══ FORMULAIRE D'ENVOI (comme WhatsApp) ═══════════════════════════ -->
+{% if peut_poster and not est_bloque %}
+<div class="forum-input-area">
+  <div class="forum-input-wrapper">
+    <textarea id="messageInput" class="forum-input" placeholder="Écrivez votre message..." rows="1"></textarea>
+    <button id="sendBtn" class="forum-send-btn" disabled>
+      <i class="fas fa-paper-plane"></i>
+    </button>
+  </div>
+  <div class="forum-input-footer">
+    <small class="text-muted">
+      <span id="charCount">0</span> / {{ config.forum_longueur_max_message|default:2000 }} caractères
+    </small>
+    <small class="text-muted">
+      <i class="fas fa-chart-line me-1"></i>Limité à {{ config.forum_max_messages_par_jour|default:100 }} messages/jour
+    </small>
+  </div>
+</div>
+{% elif est_bloque %}
+<div class="forum-blocked-banner">
+  <i class="fas fa-ban me-2"></i>Vous avez été bloqué de ce forum. Vous ne pouvez plus envoyer de messages.
+</div>
+{% elif forum.lecture_seule %}
+<div class="forum-readonly-banner">
+  <i class="fas fa-lock me-2"></i>Ce forum est en lecture seule. Aucun nouveau message n'est accepté.
+</div>
+{% else %}
+<div class="forum-login-prompt">
+  <i class="fas fa-sign-in-alt me-2"></i>
+  <a href="{% url 'connexion' %}?next={{ request.path }}">Connectez-vous</a> pour participer à la discussion.
+</div>
+{% endif %}
+
+<!-- ══ STYLES ══════════════════════════════════════════════════════ -->
+<style>
+/* En-tête */
+.forum-header {
+  background: white;
+  border-radius: 16px;
+  border: 1.5px solid #e5e7eb;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.forum-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.forum-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.forum-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+.forum-breadcrumb a {
+  color: #6b7280;
+  text-decoration: none;
+}
+.forum-breadcrumb a:hover {
+  color: #1e3a8a;
+}
+.forum-breadcrumb i {
+  font-size: 0.55rem;
+}
+.forum-nom {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 0 0 4px;
+}
+.forum-desc {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+.forum-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+.forum-badge-lock {
+  color: #6b7280;
+  font-weight: 600;
+}
+.forum-header-actions {
+  display: flex;
+  gap: 10px;
+}
+.forum-btn-mod, .forum-btn-sujet {
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.forum-btn-mod:hover, .forum-btn-sujet:hover {
+  background: #e5e7eb;
+}
+
+/* Sujet du jour */
+.forum-sujet-jour {
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  border-left: 4px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 16px;
+}
+.sujet-jour-icon {
+  width: 48px;
+  height: 48px;
+  background: #f59e0b;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.3rem;
+}
+.sujet-jour-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #92400e;
+  margin-bottom: 6px;
+}
+.sujet-jour-titre {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #78350f;
+  margin: 0 0 4px;
+}
+.sujet-jour-desc {
+  font-size: 0.85rem;
+  color: #92400e;
+  margin: 0;
+}
+
+/* Messages container */
+.forum-messages-container {
+  background: #f9fafb;
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 400px;
+  max-height: 500px;
+  overflow-y: auto;
+}
+.forum-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.forum-message {
+  display: flex;
+  gap: 12px;
+  animation: fadeIn 0.3s ease;
+}
+.forum-message.my-message {
+  flex-direction: row-reverse;
+}
+.forum-message.my-message .message-content {
+  background: #1e3a8a;
+  color: white;
+}
+.forum-message.my-message .message-header {
+  color: rgba(255,255,255,0.8);
+}
+.forum-message.my-message .message-author {
+  color: white;
+}
+.forum-message.my-message .message-footer button {
+  color: rgba(255,255,255,0.6);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message-avatar {
+  flex-shrink: 0;
+}
+.avatar-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 1rem;
+}
+.message-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.message-content {
+  background: white;
+  border-radius: 16px;
+  padding: 12px 16px;
+  max-width: 70%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.forum-message.my-message .message-content {
+  background: #1e3a8a;
+}
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+.message-author {
+  font-weight: 700;
+  color: #111827;
+  font-size: 0.85rem;
+}
+.message-role {
+  font-size: 0.65rem;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 20px;
+}
+.message-date {
+  font-size: 0.65rem;
+}
+.message-body {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+.message-footer {
+  margin-top: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+.message-signaler, .message-masquer {
+  background: none;
+  border: none;
+  font-size: 0.65rem;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.message-signaler:hover {
+  color: #ef4444;
+}
+.message-masquer:hover {
+  color: #dc2626;
+}
+
+.forum-empty {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+/* Chargement plus anciens */
+.forum-load-more {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.load-more-btn {
+  background: white;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 30px;
+  padding: 10px 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e3a8a;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+.load-more-btn:hover {
+  border-color: #1e3a8a;
+  background: #f0f4ff;
+}
+
+/* Zone de saisie */
+.forum-input-area {
+  background: white;
+  border-radius: 16px;
+  border: 1.5px solid #e5e7eb;
+  padding: 16px;
+  margin-top: 20px;
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 10;
+}
+.forum-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+.forum-input {
+  flex: 1;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 24px;
+  padding: 12px 18px;
+  font-size: 0.9rem;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.forum-input:focus {
+  border-color: #1e3a8a;
+}
+.forum-send-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.forum-send-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+.forum-send-btn:hover:not(:disabled) {
+  background: #0f2b5e;
+  transform: scale(1.05);
+}
+.forum-input-footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding: 0 8px;
+}
+.forum-blocked-banner, .forum-readonly-banner, .forum-login-prompt {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+  color: #6b7280;
+  margin-top: 20px;
+}
+.forum-login-prompt a {
+  color: #1e3a8a;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Scrollbar */
+.forum-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+.forum-messages-container::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+.forum-messages-container::-webkit-scrollbar-thumb {
+  background: #1e3a8a;
+  border-radius: 4px;
+}
+</style>
+
+<!-- ══ JAVASCRIPT ══════════════════════════════════════════════════ -->
+<script>
+// Configuration
+let dernierMessageId = {{ dernier_message_id|default:0 }};
+let pollingActif = document.getElementById('forum-config')?.dataset.pollingActif === 'true';
+let intervallePolling = parseInt(document.getElementById('forum-config')?.dataset.intervalle || 15);
+let forumId = {{ forum.id }};
+let csrfToken = document.getElementById('forum-config')?.dataset.csrfToken || '{{ csrf_token }}';
+let timeoutId = null;
+let enPause = false;
+
+// Éléments DOM
+const messagesContainer = document.getElementById('forum-messages-container');
+const messagesDiv = document.getElementById('forum-messages');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+const charCount = document.getElementById('charCount');
+const maxLength = {{ config.forum_longueur_max_message|default:2000 }};
+
+// Scroll automatique en bas
+function scrollToBottom() {
+  if (messagesContainer) {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+}
+scrollToBottom();
+
+// Compteur de caractères
+if (messageInput) {
+  messageInput.addEventListener('input', function() {
+    const len = this.value.length;
+    if (charCount) charCount.textContent = len;
+    sendBtn.disabled = len === 0 || len > maxLength;
+  });
+}
+
+// Envoyer un message
+async function envoyerMessage() {
+  const contenu = messageInput.value.trim();
+  if (!contenu || contenu.length > maxLength) return;
+  
+  sendBtn.disabled = true;
+  
+  try {
+    const response = await fetch(`/forum/${forumId}/message/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ contenu: contenu })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      ajouterMessage(data.message);
+      messageInput.value = '';
+      if (charCount) charCount.textContent = '0';
+      sendBtn.disabled = true;
+      scrollToBottom();
+    } else {
+      alert(data.error || 'Erreur lors de l\'envoi');
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur réseau');
+  } finally {
+    sendBtn.disabled = false;
+    messageInput.focus();
+  }
+}
+
+// Ajouter un message au DOM
+function ajouterMessage(msg) {
+  const isMyMessage = msg.auteur.id === {{ user.id }};
+  const messageHtml = `
+    <div class="forum-message ${isMyMessage ? 'my-message' : ''}" data-message-id="${msg.id}" data-auteur-id="${msg.auteur.id}">
+      <div class="message-avatar">
+        <div class="avatar-placeholder" style="background: ${['#1e3a8a','#3b82f6','#10b981','#f59e0b','#ef4444'][msg.auteur.id % 5]}">
+          ${(msg.auteur.prenom || msg.auteur.username).charAt(0).toUpperCase()}
+        </div>
+      </div>
+      <div class="message-content">
+        <div class="message-header">
+          <span class="message-author">${escapeHtml(msg.auteur.prenom || msg.auteur.username)}</span>
+          <span class="message-date">${msg.date_creation}</span>
+        </div>
+        <div class="message-body">${escapeHtml(msg.contenu).replace(/\n/g, '<br>')}</div>
+        <div class="message-footer">
+          <button class="message-signaler" data-message-id="${msg.id}" title="Signaler">
+            <i class="fas fa-flag"></i> Signaler
+          </button>
+          {% if user.role == 'super_admin' or peut_moderer %}
+          <button class="message-masquer" data-message-id="${msg.id}" data-auteur-id="${msg.auteur.id}" title="Masquer">
+            <i class="fas fa-eye-slash"></i> Masquer
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  `;
+  messagesDiv.insertAdjacentHTML('beforeend', messageHtml);
+  
+  if (msg.id > dernierMessageId) {
+    dernierMessageId = msg.id;
+  }
+  
+  attacherEvenementsMessages();
+}
+
+// Échapper le HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Polling
+async function verifierNouveauxMessages() {
+  if (!pollingActif || enPause) return;
+  
+  try {
+    const response = await fetch(`/forum/${forumId}/messages/nouveaux/?dernier_id=${dernierMessageId}`);
+    const data = await response.json();
+    
+    if (data.messages && data.messages.length > 0) {
+      for (const msg of data.messages) {
+        ajouterMessage(msg);
+      }
+      scrollToBottom();
+    }
+  } catch (error) {
+    console.error('Erreur polling:', error);
+  }
+  
+  timeoutId = setTimeout(verifierNouveauxMessages, intervallePolling * 1000);
+}
+
+// Signaler un message
+async function signalerMessage(messageId) {
+  if (!confirm('Signaler ce message ?')) return;
+  
+  try {
+    const response = await fetch(`/forum/message/signaler/${messageId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const data = await response.json();
+    alert(data.message || 'Message signalé');
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur lors du signalement');
+  }
+}
+
+// Masquer un message
+async function masquerMessage(messageId) {
+  if (!confirm('Masquer ce message ?')) return;
+  
+  try {
+    const response = await fetch(`/forum/message/masquer/${messageId}/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ motif: 'Masqué par modérateur' })
+    });
+    const data = await response.json();
+    if (data.success) {
+      const msgDiv = document.querySelector(`.forum-message[data-message-id="${messageId}"]`);
+      if (msgDiv) msgDiv.remove();
+      alert('Message masqué');
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur');
+  }
+}
+
+function attacherEvenementsMessages() {
+  document.querySelectorAll('.message-signaler').forEach(btn => {
+    btn.removeEventListener('click', signalerHandler);
+    btn.addEventListener('click', signalerHandler);
+  });
+  document.querySelectorAll('.message-masquer').forEach(btn => {
+    btn.removeEventListener('click', masquerHandler);
+    btn.addEventListener('click', masquerHandler);
+  });
+}
+
+function signalerHandler(e) {
+  const btn = e.currentTarget;
+  const messageId = btn.dataset.messageId;
+  signalerMessage(messageId);
+}
+
+function masquerHandler(e) {
+  const btn = e.currentTarget;
+  const messageId = btn.dataset.messageId;
+  masquerMessage(messageId);
+}
+
+// Envoi avec Entrée
+if (messageInput) {
+  messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!sendBtn.disabled) envoyerMessage();
+    }
+  });
+  
+  sendBtn.addEventListener('click', envoyerMessage);
+}
+
+// Démarrer le polling
+if (pollingActif) {
+  verifierNouveauxMessages();
+}
+
+attacherEvenementsMessages();
+</script>
+
+{% endblock %}

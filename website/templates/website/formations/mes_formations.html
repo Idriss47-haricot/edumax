@@ -1,0 +1,356 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mes formations{% endblock %}
+{% block page_title %}Mes formations{% endblock %}
+
+{% block content %}
+
+<!-- ── Stats rapides ── -->
+<div class="mf-stats-row">
+  <div class="mf-stat">
+    <span class="mf-stat-n">{{ formations_crees|length }}</span>
+    <span class="mf-stat-l">Formations créées</span>
+  </div>
+  <div class="mf-stat">
+    <span class="mf-stat-n">{{ formations_achetees|length }}</span>
+    <span class="mf-stat-l">Formations achetées</span>
+  </div>
+  <div class="mf-stat">
+    <span class="mf-stat-n">{{ total_ventes|default:0 }}</span>
+    <span class="mf-stat-l">Total ventes</span>
+  </div>
+  <div class="mf-stat">
+    <span class="mf-stat-n">{{ total_revenus|default:0|floatformat:0 }}</span>
+    <span class="mf-stat-l">Revenus (FCFA)</span>
+  </div>
+  <div class="mf-stat">
+    <span class="mf-stat-n">{{ wishlist|length }}</span>
+    <span class="mf-stat-l">Favoris</span>
+  </div>
+</div>
+
+<!-- ── Onglets ── -->
+<div class="mf-tabs" id="mfTabs">
+  {% if formations_crees or user.role in 'enseignant,admin_ecole,super_admin' %}
+  <button class="mf-tab active" onclick="showTab('crees', this)">
+    <i class="fas fa-chalkboard-teacher me-2"></i>Mes formations ({{ formations_crees|length }})
+  </button>
+  {% endif %}
+  <button class="mf-tab {% if not formations_crees %}active{% endif %}" onclick="showTab('achetees', this)">
+    <i class="fas fa-shopping-cart me-2"></i>Mes achats ({{ formations_achetees|length }})
+  </button>
+  <button class="mf-tab" onclick="showTab('wishlist', this)">
+    <i class="fas fa-heart me-2"></i>Favoris ({{ wishlist|length }})
+  </button>
+</div>
+
+<!-- ══ FORMATIONS CRÉÉES ══ -->
+<div id="tab-crees" class="mf-tab-content {% if not formations_crees %}d-none{% endif %}">
+
+  <!-- Règles de la plateforme -->
+  {% if regles %}
+  <details class="mf-rules-block mb-4">
+    <summary class="mf-rules-summary">
+      <i class="fas fa-gavel me-2 text-primary"></i>Règles de la plateforme
+      <i class="fas fa-chevron-down ms-auto"></i>
+    </summary>
+    <div class="mf-rules-body">
+      {% regroup regles by get_rubrique_display as rubriques_regles %}
+      {% for rubrique in rubriques_regles %}
+      <h6 class="mt-3 fw-700">{{ rubrique.grouper }}</h6>
+      <ul class="small">
+        {% for regle in rubrique.list %}
+        <li><strong>{{ regle.titre }}</strong> : {{ regle.contenu|linebreaksbr }}</li>
+        {% endfor %}
+      </ul>
+      {% endfor %}
+    </div>
+  </details>
+  {% endif %}
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0 fw-700">Formations que je vends</h5>
+    <a href="{% url 'formation_creer' %}" class="btn btn-success btn-sm rounded-pill px-3">
+      <i class="fas fa-plus me-1"></i>Créer une formation
+    </a>
+  </div>
+
+  {% if formations_crees %}
+  <div class="mf-grid">
+    {% for formation in formations_crees %}
+    <div class="mf-card">
+      <!-- Image -->
+      <div class="mf-card-img">
+        {% if formation.image_cover %}
+        <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}" loading="lazy">
+        {% else %}
+        <div class="mf-card-placeholder"><i class="fas fa-graduation-cap fa-2x"></i></div>
+        {% endif %}
+        <span class="mf-statut-badge mf-statut-{{ formation.statut }}">
+          {{ formation.get_statut_display }}
+        </span>
+      </div>
+      <!-- Corps -->
+      <div class="mf-card-body">
+        <h6 class="mf-card-title">{{ formation.titre|truncatechars:45 }}</h6>
+        <div class="mf-card-meta">
+          <span class="mf-price">{{ formation.prix|floatformat:0 }} FCFA</span>
+          <span class="mf-badge-info">{{ formation.nb_ventes|default:0 }} vente{{ formation.nb_ventes|default:0|pluralize }}</span>
+          {% if formation.nb_avis > 0 %}
+          <span class="mf-badge-info">★ {{ formation.note_moyenne|floatformat:1 }}</span>
+          {% endif %}
+        </div>
+        {% if formation.statut == 'refuse' and formation.raison_refus %}
+        <div class="alert alert-danger py-2 small mt-2">
+          <i class="fas fa-exclamation-circle me-1"></i><strong>Refusée :</strong> {{ formation.raison_refus }}
+        </div>
+        {% endif %}
+        {% if formation.statut == 'suspendu' %}
+        <div class="alert alert-warning py-2 small mt-2">
+          <i class="fas fa-pause-circle me-1"></i>Formation suspendue
+        </div>
+        {% endif %}
+      </div>
+      <!-- Actions -->
+      <div class="mf-card-actions">
+        <a href="{% url 'formation_detail' formation.slug %}" class="mf-action-btn mf-action-view">
+          <i class="fas fa-eye"></i>
+        </a>
+        <a href="{% url 'formation_modifier' formation.slug %}" class="mf-action-btn mf-action-edit">
+          <i class="fas fa-pen"></i>
+        </a>
+        <a href="{% url 'formation_ajouter_fichiers' formation.slug %}" class="mf-action-btn mf-action-files" title="Gérer les fichiers">
+          <i class="fas fa-folder"></i>
+        </a>
+        <a href="{% url 'formation_supprimer' formation.id %}"
+           class="mf-action-btn mf-action-delete"
+           onclick="return confirm('Supprimer définitivement « {{ formation.titre }} » ? Cette action est irréversible.')">
+          <i class="fas fa-trash"></i>
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="mf-empty">
+    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+    <h5>Vous n'avez pas encore créé de formation</h5>
+    <p class="text-muted">Partagez votre expertise et commencez à gagner de l'argent.</p>
+    <a href="{% url 'formation_creer' %}" class="btn btn-primary rounded-pill px-4">
+      <i class="fas fa-plus me-2"></i>Créer ma première formation
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ FORMATIONS ACHETÉES ══ -->
+<div id="tab-achetees" class="mf-tab-content {% if formations_crees %}d-none{% endif %}">
+  <h5 class="fw-700 mb-4">Formations achetées</h5>
+
+  {% if formations_achetees %}
+  <div class="mf-grid">
+    {% for formation in formations_achetees %}
+    <div class="mf-card">
+      <div class="mf-card-img">
+        {% if formation.image_cover %}
+        <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}" loading="lazy">
+        {% else %}
+        <div class="mf-card-placeholder"><i class="fas fa-graduation-cap fa-2x"></i></div>
+        {% endif %}
+        <span class="mf-statut-badge mf-statut-achat">Acheté</span>
+
+        <!-- Barre de progression si disponible -->
+        {% for prog in user.progressions_formations.all %}
+        {% if prog.formation == formation %}
+        <div class="mf-progress-bar" title="{{ prog.pourcentage }}% complété">
+          <div class="mf-progress-fill" style="width:{{ prog.pourcentage }}%;"></div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      <div class="mf-card-body">
+        <h6 class="mf-card-title">{{ formation.titre|truncatechars:45 }}</h6>
+        <div class="small text-muted mb-1">
+          Par {{ formation.createur.prenom|default:formation.createur.username }}
+        </div>
+        <div class="mf-card-meta">
+          {% if formation.certifiee %}
+          <span class="mf-badge-cert"><i class="fas fa-certificate me-1"></i>Certifiante</span>
+          {% endif %}
+          {% if formation.langue %}
+          <span class="mf-badge-info">{{ formation.langue }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="mf-card-actions">
+        <a href="{% url 'formation_detail' formation.slug %}" class="mf-action-btn mf-action-view" style="flex:1;justify-content:center;">
+          <i class="fas fa-play me-1"></i> Accéder
+        </a>
+        <a href="{% url 'formation_laisser_avis' formation.slug %}" class="mf-action-btn mf-action-edit" title="Laisser un avis">
+          <i class="fas fa-star"></i>
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="mf-empty">
+    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+    <h5>Vous n'avez acheté aucune formation</h5>
+    <p class="text-muted">Découvrez nos formations et commencez à apprendre.</p>
+    <a href="{% url 'formations_liste' %}" class="btn btn-primary rounded-pill px-4">
+      <i class="fas fa-search me-2"></i>Explorer les formations
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ WISHLIST ══ -->
+<div id="tab-wishlist" class="mf-tab-content d-none">
+  <h5 class="fw-700 mb-4">Mes formations favorites</h5>
+
+  {% if wishlist %}
+  <div class="mf-grid">
+    {% for item in wishlist %}
+    <div class="mf-card">
+      <div class="mf-card-img">
+        {% if item.formation.image_cover %}
+        <img src="{{ item.formation.image_cover.url }}" alt="{{ item.formation.titre }}" loading="lazy">
+        {% else %}
+        <div class="mf-card-placeholder"><i class="fas fa-heart fa-2x text-danger"></i></div>
+        {% endif %}
+        <!-- Bouton retirer du wishlist -->
+        <button class="mf-wishlist-remove" title="Retirer des favoris"
+                onclick="retirerWishlist({{ item.formation.id }}, this)">
+          <i class="fas fa-heart text-danger"></i>
+        </button>
+      </div>
+      <div class="mf-card-body">
+        <h6 class="mf-card-title">{{ item.formation.titre|truncatechars:45 }}</h6>
+        <div class="mf-card-meta">
+          {% if item.formation.prix == 0 %}
+          <span class="mf-price-free">Gratuit</span>
+          {% else %}
+          <span class="mf-price">{{ item.formation.prix|floatformat:0 }} FCFA</span>
+          {% endif %}
+          <span class="text-muted small">Ajouté le {{ item.date_ajout|date:"d/m/Y" }}</span>
+        </div>
+      </div>
+      <div class="mf-card-actions">
+        <a href="{% url 'formation_detail' item.formation.slug %}" class="mf-action-btn mf-action-view" style="flex:1;justify-content:center;">
+          <i class="fas fa-eye me-1"></i>
+          {% if item.formation.prix == 0 %}Commencer{% else %}Voir{% endif %}
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="mf-empty">
+    <i class="fas fa-heart fa-3x text-muted mb-3"></i>
+    <h5>Aucune formation en favoris</h5>
+    <p class="text-muted">Cliquez sur le ♥ d'une formation pour l'ajouter à vos favoris.</p>
+    <a href="{% url 'formations_liste' %}" class="btn btn-primary rounded-pill px-4">
+      <i class="fas fa-search me-2"></i>Explorer les formations
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ STYLES ══ -->
+<style>
+/* Stats */
+.mf-stats-row { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:28px; }
+@media(max-width:768px) { .mf-stats-row { grid-template-columns:repeat(2,1fr); } }
+.mf-stat { background:white; border-radius:14px; border:1.5px solid #e5e7eb; padding:16px; text-align:center; }
+.mf-stat-n { display:block; font-size:1.6rem; font-weight:900; color:#1e3a8a; }
+.mf-stat-l { font-size:0.72rem; color:#6b7280; font-weight:500; }
+
+/* Tabs */
+.mf-tabs { display:flex; gap:8px; margin-bottom:28px; flex-wrap:wrap; }
+.mf-tab { padding:10px 20px; border-radius:50px; border:1.5px solid #e5e7eb; background:white; font-weight:600; font-size:0.88rem; cursor:pointer; transition:all 0.2s; color:#374151; }
+.mf-tab:hover { border-color:#1e3a8a; color:#1e3a8a; }
+.mf-tab.active { background:#1e3a8a; color:white; border-color:#1e3a8a; }
+
+/* Règles */
+.mf-rules-block { background:#f8faff; border:1px solid #e0e7ff; border-radius:12px; }
+.mf-rules-summary { padding:14px 18px; cursor:pointer; font-weight:600; color:#1e3a8a; display:flex; align-items:center; list-style:none; gap:8px; }
+.mf-rules-summary::marker { display:none; }
+.mf-rules-body { padding:0 18px 16px; border-top:1px solid #e0e7ff; }
+
+/* Grille cartes */
+.mf-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:18px; }
+.mf-card { background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; transition:all 0.25s; }
+.mf-card:hover { box-shadow:0 6px 24px rgba(0,0,0,0.1); border-color:#93c5fd; transform:translateY(-3px); }
+
+.mf-card-img { position:relative; height:140px; overflow:hidden; background:#f0f4ff; }
+.mf-card-img img { width:100%; height:100%; object-fit:cover; }
+.mf-card-placeholder { height:100%; display:flex; align-items:center; justify-content:center; color:#1e3a8a; opacity:0.3; }
+
+.mf-statut-badge { position:absolute; top:10px; left:10px; font-size:0.68rem; font-weight:700; padding:3px 10px; border-radius:50px; }
+.mf-statut-publie { background:#d1fae5; color:#065f46; }
+.mf-statut-en_attente { background:#fef3c7; color:#92400e; }
+.mf-statut-brouillon { background:#f3f4f6; color:#6b7280; }
+.mf-statut-refuse { background:#fee2e2; color:#991b1b; }
+.mf-statut-suspendu { background:#fde68a; color:#92400e; }
+.mf-statut-achat { background:#dbeafe; color:#1e40af; }
+
+.mf-progress-bar { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(0,0,0,0.2); }
+.mf-progress-fill { height:100%; background:#10b981; transition:width 0.4s; }
+
+.mf-wishlist-remove { position:absolute; top:8px; right:8px; background:white; border:none; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(0,0,0,0.15); transition:all 0.2s; }
+.mf-wishlist-remove:hover { transform:scale(1.15); }
+
+.mf-card-body { padding:14px; }
+.mf-card-title { font-size:0.9rem; font-weight:700; color:#111827; margin-bottom:8px; line-height:1.4; }
+.mf-card-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.mf-price { color:#1e3a8a; font-weight:800; font-size:0.95rem; }
+.mf-price-free { color:#10b981; font-weight:800; font-size:0.95rem; }
+.mf-badge-info { background:#f0f4ff; color:#1e3a8a; border-radius:50px; padding:2px 8px; font-size:0.72rem; font-weight:600; }
+.mf-badge-cert { background:#fef3c7; color:#92400e; border-radius:50px; padding:2px 8px; font-size:0.72rem; font-weight:600; }
+
+.mf-card-actions { display:flex; gap:6px; padding:10px 14px; border-top:1px solid #f3f4f6; }
+.mf-action-btn { display:inline-flex; align-items:center; gap:4px; padding:7px 12px; border-radius:8px; font-size:0.82rem; font-weight:600; text-decoration:none; transition:all 0.2s; border:none; cursor:pointer; }
+.mf-action-view { background:#e0e7ff; color:#1e3a8a; }
+.mf-action-view:hover { background:#1e3a8a; color:white; }
+.mf-action-edit { background:#fef3c7; color:#92400e; }
+.mf-action-edit:hover { background:#f59e0b; color:white; }
+.mf-action-files { background:#d1fae5; color:#065f46; }
+.mf-action-files:hover { background:#10b981; color:white; }
+.mf-action-delete { background:#fee2e2; color:#991b1b; }
+.mf-action-delete:hover { background:#ef4444; color:white; }
+
+.mf-empty { text-align:center; padding:60px 20px; }
+.fw-700 { font-weight:700; }
+</style>
+
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.mf-tab-content').forEach(t => t.classList.add('d-none'));
+  document.querySelectorAll('.mf-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.remove('d-none');
+  btn.classList.add('active');
+}
+
+function retirerWishlist(formationId, btn) {
+  fetch(`/formations/wishlist/toggle/${formationId}/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCsrf(), 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (!data.added) {
+      btn.closest('.mf-card').style.opacity = '0';
+      setTimeout(() => btn.closest('.mf-card').remove(), 300);
+    }
+  });
+}
+
+function getCsrf() {
+  const m = document.cookie.match('(^|;)\\s*csrftoken=([^;]*)');
+  return m ? m[2] : '';
+}
+</script>
+
+{% endblock %}

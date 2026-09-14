@@ -1,0 +1,64 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Sujet du jour — {{ forum.nom }}{% endblock %}
+{% block page_title %}Sujet du jour — {{ forum.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Définir le sujet du jour</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Titre du sujet</label>
+                <input type="text" name="titre" class="form-control" required placeholder="Ex: Question du jour, Débat, etc.">
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Description</label>
+                <textarea name="description" class="form-control" rows="4" placeholder="Décrivez le sujet du jour..."></textarea>
+            </div>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Le sujet du jour sera affiché en haut du forum pour tous les participants.
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'forum_detail' forum.id %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Retour
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Enregistrer le sujet
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.card-header {
+    border-radius: 16px 16px 0 0 !important;
+}
+.form-control {
+    border-radius: 10px;
+    border: 1.5px solid #e5e7eb;
+    padding: 12px;
+}
+.form-control:focus {
+    border-color: #1e3a8a;
+    box-shadow: 0 0 0 3px rgba(30,58,138,0.1);
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,116 @@
+{% load static %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-puzzle-piece me-2 text-success"></i>
+            Exercices d'application
+        </h5>
+        {% if est_enseignant %}
+            <a href="{% url 'exercice_ajouter' seance.id %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus me-1"></i>Ajouter un exercice
+            </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if exercices_integration %}
+            <!-- Liste des exercices -->
+            <div class="accordion" id="accordionExercices">
+                {% for exercice in exercices_integration %}
+                <div class="accordion-item mb-3 border rounded">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ exercice.id }}">
+                            <div class="d-flex justify-content-between align-items-center w-100 me-3">
+                                <div>
+                                    <strong>{{ exercice.titre }}</strong>
+                                    <span class="badge bg-secondary ms-1">{{ exercice.points }} pts</span>
+                                    {% if exercice.est_lance %}
+                                        <span class="badge bg-success">Publié</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Brouillon</span>
+                                    {% endif %}
+                                    {% if est_enseignant and exercice.nb_soumissions %}
+                                        <span class="badge bg-warning text-dark">{{ exercice.nb_soumissions }} soumission(s)</span>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {% if not est_enseignant and exercice.ma_soumission %}
+                                        {% if exercice.ma_soumission.status == 'termine' %}
+                                            <span class="badge bg-success">✅ Soumis</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">En cours</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ exercice.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}">
+                        <div class="accordion-body">
+                            <p><strong>Consignes :</strong></p>
+                            <p>{{ exercice.consignes|linebreaks }}</p>
+                            
+                            {% if est_enseignant %}
+                                <!-- Vue enseignant -->
+                                <div class="mt-3">
+                                    <div class="btn-group">
+                                        <a href="{% url 'exercice_configurer' exercice.id %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-cog"></i> Configurer
+                                        </a>
+                                        <a href="{% url 'exercice_tableau_resultats' exercice.id %}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-chart-bar"></i> Résultats
+                                        </a>
+                                        <a href="{% url 'exercice_lancer' exercice.id %}" class="btn btn-sm {% if exercice.est_lance %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="{% if exercice.est_lance %}Arrêter{% else %}Publier{% endif %}">
+                                            <i class="fas {% if exercice.est_lance %}fa-stop{% else %}fa-play{% endif %}"></i>
+                                            {% if exercice.est_lance %}Arrêter{% else %}Publier{% endif %}
+                                        </a>
+                                        <a href="{% url 'exercice_modifier' exercice.id %}" class="btn btn-secondary btn-sm">
+                                            <i class="fas fa-edit"></i> Modifier
+                                        </a>
+                                        <a href="{% url 'exercice_supprimer' exercice.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Supprimer cet exercice ?')">
+                                            <i class="fas fa-trash"></i> Supprimer
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                            {% else %}
+                                <!-- Vue étudiant -->
+                                {% if exercice.est_lance %}
+                                    {% if exercice.peut_passer %}
+                                        <a href="{% url 'exercice_passer' exercice.id %}" class="btn btn-success">
+                                            <i class="fas fa-play me-1"></i>Commencer l'exercice
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-secondary" disabled>
+                                            <i class="fas fa-lock me-1"></i>Bloqué
+                                        </button>
+                                    {% endif %}
+                                    {% if exercice.ma_soumission %}
+                                        <a href="{% url 'exercice_resultat' exercice.id %}" class="btn btn-info">
+                                            <i class="fas fa-chart-line me-1"></i>Voir mon résultat
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    <button class="btn btn-secondary" disabled>
+                                        <i class="fas fa-lock me-1"></i>Indisponible
+                                    </button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-puzzle-piece fa-3x text-muted mb-3"></i>
+                <p>Aucun exercice pour le moment.</p>
+                {% if est_enseignant %}
+                    <a href="{% url 'exercice_ajouter' seance.id %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>Ajouter le premier exercice
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>

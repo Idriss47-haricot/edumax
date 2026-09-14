@@ -1,0 +1,66 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer - {{ exercice.titre }}{% endblock %}
+{% block page_title %}Configuration de l'exercice : {{ exercice.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-cog me-2 text-primary"></i>
+                    Configuration de l'exercice
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Type d'exercice : <strong>{{ exercice.get_type_exercice_display }}</strong>
+                </div>
+
+                {% if exercice.type_exercice == 'qcm' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'qcm_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration QCM...</p>
+                    
+                {% elif exercice.type_exercice == 'vrai_faux' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'vrai_faux_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration Vrai/Faux...</p>
+                    
+                {% elif exercice.type_exercice == 'texte_trous' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'texte_trous_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration Texte à trous...</p>
+                    
+                {% elif exercice.type_exercice == 'reponse_courte' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'reponse_courte_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration Réponse courte...</p>
+                    
+                {% elif exercice.type_exercice == 'redaction' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'redaction_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration Rédaction...</p>
+                    
+                {% elif exercice.type_exercice == 'depot_fichier' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'depot_fichier_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration Dépôt de fichier...</p>
+                    
+                {% elif exercice.type_exercice == 'etude_cas' %}
+                    <meta http-equiv="refresh" content="0; url={% url 'etude_cas_configurer' exercice.id %}">
+                    <p>Redirection vers la configuration Étude de cas...</p>
+                    
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        La configuration pour ce type d'exercice n'est pas encore disponible.
+                    </div>
+                    <a href="{% url 'seance_detail' exercice.seance.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Retour
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Recherche formations - Academia Net{% endblock %}
+
+{% block content %}
+
+<div class="formations-container">
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        Formations <span class="text-gradient">certifiantes</span>
+                    </h1>
+                    <p class="lead mb-4">
+                        Découvrez nos formations de qualité, créées par des experts certifiés.
+                    </p>
+                    
+                    <!-- BARRE DE RECHERCHE -->
+                    <form method="get" class="search-form">
+                        <div class="input-group input-group-lg shadow-sm">
+                            <input type="text" name="q" class="form-control" placeholder="Rechercher une formation..." value="{{ q }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search me-2"></i>Rechercher
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILTRES -->
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <form method="get" class="row g-2 align-items-end">
+                    <div class="col-md-4">
+                        <label class="small text-muted mb-1">Prix min (FCFA)</label>
+                        <input type="number" name="prix_min" class="form-control form-control-sm" placeholder="0" value="{{ prix_min }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="small text-muted mb-1">Prix max (FCFA)</label>
+                        <input type="number" name="prix_max" class="form-control form-control-sm" placeholder="50000" value="{{ prix_max }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100 btn-sm">Filtrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTE DES FORMATIONS -->
+    <section class="formations-section">
+        <div class="container">
+            <div class="section-header text-center mb-4">
+                <h2 class="section-title">
+                    {% if q %}Résultats pour "{{ q }}"{% else %}Toutes les formations{% endif %}
+                </h2>
+                <p class="text-muted">{{ formations.paginator.count }} formation(s) trouvée(s)</p>
+            </div>
+            
+            <div class="row g-4">
+                {% for formation in formations %}
+                <div class="col-md-6 col-lg-3">
+                    <div class="formation-card">
+                        <div class="formation-thumbnail">
+                            {% if formation.image_cover %}
+                                <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}">
+                            {% else %}
+                                <div class="thumbnail-placeholder">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                            {% endif %}
+                            <div class="card-badges">
+                                {% if formation.certifiee %}
+                                    <span class="badge-certifie">Certifiée</span>
+                                {% endif %}
+                                {% if formation.prix == 0 %}
+                                    <span class="badge-gratuit">Gratuit</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="formation-body">
+                            <h3 class="formation-title">{{ formation.titre|truncatechars:45 }}</h3>
+                            <p class="formation-description">{{ formation.description_courte|truncatechars:60 }}</p>
+                            
+                            <div class="formation-author">
+                                <i class="fas fa-user-circle"></i>
+                                <span>{{ formation.createur.get_full_name|default:formation.createur.username }}</span>
+                            </div>
+                            
+                            <div class="formation-stats">
+                                <span><i class="fas fa-download"></i> {{ formation.nb_ventes }} ventes</span>
+                                <span><i class="fas fa-star text-warning"></i> {{ formation.note_moyenne|default:"0" }}/5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="formation-footer">
+                            <div class="price">
+                                {% if formation.prix == 0 %}
+                                    <span class="free">Gratuit</span>
+                                {% else %}
+                                    <span class="amount">{{ formation.prix|floatformat:0 }} FCFA</span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'formation_detail' formation.slug %}" class="btn-detail">
+                                Voir <i class="fas fa-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-graduation-cap fa-4x text-muted mb-3"></i>
+                    <h4>Aucune formation trouvée</h4>
+                    <p class="text-muted">Essayez d'autres critères de recherche.</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if formations.has_other_pages %}
+            <div class="text-center mt-5">
+                <nav>
+                    <ul class="pagination justify-content-center">
+                        {% if formations.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ formations.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if prix_min %}&prix_min={{ prix_min }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}">
+                                <i class="fas fa-chevron-left"></i> Précédent
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">{{ formations.number }}</span>
+                        </li>
+                        
+                        {% if formations.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ formations.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if prix_min %}&prix_min={{ prix_min }}{% endif %}{% if prix_max %}&prix_max={{ prix_max }}{% endif %}">
+                                Suivant <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<style>
+:root {
+    --primary-color: #1e3a8a;
+    --primary-dark: #0f2b5e;
+    --gray-light: #f5f7fa;
+    --gray-border: #e5e7eb;
+    --white: #ffffff;
+}
+
+.formations-container {
+    background: var(--gray-light);
+    min-height: 100vh;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    padding: 60px 0;
+    color: white;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #facc15, #ffd166);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.search-form .input-group {
+    border-radius: 60px;
+    overflow: hidden;
+}
+
+.search-form .btn-primary {
+    background: var(--primary-color);
+    border: none;
+    padding: 14px 30px;
+}
+
+.formations-section {
+    padding: 50px 0;
+}
+
+.section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0f2b5e;
+}
+
+.formation-card {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--gray-border);
+}
+
+.formation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+.formation-thumbnail {
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.formation-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.thumbnail-placeholder i {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+.card-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    gap: 5px;
+}
+
+.badge-certifie, .badge-gratuit {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+
+.badge-certifie { background: rgba(16, 185, 129, 0.9); color: white; }
+.badge-gratuit { background: rgba(30, 58, 138, 0.9); color: white; }
+
+.formation-body {
+    padding: 15px;
+    flex: 1;
+}
+
+.formation-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.formation-description {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.formation-author {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.formation-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.65rem;
+    color: #94a3b8;
+}
+
+.formation-footer {
+    padding: 12px 15px;
+    border-top: 1px solid var(--gray-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price .amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.price .free {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+.btn-detail {
+    background: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    color: #475569;
+    text-decoration: none;
+}
+
+.btn-detail:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .col-md-6.col-lg-3 {
+        width: 50%;
+    }
+}
+
+@media (max-width: 576px) {
+    .col-md-6.col-lg-3 {
+        width: 100%;
+    }
+}
+</style>
+
+{% endblock %}

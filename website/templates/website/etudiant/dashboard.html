@@ -1,180 +1,472 @@
 {% extends 'website/base_dashboard.html' %}
+{% load static %}
 
-{% block title %}Mes cours - Étudiant{% endblock %}
-{% block page_title %}Mes cours{% endblock %}
+{% block title %}Mon espace étudiant{% endblock %}
+{% block page_title %}Mon espace étudiant{% endblock %}
 
 {% block content %}
 
-<!-- Inscription avec clé -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card shadow-sm border-0 rounded-4 bg-success text-white">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <div>
-                    <i class="fas fa-key fa-2x me-3"></i>
-                    <strong>Nouvelle inscription</strong>
-                    <span class="ms-2">Entrez une clé d'inscription pour rejoindre une spécialité</span>
-                </div>
-                <a href="/etudiant/inscription-cle/" class="btn btn-light">
-                    <i class="fas fa-key me-1"></i>S'inscrire avec une clé
-                </a>
-            </div>
-        </div>
+<!-- ══ BANNIÈRE D'INSCRIPTION CLE ════════════════════════════════ -->
+<div class="etud-cle-banner">
+  <div class="etud-cle-left">
+    <i class="fas fa-key fa-lg me-3"></i>
+    <div>
+      <strong>Rejoindre une école</strong>
+      <span>Entrez une clé d'inscription fournie par votre établissement</span>
     </div>
+  </div>
+  <a href="{% url 'etudiant_inscription_cle' %}" class="etud-cle-btn">
+    <i class="fas fa-plus me-1"></i>S'inscrire avec une clé
+  </a>
 </div>
 
-<!-- Statistiques -->
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Cours en cours</h3>
-                <div class="value">{{ cours_en_cours }}</div>
-            </div>
-            <div class="icon">
-                <i class="fas fa-book-open"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Cours terminés</h3>
-                <div class="value">{{ cours_termines }}</div>
-            </div>
-            <div class="icon">
-                <i class="fas fa-check-circle"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Progression</h3>
-                <div class="value">{{ progression|floatformat:0 }}%</div>
-            </div>
-            <div class="icon">
-                <i class="fas fa-chart-line"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Écoles</h3>
-                <div class="value">{{ ecoles|length }}</div>
-            </div>
-            <div class="icon">
-                <i class="fas fa-school"></i>
-            </div>
-        </div>
-    </div>
+<!-- ══ STATS ══════════════════════════════════════════════════════ -->
+<div class="etud-stats-grid">
+  <div class="etud-stat" style="--c:#1e3a8a;">
+    <div class="etud-stat-icon"><i class="fas fa-book-open"></i></div>
+    <span class="etud-stat-n">{{ cours_en_cours|default:0 }}</span>
+    <span class="etud-stat-l">Cours en cours</span>
+  </div>
+  <div class="etud-stat" style="--c:#059669;">
+    <div class="etud-stat-icon"><i class="fas fa-check-circle"></i></div>
+    <span class="etud-stat-n">{{ cours_termines|default:0 }}</span>
+    <span class="etud-stat-l">Cours terminés</span>
+  </div>
+  <div class="etud-stat" style="--c:#d97706;">
+    <div class="etud-stat-icon"><i class="fas fa-graduation-cap"></i></div>
+    <span class="etud-stat-n">{{ formations_achetees|length|default:0 }}</span>
+    <span class="etud-stat-l">Formations achetées</span>
+  </div>
+  <div class="etud-stat" style="--c:#7c3aed;">
+    <div class="etud-stat-icon"><i class="fas fa-file-alt"></i></div>
+    <span class="etud-stat-n">{{ epreuves_achetees|length|default:0 }}</span>
+    <span class="etud-stat-l">Épreuves téléchargées</span>
+  </div>
+  <div class="etud-stat" style="--c:#0891b2;">
+    <div class="etud-stat-icon"><i class="fas fa-chart-line"></i></div>
+    <span class="etud-stat-n">{{ progression|default:0|floatformat:0 }}%</span>
+    <span class="etud-stat-l">Progression globale</span>
+  </div>
+  <div class="etud-stat" style="--c:#be185d;">
+    <div class="etud-stat-icon"><i class="fas fa-certificate"></i></div>
+    <span class="etud-stat-n">{{ certificats|length|default:0 }}</span>
+    <span class="etud-stat-l">Certificats obtenus</span>
+  </div>
 </div>
 
-<!-- Mes inscriptions -->
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white">
-        <h5 class="mb-0"><i class="fas fa-graduation-cap me-2 text-primary"></i>Mes inscriptions</h5>
-    </div>
-    <div class="card-body">
-        {% if inscriptions %}
-            <div class="row">
-                {% for inscription in inscriptions %}
-                    {% with specialite=inscription.specialite filiere=specialite.filiere ecole=filiere.ecole %}
-                        <div class="col-md-6 col-lg-4 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ ecole.nom }}</h5>
-                                    <p class="card-text text-muted small">
-                                        <i class="fas fa-folder-open me-1"></i>{{ filiere.nom }}<br>
-                                        <i class="fas fa-tag me-1"></i>{{ specialite.nom }}
-                                    </p>
-                                    <div class="progress mb-2" style="height: 5px;">
-                                        <div class="progress-bar bg-primary" style="width: {{ inscription.progression }}%"></div>
-                                    </div>
-                                    <small class="text-muted">{{ inscription.progression }}% complété</small>
-                                </div>
-                                <div class="card-footer bg-white border-0">
-                                    <a href="#" class="btn btn-primary btn-sm w-100">
-                                        <i class="fas fa-play me-1"></i>Continuer
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    {% endwith %}
-                {% endfor %}
+<!-- ══ ONGLETS ════════════════════════════════════════════════════ -->
+<div class="etud-tabs">
+  <button class="etud-tab active" onclick="showEtudTab('ecole', this)">
+    <i class="fas fa-school me-2"></i>Mon école
+  </button>
+  <button class="etud-tab" onclick="showEtudTab('formations', this)">
+    <i class="fas fa-book me-2"></i>Formations
+    {% if formations_achetees %}<span class="etud-tab-badge">{{ formations_achetees|length }}</span>{% endif %}
+  </button>
+  <button class="etud-tab" onclick="showEtudTab('epreuves', this)">
+    <i class="fas fa-file-alt me-2"></i>Épreuves
+    {% if epreuves_achetees %}<span class="etud-tab-badge">{{ epreuves_achetees|length }}</span>{% endif %}
+  </button>
+  <button class="etud-tab" onclick="showEtudTab('notes', this)">
+    <i class="fas fa-star me-2"></i>Notes & Résultats
+  </button>
+</div>
+
+<!-- ══ ONGLET ÉCOLE ════════════════════════════════════════════════ -->
+<div id="etud-tab-ecole" class="etud-tab-content">
+
+  <div class="etud-two-col">
+
+    <!-- Mes inscriptions -->
+    <div class="etud-panel">
+      <div class="etud-panel-header">
+        <span><i class="fas fa-graduation-cap me-2 text-primary"></i>Mes inscriptions</span>
+        <span class="etud-panel-count">{{ inscriptions|length }} spécialité{{ inscriptions|length|pluralize }}</span>
+      </div>
+      {% if inscriptions %}
+      {% for ins in inscriptions %}
+      {% with spec=ins.specialite fil=ins.specialite.filiere ecole=ins.specialite.filiere.ecole %}
+      <div class="etud-ins-item">
+        <div class="etud-ins-logo">
+          {% if ecole.logo %}<img src="{{ ecole.logo.url }}" alt="">
+          {% else %}<i class="fas fa-school"></i>{% endif %}
+        </div>
+        <div class="etud-ins-info">
+          <strong>{{ ecole.nom|truncatechars:25 }}</strong>
+          <span>{{ fil.nom }} › {{ spec.nom }}</span>
+          <div class="etud-ins-progress">
+            <div class="etud-ins-bar">
+              <div class="etud-ins-fill" style="width:{{ ins.progression|default:0 }}%;"></div>
             </div>
+            <span>{{ ins.progression|default:0 }}%</span>
+          </div>
+        </div>
+        <a href="#" class="etud-ins-btn">
+          <i class="fas fa-play me-1"></i>Continuer
+        </a>
+      </div>
+      {% endwith %}
+      {% endfor %}
+      {% else %}
+      <div class="etud-empty">
+        <i class="fas fa-key fa-2x text-muted mb-2"></i>
+        <p>Aucune inscription. Utilisez une clé d'accès fournie par votre école.</p>
+        <a href="{% url 'etudiant_inscription_cle' %}" class="etud-link-btn">
+          <i class="fas fa-plus me-1"></i>S'inscrire avec une clé
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Prochains cours / visios -->
+    <div class="etud-panel">
+      <div class="etud-panel-header">
+        <span><i class="fas fa-calendar-alt me-2 text-danger"></i>Prochains cours</span>
+      </div>
+      {% if prochains_cours %}
+      {% for cours in prochains_cours|slice:":5" %}
+      <div class="etud-list-item">
+        <div class="etud-list-icon etud-icon-blue"><i class="fas fa-clock"></i></div>
+        <div class="etud-list-info">
+          <strong>{{ cours.titre }}</strong>
+          <span>{{ cours.visio_date|date:"d/m/Y à H:i"|default:"Voir le planning" }}</span>
+        </div>
+        <a href="#" class="etud-sm-btn">Rejoindre</a>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="etud-empty"><p>Pas de cours planifié prochainement.</p></div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Devoirs en attente -->
+  {% if devoirs_en_attente %}
+  <div class="etud-panel mt-4">
+    <div class="etud-panel-header">
+      <span><i class="fas fa-file-pen me-2 text-warning"></i>Devoirs à rendre</span>
+      <span class="etud-urgent-badge">{{ devoirs_en_attente|length }} en attente</span>
+    </div>
+    {% for devoir in devoirs_en_attente %}
+    <div class="etud-list-item">
+      <div class="etud-list-icon etud-icon-warn"><i class="fas fa-file-alt"></i></div>
+      <div class="etud-list-info">
+        <strong>{{ devoir.titre }}</strong>
+        <span>{{ devoir.cours.titre }} · Limite : {{ devoir.date_limite|date:"d/m/Y" }}</span>
+      </div>
+      <a href="{% url 'rendre_devoir' devoir.id %}" class="etud-sm-btn etud-btn-warn">Rendre</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- ══ ONGLET FORMATIONS ════════════════════════════════════════════ -->
+<div id="etud-tab-formations" class="etud-tab-content d-none">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h6 class="mb-0 fw-700">Formations achetées</h6>
+    <a href="{% url 'formations_liste' %}" class="etud-link-btn">
+      <i class="fas fa-search me-1"></i>Explorer les formations
+    </a>
+  </div>
+
+  {% if formations_achetees %}
+  <div class="etud-fcard-grid">
+    {% for formation in formations_achetees %}
+    <div class="etud-fcard">
+      <div class="etud-fcard-img">
+        {% if formation.image_cover %}
+        <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}" loading="lazy">
         {% else %}
-            <div class="text-center py-4">
-                <i class="fas fa-key fa-3x text-muted mb-3"></i>
-                <p>Vous n'êtes inscrit à aucune spécialité.</p>
-                <a href="{% url 'etudiant_inscription_cle' %}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i>S'inscrire avec une clé
-                </a>
-            </div>
+        <div class="etud-fcard-placeholder"><i class="fas fa-graduation-cap fa-2x"></i></div>
         {% endif %}
-    </div>
-</div>
-
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white">
-        <h5 class="mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Mes notes</h5>
-    </div>
-    <div class="card-body">
-        {% if notes %}
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Cours</th>
-                            <th>Note</th>
-                            <th>/</th>
-                            <th>Date</th>
-                        </thead>
-                        <tbody>
-                            {% for note in notes %}
-                            <tr>
-                                <td>{{ note.cours.titre }} ({{
-note.seance.titre|default:"Évaluation" }})</td>
-                                <td>{{ note.note }}/{{ note.note_max }}</td>
-                                <td>-</td>
-                                <td>{{ note.date_attribution|date:"d/m/Y" }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted text-center">Aucune note disponible.</p>
-            {% endif %}
+        {% if formation.certifiee %}
+        <span class="etud-fcard-cert"><i class="fas fa-certificate me-1"></i>Certifiante</span>
+        {% endif %}
+      </div>
+      <div class="etud-fcard-body">
+        <h6 class="etud-fcard-titre">{{ formation.titre|truncatechars:45 }}</h6>
+        <span class="etud-fcard-auteur">Par {{ formation.createur.prenom|default:formation.createur.username }}</span>
+        <!-- Barre de progression -->
+        {% for prog in user.progressions_formations.all %}
+        {% if prog.formation == formation %}
+        <div class="etud-prog-wrap">
+          <div class="etud-prog-bar">
+            <div class="etud-prog-fill" style="width:{{ prog.pourcentage }}%;"></div>
+          </div>
+          <span class="etud-prog-pct">{{ prog.pourcentage }}%</span>
         </div>
-    </div>
-
-
-<!-- Prochains cours -->
-<div class="card shadow-sm">
-    <div class="card-header bg-white">
-        <h5 class="mb-0"><i class="fas fa-calendar-alt me-2 text-primary"></i>Prochains cours</h5>
-    </div>
-    <div class="card-body">
-        {% if prochains_cours %}
-            <div class="list-group">
-                {% for cours in prochains_cours %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">{{ cours.titre }}</h6>
-                            <small class="text-muted">
-                                <i class="fas fa-clock me-1"></i>{{ cours.visio_date|date:"d/m/Y H:i" }}
-                            </small>
-                        </div>
-                        <a href="#" class="btn btn-sm btn-outline-primary">Rejoindre</a>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-muted text-center mb-0">Aucun cours programmé</p>
+        {% if prog.terminee %}
+        <span class="etud-badge-done"><i class="fas fa-check me-1"></i>Terminée</span>
         {% endif %}
+        {% endif %}
+        {% endfor %}
+      </div>
+      <div class="etud-fcard-footer">
+        <a href="{% url 'formation_detail' formation.slug %}" class="etud-fcard-btn">
+          <i class="fas fa-play me-1"></i>Continuer
+        </a>
+        <a href="{% url 'formation_laisser_avis' formation.slug %}" class="etud-fcard-star" title="Laisser un avis">
+          <i class="fas fa-star"></i>
+        </a>
+      </div>
     </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="etud-empty-big">
+    <i class="fas fa-book fa-3x text-muted mb-3"></i>
+    <h5>Aucune formation achetée</h5>
+    <p class="text-muted">Découvrez nos formations et commencez à apprendre.</p>
+    <a href="{% url 'formations_liste' %}" class="etud-link-btn-lg">
+      <i class="fas fa-search me-2"></i>Explorer les formations
+    </a>
+  </div>
+  {% endif %}
 </div>
+
+<!-- ══ ONGLET ÉPREUVES ══════════════════════════════════════════════ -->
+<div id="etud-tab-epreuves" class="etud-tab-content d-none">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h6 class="mb-0 fw-700">Épreuves achetées</h6>
+    <a href="{% url 'epreuves_accueil' %}" class="etud-link-btn">
+      <i class="fas fa-search me-1"></i>Voir le catalogue
+    </a>
+  </div>
+
+  {% if epreuves_achetees %}
+  <div class="etud-epreuve-list">
+    {% for achat in epreuves_achetees %}
+    {% with ep=achat.epreuve %}
+    <div class="etud-ep-item">
+      <div class="etud-ep-icon"><i class="fas fa-file-pdf"></i></div>
+      <div class="etud-ep-info">
+        <strong>{{ ep.titre }}</strong>
+        <span>
+          {{ ep.categorie.rubrique.nom }} · {{ ep.categorie.nom }}
+          {% if ep.annee %}· {{ ep.annee }}{% endif %}
+          {% if ep.serie %}· Série {{ ep.serie }}{% endif %}
+        </span>
+      </div>
+      <div class="etud-ep-actions">
+        <a href="{{ ep.fichier.url }}" class="etud-ep-dl" download title="Télécharger l'épreuve">
+          <i class="fas fa-download me-1"></i>Épreuve
+        </a>
+        {% if ep.fichier_corrige and achat.avec_corrige %}
+        <a href="{{ ep.fichier_corrige.url }}" class="etud-ep-dl etud-dl-green" download title="Télécharger le corrigé">
+          <i class="fas fa-check me-1"></i>Corrigé
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="etud-empty-big">
+    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+    <h5>Aucune épreuve achetée</h5>
+    <p class="text-muted">Téléchargez des épreuves officielles pour préparer vos examens.</p>
+    <a href="{% url 'epreuves_accueil' %}" class="etud-link-btn-lg">
+      <i class="fas fa-search me-2"></i>Explorer les épreuves
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ ONGLET NOTES ════════════════════════════════════════════════ -->
+<div id="etud-tab-notes" class="etud-tab-content d-none">
+  <div class="etud-two-col">
+
+    <!-- Notes récentes -->
+    <div class="etud-panel">
+      <div class="etud-panel-header">
+        <span><i class="fas fa-star me-2 text-warning"></i>Mes notes récentes</span>
+      </div>
+      {% if notes %}
+      <div class="table-responsive">
+        <table class="etud-table">
+          <thead>
+            <tr><th>Cours / Évaluation</th><th>Note</th><th>Date</th></tr>
+          </thead>
+          <tbody>
+            {% for note in notes %}
+            <tr>
+              <td>
+                <strong>{{ note.cours.titre }}</strong>
+                <br><small class="text-muted">{{ note.seance.titre|default:"Évaluation" }}</small>
+              </td>
+              <td>
+                <span class="etud-note-badge {% if note.note >= note.note_max|floatformat:0|add:0 %}etud-note-max{% elif note.note >= note.note_max|floatformat:0|add:0|divisibleby:2 %}etud-note-mid{% else %}etud-note-low{% endif %}">
+                  {{ note.note }} / {{ note.note_max }}
+                </span>
+              </td>
+              <td class="text-muted small">{{ note.date_attribution|date:"d/m/Y" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="etud-empty"><p>Aucune note disponible.</p></div>
+      {% endif %}
+    </div>
+
+    <!-- Certificats -->
+    <div class="etud-panel">
+      <div class="etud-panel-header">
+        <span><i class="fas fa-certificate me-2 text-purple"></i>Mes certificats</span>
+      </div>
+      {% if certificats %}
+      {% for cert in certificats %}
+      <div class="etud-list-item">
+        <div class="etud-list-icon etud-icon-purple"><i class="fas fa-certificate"></i></div>
+        <div class="etud-list-info">
+          <strong>{{ cert.formation.titre|truncatechars:35 }}</strong>
+          <span>Obtenu le {{ cert.date_obtenu|date:"d/m/Y" }} · {{ cert.code_unique }}</span>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="etud-empty">
+        <i class="fas fa-certificate fa-2x text-muted mb-2"></i>
+        <p>Complétez une formation certifiante pour obtenir votre certificat.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ STYLES ═════════════════════════════════════════════════════ -->
+<style>
+/* Bannière clé */
+.etud-cle-banner { background:linear-gradient(135deg,#059669,#10b981); border-radius:14px; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.etud-cle-left { display:flex; align-items:center; color:white; }
+.etud-cle-left strong { display:block; font-weight:700; }
+.etud-cle-left span { font-size:0.82rem; opacity:0.88; }
+.etud-cle-btn { background:white; color:#059669; padding:10px 20px; border-radius:10px; font-weight:700; font-size:0.88rem; text-decoration:none; transition:all 0.2s; display:inline-flex; align-items:center; white-space:nowrap; }
+.etud-cle-btn:hover { background:#ecfdf5; color:#047857; }
+
+/* Stats */
+.etud-stats-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:28px; }
+@media(max-width:1000px) { .etud-stats-grid { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:600px) { .etud-stats-grid { grid-template-columns:repeat(2,1fr); } }
+.etud-stat { background:white; border-radius:14px; border:1.5px solid #e5e7eb; padding:16px 10px; text-align:center; position:relative; overflow:hidden; transition:all 0.2s; }
+.etud-stat:hover { border-color:var(--c); transform:translateY(-2px); }
+.etud-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c); }
+.etud-stat-icon { width:38px; height:38px; background:var(--c); border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:0.95rem; margin:0 auto 8px; }
+.etud-stat-n { display:block; font-size:1.5rem; font-weight:900; color:#111827; line-height:1; }
+.etud-stat-l { font-size:0.7rem; color:#6b7280; font-weight:500; }
+
+/* Tabs */
+.etud-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+.etud-tab { padding:10px 20px; border-radius:50px; border:1.5px solid #e5e7eb; background:white; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s; color:#374151; }
+.etud-tab:hover { border-color:#1e3a8a; color:#1e3a8a; }
+.etud-tab.active { background:#1e3a8a; color:white; border-color:#1e3a8a; }
+.etud-tab-badge { background:rgba(255,255,255,0.25); border-radius:50px; padding:1px 7px; font-size:0.7rem; margin-left:4px; }
+
+/* Panels */
+.etud-two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+@media(max-width:768px) { .etud-two-col { grid-template-columns:1fr; } }
+.etud-panel { background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; }
+.etud-panel-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f3f4f6; font-weight:600; font-size:0.88rem; }
+.etud-panel-count { background:#f0f4ff; color:#1e3a8a; border-radius:50px; padding:2px 10px; font-size:0.72rem; font-weight:700; }
+.etud-urgent-badge { background:#fee2e2; color:#dc2626; border-radius:50px; padding:2px 10px; font-size:0.72rem; font-weight:700; }
+
+/* Inscriptions */
+.etud-ins-item { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid #f9fafb; }
+.etud-ins-logo { width:40px; height:40px; border-radius:10px; background:#e0e7ff; color:#1e3a8a; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+.etud-ins-logo img { width:100%; height:100%; object-fit:cover; }
+.etud-ins-info { flex:1; min-width:0; }
+.etud-ins-info strong { display:block; font-size:0.85rem; font-weight:700; color:#111827; }
+.etud-ins-info span { font-size:0.75rem; color:#6b7280; }
+.etud-ins-progress { display:flex; align-items:center; gap:8px; margin-top:6px; }
+.etud-ins-bar { flex:1; height:6px; background:#f3f4f6; border-radius:50px; overflow:hidden; }
+.etud-ins-fill { height:100%; background:#1e3a8a; border-radius:50px; }
+.etud-ins-progress span { font-size:0.72rem; color:#6b7280; font-weight:600; flex-shrink:0; }
+.etud-ins-btn { background:#1e3a8a; color:white; border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:600; text-decoration:none; white-space:nowrap; flex-shrink:0; }
+.etud-ins-btn:hover { background:#0f2b5e; color:white; }
+
+/* List items */
+.etud-list-item { display:flex; align-items:center; gap:12px; padding:10px 18px; border-bottom:1px solid #f9fafb; }
+.etud-list-item:last-child { border:none; }
+.etud-list-icon { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:0.85rem; flex-shrink:0; }
+.etud-icon-blue { background:#dbeafe; color:#1e3a8a; }
+.etud-icon-warn { background:#fef3c7; color:#d97706; }
+.etud-icon-purple { background:#ede9fe; color:#7c3aed; }
+.etud-list-info { flex:1; min-width:0; }
+.etud-list-info strong { display:block; font-size:0.85rem; font-weight:600; color:#111827; }
+.etud-list-info span { font-size:0.75rem; color:#6b7280; }
+.etud-sm-btn { background:#1e3a8a; color:white; border-radius:8px; padding:5px 12px; font-size:0.75rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+.etud-btn-warn { background:#d97706; }
+
+/* Formations grid */
+.etud-fcard-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
+.etud-fcard { background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; transition:all 0.2s; }
+.etud-fcard:hover { border-color:#d97706; box-shadow:0 4px 14px rgba(0,0,0,0.08); transform:translateY(-2px); }
+.etud-fcard-img { height:130px; overflow:hidden; background:#f0f4ff; position:relative; }
+.etud-fcard-img img { width:100%; height:100%; object-fit:cover; }
+.etud-fcard-placeholder { height:100%; display:flex; align-items:center; justify-content:center; color:#1e3a8a; opacity:0.3; }
+.etud-fcard-cert { position:absolute; top:8px; left:8px; background:#7c3aed; color:white; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:50px; }
+.etud-fcard-body { padding:12px 14px; }
+.etud-fcard-titre { font-size:0.88rem; font-weight:700; color:#111827; margin-bottom:4px; }
+.etud-fcard-auteur { font-size:0.75rem; color:#6b7280; display:block; margin-bottom:10px; }
+.etud-prog-wrap { display:flex; align-items:center; gap:8px; }
+.etud-prog-bar { flex:1; height:6px; background:#f3f4f6; border-radius:50px; overflow:hidden; }
+.etud-prog-fill { height:100%; background:#d97706; border-radius:50px; }
+.etud-prog-pct { font-size:0.72rem; font-weight:700; color:#374151; }
+.etud-badge-done { display:inline-block; background:#d1fae5; color:#065f46; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:50px; margin-top:6px; }
+.etud-fcard-footer { display:flex; gap:6px; padding:10px 14px; border-top:1px solid #f3f4f6; }
+.etud-fcard-btn { flex:1; background:#1e3a8a; color:white; padding:8px; border-radius:8px; font-size:0.78rem; font-weight:600; text-decoration:none; display:flex; align-items:center; justify-content:center; }
+.etud-fcard-btn:hover { background:#0f2b5e; color:white; }
+.etud-fcard-star { width:34px; height:34px; border-radius:8px; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:0.85rem; }
+
+/* Épreuves */
+.etud-epreuve-list { display:flex; flex-direction:column; gap:0; background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; }
+.etud-ep-item { display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid #f3f4f6; transition:background 0.15s; }
+.etud-ep-item:last-child { border:none; }
+.etud-ep-item:hover { background:#f9fafb; }
+.etud-ep-icon { width:40px; height:40px; border-radius:10px; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.etud-ep-info { flex:1; min-width:0; }
+.etud-ep-info strong { display:block; font-size:0.88rem; font-weight:700; color:#111827; }
+.etud-ep-info span { font-size:0.75rem; color:#6b7280; }
+.etud-ep-actions { display:flex; gap:6px; flex-shrink:0; }
+.etud-ep-dl { background:#1e3a8a; color:white; border-radius:8px; padding:6px 12px; font-size:0.78rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; white-space:nowrap; }
+.etud-ep-dl:hover { background:#0f2b5e; color:white; }
+.etud-dl-green { background:#059669; }
+.etud-dl-green:hover { background:#047857; }
+
+/* Table notes */
+.etud-table { width:100%; border-collapse:collapse; }
+.etud-table th { background:#f9fafb; padding:10px 16px; font-size:0.78rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; text-align:left; border-bottom:1px solid #e5e7eb; }
+.etud-table td { padding:12px 16px; font-size:0.85rem; border-bottom:1px solid #f3f4f6; }
+.etud-note-badge { border-radius:50px; padding:3px 10px; font-size:0.78rem; font-weight:700; }
+.etud-note-max { background:#d1fae5; color:#065f46; }
+.etud-note-mid { background:#fef3c7; color:#92400e; }
+.etud-note-low { background:#fee2e2; color:#991b1b; }
+
+/* Buttons */
+.etud-link-btn { background:#e0e7ff; color:#1e3a8a; border-radius:10px; padding:8px 18px; font-size:0.85rem; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; transition:all 0.2s; }
+.etud-link-btn:hover { background:#1e3a8a; color:white; }
+.etud-link-btn-lg { background:#1e3a8a; color:white; border-radius:12px; padding:12px 28px; font-size:0.95rem; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; transition:all 0.2s; }
+.etud-link-btn-lg:hover { background:#0f2b5e; color:white; }
+
+.etud-empty, .etud-empty-big { text-align:center; padding:24px; color:#9ca3af; }
+.etud-empty-big { padding:60px 20px; }
+.fw-700 { font-weight:700; }
+.text-purple { color:#7c3aed; }
+</style>
+
+<script>
+function showEtudTab(name, btn) {
+  document.querySelectorAll('.etud-tab-content').forEach(t => t.classList.add('d-none'));
+  document.querySelectorAll('.etud-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('etud-tab-' + name).classList.remove('d-none');
+  btn.classList.add('active');
+}
+</script>
 
 {% endblock %}

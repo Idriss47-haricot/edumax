@@ -1,0 +1,196 @@
+<div class="formation-card h-100">
+    <div class="card-badges">
+        {% if formation.certifiee %}
+            <span class="badge-certifie"><i class="fas fa-certificate"></i> Certifiée</span>
+        {% endif %}
+        {% if formation.prix == 0 %}
+            <span class="badge-gratuit"><i class="fas fa-gift"></i> Gratuit</span>
+        {% endif %}
+        {% if formation.mise_en_avant %}
+            <span class="badge-featured"><i class="fas fa-star"></i> À la une</span>
+        {% endif %}
+    </div>
+    
+    <div class="formation-thumbnail">
+        {% if formation.image_cover %}
+            <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}">
+        {% else %}
+            <div class="thumbnail-placeholder">
+                <i class="fas fa-graduation-cap"></i>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="formation-body">
+        <h3 class="formation-title">{{ formation.titre|truncatechars:45 }}</h3>
+        {% if formation.resume %}
+            <p class="formation-resume">{{ formation.resume|truncatechars:60 }}</p>
+        {% else %}
+            <p class="formation-description">{{ formation.description_courte|truncatechars:60 }}</p>
+        {% endif %}
+        
+        <div class="formation-author">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ formation.createur.get_full_name|default:formation.createur.username }}</span>
+            {% if formation.createur.certifie %}
+                <i class="fas fa-check-circle text-success ms-1" style="font-size: 0.65rem;"></i>
+            {% endif %}
+        </div>
+        
+        <div class="formation-stats">
+            <span><i class="fas fa-download"></i> {{ formation.nb_ventes }} ventes</span>
+            <span><i class="fas fa-star text-warning"></i> {{ formation.note_moyenne|default:"0" }}/5</span>
+        </div>
+    </div>
+    
+    <div class="formation-footer">
+        <div class="price">
+            {% if formation.prix == 0 %}
+                <span class="free">Gratuit</span>
+            {% else %}
+                <span class="amount">{{ formation.prix|floatformat:0 }} FCFA</span>
+            {% endif %}
+        </div>
+        <a href="{% url 'formation_detail' formation.slug %}" class="btn-detail">
+            Voir <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+<style>
+.formation-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e2e8f0;
+}
+
+.formation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    border-color: #3b82f6;
+}
+
+.card-badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.badge-certifie, .badge-gratuit, .badge-featured {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+
+.badge-certifie { background: rgba(16, 185, 129, 0.9); color: white; }
+.badge-gratuit { background: rgba(30, 58, 138, 0.9); color: white; }
+.badge-featured { background: rgba(245, 158, 11, 0.9); color: white; }
+
+.formation-thumbnail {
+    height: 140px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.formation-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.thumbnail-placeholder i {
+    font-size: 2.5rem;
+    color: #1e3a8a;
+}
+
+.formation-body {
+    padding: 12px;
+    flex: 1;
+}
+
+.formation-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 6px;
+    line-height: 1.3;
+}
+
+.formation-resume, .formation-description {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.formation-author {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.formation-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 0.65rem;
+    color: #94a3b8;
+}
+
+.formation-footer {
+    padding: 10px 12px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price .amount {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e3a8a;
+}
+
+.price .free {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #10b981;
+}
+
+.btn-detail {
+    background: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: #475569;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.btn-detail:hover {
+    background: #1e3a8a;
+    color: white;
+}
+</style>

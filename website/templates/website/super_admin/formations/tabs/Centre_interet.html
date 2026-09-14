@@ -1,0 +1,32 @@
+<div class="tab-pane fade" id="centres">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between">
+            <h5>Centres d'intérêt</h5>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCentre">
+                <i class="fas fa-plus"></i> Nouveau centre
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <table class="table">
+                <thead>
+                    <tr><th>Nom</th><th>Slug</th><th>Formations</th><th>Ordre</th><th>Actif</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for centre in centres_interet %}
+                    <tr>
+                        <td>{{ centre.nom }}</td>
+                        <td>{{ centre.slug }}</td>
+                        <td>{{ centre.formations.count }}</td>
+                        <td>{{ centre.ordre }}</td>
+                        <td>{% if centre.actif %}✅{% else %}❌{% endif %}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editCentre({{ centre.id }})">✏️</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCentre({{ centre.id }})">🗑️</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

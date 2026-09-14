@@ -1,0 +1,246 @@
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Gestion des validations</h5>
+    </div>
+    <div class="card-body">
+        
+        <!-- SECTION 1 : VALIDATIONS MANUELLES -->
+        <div class="mb-5">
+            <h6 class="mb-3 pb-2 border-bottom">
+                <i class="fas fa-check-circle text-primary me-2"></i>Validations manuelles
+                {% if formations_en_attente > 0 %}
+                    <span class="badge bg-danger ms-2">{{ formations_en_attente }} en attente</span>
+                {% endif %}
+            </h6>
+            
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Formation</th>
+                            <th>Créateur</th>
+                            <th>Date</th>
+                            <th>Fichiers</th>
+                            <th>Actions</th>
+                        </thead>
+                        <tbody>
+                            {% for f in formations_en_attente_list %}
+                            <tr>
+                                <td>
+                                    <strong>{{ f.titre }}</strong><br>
+                                    <small class="text-muted">{{ f.description_courte|truncatechars:50 }}</small>
+                                </td>
+                                <td>{{ f.createur.username }}</td>
+                                <td>{{ f.date_creation|date:"d/m/Y H:i" }}</td>
+                                <td>{{ f.fichiers.count }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#apercuModal{{ f.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <a href="{% url 'valider_formation' f.id %}" class="btn btn-sm btn-success" onclick="return confirm('Valider cette formation ?')">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#refuserModal{{ f.id }}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">Aucune formation en attente de validation</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- SECTION 2 : VALIDATIONS AUTOMATIQUES -->
+            <div>
+                <h6 class="mb-3 pb-2 border-bottom">
+                    <i class="fas fa-clock text-success me-2"></i>Validations automatiques
+                </h6>
+                <p class="text-muted small mb-3">Activez la validation automatique pour les comptes de confiance</p>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Utilisateur</th>
+                                <th>Email</th>
+                                <th>Rôle</th>
+                                <th>Formations publiées</th>
+                                <th>En attente</th>
+                                <th>Signalements reçus</th>
+                                <th>Statut validation</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in tous_utilisateurs %}
+                            <tr class="{% if user.validation_automatique %}table-success{% endif %}">
+                                <td>
+                                    {{ user.username }}
+                                    {% if user.certifie %}
+                                        <i class="fas fa-certificate text-success ms-1" title="Certifié"></i>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    {% if user.role == 'enseignant' %}
+                                        <span class="badge bg-info">Enseignant</span>
+                                    {% elif user.role == 'admin_ecole' %}
+                                        <span class="badge bg-primary">Admin école</span>
+                                    {% elif user.is_superuser %}
+                                        <span class="badge bg-danger">Super Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Étudiant</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ user.formations_publiees_count|default:0 }}</span>
+                                </td>
+                                <td>
+                                    {% if user.formations_attente_count|default:0 > 0 %}
+                                        <span class="badge bg-warning">{{ user.formations_attente_count }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.signalements_recus_count|default:0 > 0 %}
+                                        <span class="badge bg-danger">{{ user.signalements_recus_count }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">0</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.validation_automatique %}
+                                        <span class="badge bg-success">Auto activée</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Manuelle</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.validation_automatique %}
+                                        <a href="{% url 'desactiver_auto_validation' user.id %}" class="btn btn-sm btn-warning" onclick="return confirm('Désactiver la validation auto pour {{ user.username }} ?')">
+                                            <i class="fas fa-toggle-off me-1"></i>Désactiver
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'activer_auto_validation' user.id %}" class="btn btn-sm btn-success" onclick="return confirm('Activer la validation auto pour {{ user.username }} ?')">
+                                            <i class="fas fa-toggle-on me-1"></i>Activer
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Aucun utilisateur trouvé</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- SECTION 3 : HISTORIQUE DES VALIDATIONS AUTO -->
+            <div class="mt-5">
+                <h6 class="mb-3 pb-2 border-bottom">
+                    <i class="fas fa-history me-2"></i>Historique des publications automatiques
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Utilisateur</th>
+                                <th>Formation</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs_auto_validation %}
+                            <tr>
+                                <td>{{ log.date_publication|date:"d/m/Y H:i:s" }}</td>
+                                <td>{{ log.utilisateur.username }}</td>
+                                <td>
+                                    <a href="{% url 'formation_detail' log.formation.slug %}" target="_blank">
+                                        {{ log.formation.titre|truncatechars:50 }}
+                                    </a>
+                                </td>
+                                <td>{{ log.ip_adresse|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Aucune publication automatique enregistrée</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS APERÇU ET REFUS -->
+{% for f in formations_en_attente_list %}
+<!-- Modal Aperçu -->
+<div class="modal fade" id="apercuModal{{ f.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Aperçu : {{ f.titre }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Description :</strong> {{ f.description_longue|linebreaks }}</p>
+                <p><strong>Prix :</strong> {{ f.prix }} FCFA</p>
+                <p><strong>Créateur :</strong> {{ f.createur.username }}</p>
+                <hr>
+                <h6>Fichiers :</h6>
+                {% for fichier in f.fichiers.all %}
+                <div class="border rounded p-2 mb-2">
+                    <strong>{{ fichier.titre }}</strong> ({{ fichier.get_type_fichier_display }})<br>
+                    {% if fichier.type_fichier == 'video' %}
+                        <video src="{{ fichier.fichier.url }}" controls class="w-100 mt-2" style="max-height: 300px;"></video>
+                    {% elif fichier.type_fichier == 'pdf' %}
+                        <iframe src="{{ fichier.fichier.url }}" class="w-100 mt-2" style="height: 400px;"></iframe>
+                    {% else %}
+                        <a href="{{ fichier.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">Télécharger</a>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <p class="text-muted">Aucun fichier</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Refus -->
+<div class="modal fade" id="refuserModal{{ f.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'refuser_formation' f.id %}">
+                {% csrf_token %}
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Refuser la formation</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Motif du refus :</label>
+                        <textarea name="motif_refus" class="form-control" rows="3" required placeholder="Expliquez pourquoi cette formation est refusée..."></textarea>
+                        <small class="text-muted mt-2 d-block">Ce motif sera envoyé au créateur.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}

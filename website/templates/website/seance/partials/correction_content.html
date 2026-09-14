@@ -1,0 +1,108 @@
+{% load static %}
+
+<div class="card shadow-sm border-0 rounded-4 mb-4">
+    <div class="card-header bg-white rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0"><i class="fas fa-check-double text-warning me-2"></i>Correction</h5>
+        {% if est_enseignant %}
+            <a href="{% url 'seance_correction_config' seance.id %}" class="btn btn-info btn-sm">
+                <i class="fas fa-cog me-1"></i>Configurer
+            </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if correction %}
+            <!-- État de publication -->
+            <div class="alert {% if correction.publie %}alert-success{% else %}alert-secondary{% endif %}">
+                <i class="fas {% if correction.publie %}fa-eye{% else %}fa-eye-slash{% endif %} me-2"></i>
+                {% if correction.publie %}
+                    Correction publiée le {{ correction.date_publication|date:"d/m/Y H:i" }}
+                    {% if est_enseignant %}
+                        <a href="{% url 'seance_correction_depublier' seance.id %}" class="btn btn-sm btn-outline-warning ms-2" onclick="return confirm('Masquer la correction ?')">
+                            <i class="fas fa-eye-slash me-1"></i>Masquer
+                        </a>
+                    {% endif %}
+                {% else %}
+                    Correction en cours de rédaction (non visible par les étudiants)
+                    {% if est_enseignant and correction.a_du_contenu %}
+                        <a href="{% url 'seance_correction_publier' seance.id %}" class="btn btn-sm btn-success ms-2" onclick="return confirm('Publier la correction ?')">
+                            <i class="fas fa-globe me-1"></i>Publier
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Séance corrigée -->
+            {% if correction.seance_corrigee %}
+                <div class="mb-3">
+                    <strong>Séance corrigée :</strong>
+                    <a href="{% url 'seance_detail' correction.seance_corrigee.id %}">
+                        {{ correction.seance_corrigee.titre }}
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Contenu de la correction -->
+            {% if correction.corrige_texte %}
+                <div class="bg-light p-3 rounded mb-3">
+                    {{ correction.corrige_texte|linebreaks }}
+                </div>
+            {% endif %}
+
+            {% if correction.corrige_fichier %}
+                <div class="mb-3">
+                    <a href="{{ correction.corrige_fichier.url }}" target="_blank" class="btn btn-outline-primary">
+                        <i class="fas fa-file-pdf me-1"></i>Télécharger la correction
+                    </a>
+                </div>
+            {% endif %}
+
+            {% if correction.corrige_video_url %}
+                <div class="mb-3">
+                    <a href="{{ correction.corrige_video_url }}" target="_blank" class="btn btn-outline-danger">
+                        <i class="fas fa-video me-1"></i>Voir la vidéo de correction
+                    </a>
+                </div>
+            {% endif %}
+
+            <!-- Points clés -->
+            {% if correction.liste_points_cles %}
+                <div class="mt-3">
+                    <strong>Points clés :</strong>
+                    <ul class="mt-2">
+                        {% for point in correction.liste_points_cles %}
+                        <li>{{ point }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <!-- Statistiques enseignant -->
+            {% if est_enseignant and correction.publie %}
+                <hr>
+                <div class="text-muted small">
+                    <i class="fas fa-users me-1"></i>
+                    {{ correction.vues.count }} étudiant(s) ont consulté cette correction.
+                </div>
+            {% endif %}
+
+            <!-- Pour l'étudiant : si la correction n'est pas encore visible -->
+            {% if not est_enseignant and not correction.publie %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-clock me-2"></i>
+                    La correction n'est pas encore disponible.
+                </div>
+            {% endif %}
+
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-check-double fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Aucune correction configurée.</p>
+                {% if est_enseignant %}
+                    <a href="{% url 'seance_correction_config' seance.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>Configurer la correction
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>

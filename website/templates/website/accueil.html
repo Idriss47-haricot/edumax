@@ -1,140 +1,1477 @@
 {% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}{{ config.nom_site }} — {{ config.slogan_site|default:"La plateforme éducative de l'Afrique" }}{% endblock %}
 
 {% block content %}
 
-<!-- HERO SECTION -->
-<section class="hero">
-    <div class="container">
-        <div class="row align-items-center min-vh-75">
-            <div class="col-lg-6 mb-5 mb-lg-0">
-                <h1 class="hero-title">
-                    Créez votre école en ligne
-                    <span class="text-highlight">en quelques minutes</span>
-                </h1>
-                <p class="hero-subtitle">
-                    EduMax permet aux écoles, centres de formation et formateurs indépendants de lancer leur plateforme de cours en ligne. Gérez vos cours, vos étudiants et vos visioconférences depuis un seul espace.
-                </p>
-                <div class="hero-buttons">
-                    <a href="{% url 'inscription' %}?role=admin_ecole" class="btn btn-primary btn-lg me-3">
-                        <i class="fas fa-chalkboard-user me-2"></i>Je suis une école
-                    </a>
-                    <a href="{% url 'inscription' %}?role=etudiant" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-user-graduate me-2"></i>Je suis étudiant
-                    </a>
-                </div>
-                <div class="hero-stats mt-4">
-                    <div class="row">
-                        <div class="col-4">
-                            <h3>50+</h3>
-                            <p>Écoles partenaires</p>
-                        </div>
-                        <div class="col-4">
-                            <h3>200+</h3>
-                            <p>Formateurs</p>
-                        </div>
-                        <div class="col-4">
-                            <h3>5000+</h3>
-                            <p>Étudiants actifs</p>
+<!-- ==================== BANNIÈRE PROMO (si active) ==================== -->
+{% if banniere_promo %}
+<div class="promo-banner" style="background:{{ banniere_promo.couleur_fond }};color:{{ banniere_promo.couleur_texte }};">
+    <div class="container d-flex align-items-center justify-content-center gap-3 py-2">
+        <i class="fas fa-bolt"></i>
+        <span>{{ banniere_promo.texte }}</span>
+        {% if banniere_promo.lien %}
+        <a href="{{ banniere_promo.lien }}" style="color:inherit;font-weight:700;text-decoration:underline;">
+            En savoir plus →
+        </a>
+        {% endif %}
+        <button onclick="this.parentElement.parentElement.style.display='none'" 
+                style="background:none;border:none;color:inherit;margin-left:auto;font-size:1.2rem;cursor:pointer;">×</button>
+    </div>
+</div>
+{% endif %}
+
+<!-- ==================== HERO — DIAPORAMA ==================== -->
+<section class="hero-carousel" id="heroSection">
+    {% if slides %}
+    <!-- Diaporama dynamique géré depuis l'admin -->
+    <div class="carousel-wrapper" id="heroCarousel">
+        {% for slide in slides %}
+        <div class="slide {% if forloop.first %}active{% endif %}" 
+             style="{% if slide.image %}background-image:linear-gradient(135deg,rgba(15,43,94,0.88) 0%,rgba(30,58,138,0.75) 100%),url('{{ slide.image.url }}');background-size:cover;background-position:center;{% else %}background:linear-gradient(135deg,{{ slide.couleur_fond }} 0%,{{ slide.couleur_fond }}cc 100%);{% endif %}">
+            <div class="container slide-content">
+                <div class="row align-items-center min-vh-hero">
+                    <div class="col-lg-7">
+                        <div class="slide-text" data-aos="fade-right">
+                            {% if slide.sous_titre %}
+                            <span class="hero-badge">
+                                <i class="fas fa-graduation-cap me-2"></i>{{ slide.sous_titre }}
+                            </span>
+                            {% endif %}
+                            <h1 class="hero-title">{{ slide.titre }}</h1>
+                            {% if slide.description %}
+                            <p class="hero-description">{{ slide.description }}</p>
+                            {% endif %}
+                            <div class="hero-cta-group">
+                                {% if slide.bouton_texte %}
+                                <a href="{{ slide.bouton_lien|default:'#' }}" class="btn-hero-primary">
+                                    <i class="fas fa-rocket me-2"></i>{{ slide.bouton_texte }}
+                                </a>
+                                {% endif %}
+                                {% if slide.bouton2_texte %}
+                                <a href="{{ slide.bouton2_lien|default:'#' }}" class="btn-hero-secondary">
+                                    <i class="fas fa-play-circle me-2"></i>{{ slide.bouton2_texte }}
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6">
-                <img src="https://placehold.co/600x400/1e3a8a/white?text=EduMax" alt="EduMax" class="img-fluid rounded-4 shadow-lg">
-            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Contrôles carousel -->
+        <button class="carousel-ctrl prev" onclick="changeSlide(-1)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button class="carousel-ctrl next" onclick="changeSlide(1)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Indicateurs -->
+        <div class="carousel-dots">
+            {% for slide in slides %}
+            <button class="dot {% if forloop.first %}active{% endif %}" onclick="goToSlide({{ forloop.counter0 }})"></button>
+            {% endfor %}
         </div>
     </div>
-</section>
 
-<!-- SERVICES -->
-<section class="services">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Pourquoi choisir EduMax ?</h2>
-            <p class="section-subtitle">Une plateforme complète adaptée au contexte camerounais</p>
-        </div>
-        
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-school"></i></div>
-                    <h4>Multi-écoles</h4>
-                    <p>Chaque école a son propre espace avec son logo, ses couleurs et ses paramètres personnalisés.</p>
+    {% else %}
+    <!-- Fallback Hero statique (si aucune diapositive créée) -->
+    <div class="hero-static" style="background:linear-gradient(135deg,#0f2b5e 0%,#1e3a8a 60%,#1d4ed8 100%);">
+        <div class="hero-particles"></div>
+        <div class="container">
+            <div class="row align-items-center min-vh-hero">
+                <div class="col-lg-6">
+                    <span class="hero-badge">
+                        <i class="fas fa-graduation-cap me-2"></i>Plateforme éducative N°1
+                    </span>
+                    <h1 class="hero-title">
+                        {{ config.hero_titre }}
+                        <span class="title-accent">{{ config.hero_titre_accent }}</span>
+                    </h1>
+                    <p class="hero-description">{{ config.hero_description }}</p>
+                    <div class="hero-cta-group">
+                        <a href="{{ config.hero_bouton1_lien }}" class="btn-hero-primary">
+                            <i class="fas fa-rocket me-2"></i>{{ config.hero_bouton1_texte }}
+                        </a>
+                        <a href="{{ config.hero_bouton2_lien }}" class="btn-hero-secondary">
+                            <i class="fas fa-compass me-2"></i>{{ config.hero_bouton2_texte }}
+                        </a>
+                    </div>
+                    {% if config.hero_video_url %}
+                    <a href="{{ config.hero_video_url }}" class="btn-video" target="_blank">
+                        <span class="play-icon"><i class="fas fa-play"></i></span>
+                        Voir la présentation (2 min)
+                    </a>
+                    {% endif %}
                 </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-video"></i></div>
-                    <h4>Visio-conférence</h4>
-                    <p>Cours en direct avec enregistrement automatique. Replay disponible.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-comments"></i></div>
-                    <h4>Chat & Forum</h4>
-                    <p>Communication en temps réel entre enseignants et étudiants.</p>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="service-card">
-                    <div class="service-icon"><i class="fas fa-bell"></i></div>
-                    <h4>Notifications</h4>
-                    <p>Rappels de cours, nouveaux contenus, messages importants par email.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- COMMENT ÇA MARCHE -->
-<section class="how-it-works">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="section-title">Comment ça marche ?</h2>
-            <p class="section-subtitle">Simple, rapide et efficace</p>
-        </div>
-        
-        <div class="row">
-            <div class="col-md-4">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <div class="step-icon"><i class="fas fa-user-plus"></i></div>
-                    <h4>Inscription</h4>
-                    <p>Créez votre compte en tant qu'école, centre de formation ou formateur indépendant.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <div class="step-icon"><i class="fas fa-chalkboard"></i></div>
-                    <h4>Créez vos cours</h4>
-                    <p>Ajoutez des vidéos, des documents, programmez des visios.</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <div class="step-icon"><i class="fas fa-chart-line"></i></div>
-                    <h4>Suivez la progression</h4>
-                    <p>Tableau de bord complet pour suivre l'avancement de vos étudiants.</p>
+                <div class="col-lg-6 text-center d-none d-lg-block">
+                    {% if config.hero_image %}
+                    <img src="{{ config.hero_image.url }}" class="hero-illustration" alt="Academia Net">
+                    {% else %}
+                    <div class="hero-illustration-placeholder">
+                        <div class="floating-card card-1">
+                            <i class="fas fa-book-open text-warning"></i>
+                            <span>+{{ stats.stat2 }} Formations</span>
+                        </div>
+                        <div class="floating-card card-2">
+                            <i class="fas fa-file-alt text-success"></i>
+                            <span>{{ stats.stat3 }} Épreuves</span>
+                        </div>
+                        <div class="floating-card card-3">
+                            <i class="fas fa-school text-info"></i>
+                            <span>{{ stats.stat1 }} Écoles</span>
+                        </div>
+                        <div class="hero-circle-bg">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
+
+    <!-- Statistiques sous le hero -->
+    {% if config.hero_afficher_stats %}
+    <div class="hero-stats-bar">
+        <div class="container">
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="{{ stats.stat1 }}">0</span>
+                    <span class="stat-label">{{ stats.stat1_label }}</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="{{ stats.stat2 }}">0</span>
+                    <span class="stat-label">{{ stats.stat2_label }}</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ stats.stat3 }}</span>
+                    <span class="stat-label">{{ stats.stat3_label }}</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <span class="stat-number counter" data-target="{{ stats.stat4 }}">0</span>
+                    <span class="stat-label">{{ stats.stat4_label }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </section>
 
-<!-- CTA -->
-<section class="cta">
+<!-- ==================== SERVICES (3 piliers) ==================== -->
+{% if config.section_services_visible %}
+<section class="section-pad bg-white">
     <div class="container">
-        <div class="cta-content">
-            <h2>Prêt à lancer votre école en ligne ?</h2>
-            <p>Rejoignez des milliers d'établissements qui ont choisi EduMax</p>
-            <a href="{% url 'inscription' %}" class="btn btn-light btn-lg">
-                <i class="fas fa-arrow-right me-2"></i>Commencer maintenant
+        <div class="section-header text-center">
+            <span class="section-tag">Ce qu'on offre</span>
+            <h2 class="section-title">Trois services, <span class="text-accent">une seule plateforme</span></h2>
+            <p class="section-sub">Tout ce dont vous avez besoin pour apprendre, enseigner et réussir</p>
+        </div>
+
+        <div class="services-grid-3">
+            <!-- Écoles -->
+            <div class="service-pilier" data-color="#1e3a8a">
+                <div class="pilier-icon-wrap" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);">
+                    <i class="fas fa-school"></i>
+                </div>
+                <div class="pilier-badge" style="background:#e0e7ff;color:#1e3a8a;">École</div>
+                <h3>Gérez votre école</h3>
+                <p>Digitalisez votre établissement : cours en ligne, gestion des étudiants, emploi du temps, devoirs, résultats.</p>
+                <ul class="pilier-features">
+                    <li><i class="fas fa-check-circle text-success"></i> Cours vidéo + PDF</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Messagerie interne</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Bulletins & notes</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Tableau de bord admin</li>
+                </ul>
+                <div class="pilier-price">
+                    <span class="price-label">À partir de</span>
+                    <span class="price-value">Gratuit</span>
+                </div>
+                <a href="{% url 'inscription' %}?role=admin_ecole" class="btn-pilier" style="background:#1e3a8a;">
+                    Créer mon école <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+
+            <!-- Formations -->
+            <div class="service-pilier featured" data-color="#f59e0b">
+                <div class="featured-ribbon">Populaire</div>
+                <div class="pilier-icon-wrap" style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="pilier-badge" style="background:#fef3c7;color:#92400e;">Formation</div>
+                <h3>Vendez vos formations</h3>
+                <p>Monétisez votre expertise. Créez des formations vidéo, recevez des paiements Mobile Money et Orange Money.</p>
+                <ul class="pilier-features">
+                    <li><i class="fas fa-check-circle text-success"></i> Jusqu'à 90% reversé</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Paiement MoMo & OM</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Certification formateur</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Tableau de bord ventes</li>
+                </ul>
+                <div class="pilier-price">
+                    <span class="price-label">Commission</span>
+                    <span class="price-value">10%</span>
+                </div>
+                <a href="{% url 'inscription' %}?role=enseignant" class="btn-pilier" style="background:#d97706;">
+                    Devenir formateur <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+
+            <!-- Épreuves -->
+            <div class="service-pilier" data-color="#10b981">
+                <div class="pilier-icon-wrap" style="background:linear-gradient(135deg,#059669,#10b981);">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="pilier-badge" style="background:#d1fae5;color:#065f46;">Épreuves</div>
+                <h3>Bibliothèque d'épreuves</h3>
+                <p>Bac, BEPC, Probatoire, Concours — des centaines d'épreuves officielles avec corrigés détaillés.</p>
+                <ul class="pilier-features">
+                    <li><i class="fas fa-check-circle text-success"></i> Téléchargement PDF</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Corrigés disponibles</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Filtres par matière/année</li>
+                    <li><i class="fas fa-check-circle text-success"></i> Prix accessibles</li>
+                </ul>
+                <div class="pilier-price">
+                    <span class="price-label">À partir de</span>
+                    <span class="price-value">500 FCFA</span>
+                </div>
+                <a href="{% url 'epreuves_accueil' %}" class="btn-pilier" style="background:#059669;">
+                    Explorer les épreuves <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== FORMATIONS EN VEDETTE ==================== -->
+{% if config.section_formations_visible and formations_vedette %}
+<section class="section-pad" style="background:#f8faff;">
+    <div class="container">
+        <div class="section-header-flex">
+            <div>
+                <span class="section-tag">Apprentissage</span>
+                <h2 class="section-title">{{ config.titre_section_formations }}</h2>
+                <p class="section-sub">{{ config.sous_titre_section_formations }}</p>
+            </div>
+            <a href="{% url 'formations_liste' %}" class="btn-voir-tout">
+                Voir tout <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Filtres rapides par centre d'intérêt -->
+        {% if centres_populaires %}
+        <div class="filter-tabs" id="formationFilters">
+            <button class="filter-tab active" data-filter="all" onclick="filterFormations('all', this)">
+                <i class="fas fa-th me-1"></i>Tous
+            </button>
+            {% for centre in centres_populaires %}
+            <button class="filter-tab" data-filter="{{ centre.slug }}" onclick="filterFormations('{{ centre.slug }}', this)">
+                {{ centre.nom }}
+                <span class="filter-count">{{ centre.nb }}</span>
+            </button>
+            {% endfor %}
+            {% if formations_gratuites %}
+            <button class="filter-tab filter-tab-free" data-filter="gratuit" onclick="filterFormations('gratuit', this)">
+                <i class="fas fa-gift me-1"></i>Gratuites
+            </button>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Grille formations -->
+        <div class="formations-grid" id="formationsGrid">
+            {% for formation in formations_vedette %}
+            <div class="formation-card-modern" 
+                 data-centres="{% for c in formation.centres_interet.all %}{{ c.slug }} {% endfor %}"
+                 data-gratuit="{% if formation.prix == 0 %}true{% else %}false{% endif %}">
+                
+                <!-- Image + badges -->
+                <div class="fcard-image">
+                    {% if formation.image_cover %}
+                    <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}" loading="lazy">
+                    {% else %}
+                    <div class="fcard-placeholder" style="background:linear-gradient(135deg,#1e3a8a20,#3b82f620);">
+                        <i class="fas fa-graduation-cap fa-3x" style="color:#1e3a8a;opacity:0.3;"></i>
+                    </div>
+                    {% endif %}
+
+                    <div class="fcard-badges">
+                        {% if formation.prix == 0 and config.afficher_formations_gratuites_badge %}
+                        <span class="badge-free"><i class="fas fa-gift me-1"></i>Gratuit</span>
+                        {% endif %}
+                        {% if formation.mise_en_avant %}
+                        <span class="badge-top"><i class="fas fa-star me-1"></i>Vedette</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Preview survol -->
+                    <div class="fcard-preview">
+                        <a href="{% url 'formation_detail' formation.slug %}" class="btn-preview">
+                            <i class="fas fa-eye me-2"></i>Aperçu rapide
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Contenu -->
+                <div class="fcard-body">
+                    <div class="fcard-meta-top">
+                        {% if formation.centres_interet.exists %}
+                        <span class="fcard-category">{{ formation.centres_interet.first.nom }}</span>
+                        {% endif %}
+                        {% if formation.niveau %}
+                        <span class="fcard-level level-{{ formation.niveau }}">{{ formation.get_niveau_display|default:formation.niveau }}</span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="fcard-title">
+                        <a href="{% url 'formation_detail' formation.slug %}">{{ formation.titre|truncatechars:55 }}</a>
+                    </h3>
+
+                    <p class="fcard-desc">{{ formation.description_courte|truncatechars:90 }}</p>
+
+                    <!-- Formateur -->
+                    <div class="fcard-author">
+                        <div class="author-avatar-sm">
+                            {% if formation.createur.photo %}
+                            <img src="{{ formation.createur.photo.url }}" alt="{{ formation.createur.prenom }}">
+                            {% else %}
+                            <i class="fas fa-user"></i>
+                            {% endif %}
+                        </div>
+                        <span class="author-name">{{ formation.createur.prenom|default:formation.createur.username }}</span>
+                        {% if formation.createur.certifie %}
+                        <i class="fas fa-certificate text-warning" title="Formateur certifié"></i>
+                        {% endif %}
+                    </div>
+
+                    <!-- Note & ventes -->
+                    {% if config.afficher_note_formations %}
+                    <div class="fcard-rating">
+                        <div class="stars">
+                            {% with note=formation.note_moyenne|default:0 %}
+                            {% for i in "12345" %}
+                            <i class="fas fa-star {% if forloop.counter <= note %}filled{% endif %}"></i>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <span class="rating-val">{{ formation.note_moyenne|default:"Nouveau"|floatformat:1 }}</span>
+                        {% if config.afficher_nb_ventes_formations %}
+                        <span class="rating-count">({{ formation.nb_ventes|default:0 }} étudiants)</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Infos rapides -->
+                    <div class="fcard-infos">
+                        {% if formation.duree %}
+                        <span><i class="fas fa-clock me-1 text-muted"></i>{{ formation.duree }}</span>
+                        {% endif %}
+                        {% if formation.nb_modules %}
+                        <span><i class="fas fa-layer-group me-1 text-muted"></i>{{ formation.nb_modules }} modules</span>
+                        {% endif %}
+                        {% if formation.langue %}
+                        <span><i class="fas fa-globe me-1 text-muted"></i>{{ formation.langue }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Footer prix + CTA -->
+                <div class="fcard-footer">
+                    {% if config.afficher_prix_formations %}
+                    <div class="fcard-price">
+                        {% if formation.prix == 0 %}
+                        <span class="price-gratuit">Gratuit</span>
+                        {% else %}
+                        <span class="price-main">{{ formation.prix|floatformat:0 }} FCFA</span>
+                        {% if formation.prix_original and formation.prix_original > formation.prix %}
+                        <span class="price-old">{{ formation.prix_original|floatformat:0 }}</span>
+                        <span class="price-discount">
+                            -{% widthratio formation.prix formation.prix_original 100 as pct %}{{ pct }}%
+                        </span>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'formation_detail' formation.slug %}" class="btn-fcard">
+                        {% if formation.prix == 0 %}
+                        <i class="fas fa-play me-1"></i>Commencer
+                        {% else %}
+                        <i class="fas fa-shopping-cart me-1"></i>Acheter
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'formations_liste' %}" class="btn-section-cta">
+                <i class="fas fa-th-large me-2"></i>Toutes les formations
+                <span class="badge-count ms-2">{{ stats.stat2 }}</span>
             </a>
         </div>
     </div>
 </section>
+{% endif %}
+
+<!-- ==================== ÉPREUVES ==================== -->
+{% if config.section_epreuves_visible and epreuves_vedette %}
+<section class="section-pad bg-white">
+    <div class="container">
+        <div class="section-header-flex">
+            <div>
+                <span class="section-tag">Bibliothèque officielle</span>
+                <h2 class="section-title">{{ config.titre_section_epreuves }}</h2>
+                <p class="section-sub">{{ config.sous_titre_section_epreuves }}</p>
+            </div>
+            <a href="{% url 'epreuves_accueil' %}" class="btn-voir-tout">
+                Voir tout <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Navigation rubriques -->
+        {% if rubriques %}
+        <div class="rubriques-nav">
+            {% for rubrique in rubriques %}
+            <a href="{% url 'epreuves_accueil' %}?rubrique={{ rubrique.slug }}" class="rubrique-pill">
+                <i class="fas fa-folder me-2"></i>{{ rubrique.nom }}
+                <span class="rubrique-count">{{ rubrique.categories.count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Grille épreuves -->
+        <div class="epreuves-grid">
+            {% for epreuve in epreuves_vedette %}
+            <div class="epreuve-card">
+                <!-- Aperçu -->
+                <div class="ecard-preview">
+                    {% if epreuve.apercu %}
+                    <img src="{{ epreuve.apercu.url }}" alt="{{ epreuve.titre }}" loading="lazy">
+                    {% else %}
+                    <div class="ecard-placeholder">
+                        <i class="fas fa-file-pdf fa-3x"></i>
+                        <span>{{ epreuve.annee }}</span>
+                    </div>
+                    {% endif %}
+                    {% if epreuve.est_populaire %}
+                    <span class="ecard-badge-pop"><i class="fas fa-fire me-1"></i>Populaire</span>
+                    {% endif %}
+                    {% if epreuve.fichier_corrige %}
+                    <span class="ecard-badge-corrige"><i class="fas fa-check me-1"></i>+ Corrigé</span>
+                    {% endif %}
+                </div>
+
+                <!-- Infos -->
+                <div class="ecard-body">
+                    <div class="ecard-top">
+                        {% if epreuve.categorie %}
+                        <span class="ecard-rubrique">{{ epreuve.categorie.rubrique.nom }}</span>
+                        <span class="ecard-cat">{{ epreuve.categorie.nom }}</span>
+                        {% endif %}
+                    </div>
+                    <h4 class="ecard-title">{{ epreuve.titre|truncatechars:50 }}</h4>
+                    <div class="ecard-meta">
+                        {% if epreuve.annee %}
+                        <span><i class="fas fa-calendar me-1"></i>{{ epreuve.annee }}</span>
+                        {% endif %}
+                        {% if epreuve.serie %}
+                        <span class="serie-badge">Série {{ epreuve.serie }}</span>
+                        {% endif %}
+                        <span><i class="fas fa-download me-1"></i>{{ epreuve.nb_ventes }} téléch.</span>
+                    </div>
+                </div>
+
+                <!-- Prix + action -->
+                <div class="ecard-footer">
+                    <div class="ecard-price-block">
+                        {% if epreuve.prix == 0 %}
+                        <span class="price-gratuit">Gratuit</span>
+                        {% else %}
+                        <span class="price-main">{{ epreuve.prix|floatformat:0 }} FCFA</span>
+                        {% endif %}
+                        {% if epreuve.fichier_corrige and epreuve.prix_corrige > 0 %}
+                        <span class="corrige-price">+ corrigé {{ epreuve.prix_corrige|floatformat:0 }} FCFA</span>
+                        {% endif %}
+                    </div>
+                    <div class="ecard-actions">
+                        <a href="{% url 'epreuves_accueil' %}" class="btn-ecard">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if user.is_authenticated %}
+                        <button class="btn-ecard-cart" onclick="ajouterPanier('epreuve', {{ epreuve.id }}, this)" title="Ajouter au panier">
+                            <i class="fas fa-shopping-cart"></i>
+                        </button>
+                        {% else %}
+                        <a href="{% url 'connexion' %}?next={% url 'epreuves_accueil' %}" class="btn-ecard-cart" title="Se connecter">
+                            <i class="fas fa-shopping-cart"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'epreuves_accueil' %}" class="btn-section-cta btn-green">
+                <i class="fas fa-file-alt me-2"></i>Toute la bibliothèque
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== ÉCOLES PARTENAIRES ==================== -->
+{% if config.section_ecoles_visible and ecoles %}
+<section class="section-pad" style="background:#f0f4ff;">
+    <div class="container">
+        <div class="section-header text-center">
+            <span class="section-tag">Réseau</span>
+            <h2 class="section-title">{{ config.titre_section_ecoles }}</h2>
+            <p class="section-sub">Des établissements qui font confiance à Academia Net</p>
+        </div>
+
+        <div class="ecoles-grid">
+            {% for ecole in ecoles %}
+            <a href="{% url 'ecole_detail' ecole.slug %}" class="ecole-card">
+                <div class="ecole-banniere">
+                    {% if ecole.banniere %}
+                    <img src="{{ ecole.banniere.url }}" alt="{{ ecole.nom }}" loading="lazy">
+                    {% else %}
+                    <div class="ecole-ban-placeholder" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);"></div>
+                    {% endif %}
+                    <div class="ecole-logo-wrap">
+                        {% if ecole.logo %}
+                        <img src="{{ ecole.logo.url }}" alt="{{ ecole.nom }}">
+                        {% else %}
+                        <i class="fas fa-school"></i>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="ecole-body">
+                    <h4 class="ecole-nom">{{ ecole.nom|truncatechars:30 }}</h4>
+                    <p class="ecole-ville"><i class="fas fa-map-marker-alt me-1 text-danger"></i>{{ ecole.ville }}, {{ ecole.pays }}</p>
+                    {% if ecole.numero_agrement %}
+                    <span class="ecole-agrement"><i class="fas fa-certificate me-1"></i>Agréée</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="{% url 'ecoles_liste' %}" class="btn-voir-tout btn-large">
+                <i class="fas fa-school me-2"></i>Voir toutes les écoles ({{ stats.stat1 }})
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== POUR QUI ? ==================== -->
+{% if config.section_audience_visible %}
+<section class="section-pad bg-white">
+    <div class="container">
+        <div class="section-header text-center">
+            <span class="section-tag">Notre communauté</span>
+            <h2 class="section-title">Academia Net, <span class="text-accent">pour qui ?</span></h2>
+        </div>
+
+        <div class="audience-grid-4">
+            <div class="audience-card-modern" onclick="showAuthModal('school')">
+                <div class="aud-icon-wrap" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);">
+                    <i class="fas fa-school"></i>
+                </div>
+                <h4>Établissements</h4>
+                <p>Digitalisez votre école, gérez vos étudiants et enseignants depuis un tableau de bord central.</p>
+                <ul class="aud-list">
+                    <li>Cours en ligne</li>
+                    <li>Gestion des élèves</li>
+                    <li>Bulletins numériques</li>
+                </ul>
+                <span class="aud-cta">Créer mon école →</span>
+            </div>
+
+            <div class="audience-card-modern" onclick="showAuthModal('trainer')">
+                <div class="aud-icon-wrap" style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <h4>Formateurs</h4>
+                <p>Partagez votre expertise, créez des formations en ligne et recevez vos revenus rapidement.</p>
+                <ul class="aud-list">
+                    <li>Création de cours</li>
+                    <li>Paiements Mobile Money</li>
+                    <li>Statistiques de ventes</li>
+                </ul>
+                <span class="aud-cta">Devenir formateur →</span>
+            </div>
+
+            <div class="audience-card-modern" onclick="showAuthModal('student')">
+                <div class="aud-icon-wrap" style="background:linear-gradient(135deg,#059669,#10b981);">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h4>Étudiants</h4>
+                <p>Accédez à des centaines de formations, épreuves et corrigés pour préparer vos examens.</p>
+                <ul class="aud-list">
+                    <li>Formations certifiantes</li>
+                    <li>Épreuves officielles</li>
+                    <li>Suivi de progression</li>
+                </ul>
+                <span class="aud-cta">Commencer →</span>
+            </div>
+
+            <div class="audience-card-modern" onclick="showAuthModal('parent')">
+                <div class="aud-icon-wrap" style="background:linear-gradient(135deg,#7c3aed,#a78bfa);">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h4>Parents</h4>
+                <p>Suivez les progrès de vos enfants, consultez leurs résultats et gardez le contact avec l'école.</p>
+                <ul class="aud-list">
+                    <li>Suivi en temps réel</li>
+                    <li>Résultats & bulletins</li>
+                    <li>Messagerie avec l'école</li>
+                </ul>
+                <span class="aud-cta">En savoir plus →</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== COMMENT ÇA MARCHE ==================== -->
+{% if config.section_comment_ca_marche_visible %}
+<section class="section-pad" style="background:#f8faff;">
+    <div class="container">
+        <div class="section-header text-center">
+            <span class="section-tag">Simple & rapide</span>
+            <h2 class="section-title">Comment ça marche ?</h2>
+        </div>
+
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-number">01</div>
+                <div class="step-icon"><i class="fas fa-user-plus"></i></div>
+                <h4>Inscription gratuite</h4>
+                <p>Créez votre compte en moins de 30 secondes. Aucune carte bancaire requise.</p>
+                <div class="step-connector"></div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">02</div>
+                <div class="step-icon"><i class="fas fa-id-badge"></i></div>
+                <h4>Choisissez votre profil</h4>
+                <p>École, formateur ou étudiant — l'interface s'adapte à votre rôle automatiquement.</p>
+                <div class="step-connector"></div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">03</div>
+                <div class="step-icon"><i class="fas fa-credit-card"></i></div>
+                <h4>Payez simplement</h4>
+                <p>Mobile Money, Orange Money, Wave — tous les moyens de paiement locaux acceptés.</p>
+                <div class="step-connector"></div>
+            </div>
+            <div class="step-card">
+                <div class="step-number">04</div>
+                <div class="step-icon"><i class="fas fa-graduation-cap"></i></div>
+                <h4>Apprenez & réussissez</h4>
+                <p>Accédez instantanément à vos cours, épreuves et formations depuis n'importe quel appareil.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== TÉMOIGNAGES ==================== -->
+{% if config.section_temoignages_visible and temoignages %}
+<section class="section-pad bg-white">
+    <div class="container">
+        <div class="section-header text-center">
+            <span class="section-tag">Avis vérifiés</span>
+            <h2 class="section-title">{{ config.titre_section_temoignages }}</h2>
+        </div>
+
+        <div class="temoignages-carousel" id="temoignagesCarousel">
+            <div class="temoignages-track" id="temoignagesTrack">
+                {% for t in temoignages %}
+                <div class="temoignage-card">
+                    <div class="stars-row">
+                        {% for i in "12345" %}
+                        <i class="fas fa-star {% if forloop.counter <= t.note %}text-warning{% else %}text-muted{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                    <p class="temoignage-texte">"{{ t.texte }}"</p>
+                    <div class="temoignage-author">
+                        <div class="author-avatar-temo">
+                            {% if t.avatar %}
+                            <img src="{{ t.avatar.url }}" alt="{{ t.nom }}">
+                            {% else %}
+                            <div class="avatar-initials">{{ t.nom|first }}</div>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <strong>{{ t.nom }}</strong>
+                            <span class="author-role-temo">{{ t.role }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="temo-controls">
+                <button class="temo-btn" onclick="slideTemo(-1)"><i class="fas fa-chevron-left"></i></button>
+                <button class="temo-btn" onclick="slideTemo(1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== PARTENAIRES ==================== -->
+{% if config.section_partenaires_visible and partenaires %}
+<section class="partenaires-section">
+    <div class="container">
+        <p class="partenaires-label">Ils nous font confiance</p>
+        <div class="partenaires-strip">
+            {% for p in partenaires %}
+            <a href="{{ p.site_web|default:'#' }}" target="_blank" class="partenaire-logo" title="{{ p.nom }}">
+                <img src="{{ p.logo.url }}" alt="{{ p.nom }}">
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== CTA FINALE ==================== -->
+{% if config.section_cta_visible %}
+<section class="cta-section-modern">
+    <div class="cta-bg-pattern"></div>
+    <div class="container text-center position-relative">
+        <div class="cta-icon-top">🎓</div>
+        <h2 class="cta-title">{{ config.titre_section_cta }}</h2>
+        <p class="cta-sub">{{ config.sous_titre_section_cta }}</p>
+        <div class="cta-btns">
+            <a href="{% url 'inscription' %}" class="btn-cta-primary">
+                <i class="fas fa-rocket me-2"></i>Démarrer maintenant — c'est gratuit
+            </a>
+            {% if config.footer_telephone %}
+            <a href="tel:{{ config.footer_telephone }}" class="btn-cta-secondary">
+                <i class="fas fa-headset me-2"></i>Contacter le support
+            </a>
+            {% endif %}
+        </div>
+        <div class="cta-badges">
+            <span><i class="fas fa-check-circle text-success me-1"></i>Accès immédiat</span>
+            <span><i class="fas fa-check-circle text-success me-1"></i>Paiement MoMo & OM</span>
+            <span><i class="fas fa-check-circle text-success me-1"></i>Support 7j/7</span>
+            <span><i class="fas fa-check-circle text-success me-1"></i>Sans engagement</span>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ==================== MODAL AUTH ==================== -->
+<div id="authModal" class="auth-modal-overlay" onclick="if(event.target===this)closeAuthModal()">
+    <div class="auth-modal-box">
+        <button class="modal-close-btn" onclick="closeAuthModal()">×</button>
+        <div class="modal-logo"><i class="fas fa-graduation-cap"></i> Academia Net</div>
+        <h3 id="modalTitle">Rejoindre Academia Net</h3>
+        <p id="modalDesc">Inscrivez-vous gratuitement et accédez à toutes nos fonctionnalités.</p>
+        <div class="modal-actions">
+            <a href="{% url 'inscription' %}" class="btn-modal-primary" id="modalBtnInscription">
+                <i class="fas fa-user-plus me-2"></i>S'inscrire gratuitement
+            </a>
+            <a href="{% url 'connexion' %}" class="btn-modal-secondary">
+                <i class="fas fa-sign-in-alt me-2"></i>Se connecter
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== STYLES ==================== -->
+<style>
+:root {
+    --primary: {{ config.couleur_principale|default:"#1e3a8a" }};
+    --primary-dark: #0f2b5e;
+    --primary-light: #3b82f6;
+    --accent: {{ config.couleur_secondaire|default:"#f59e0b" }};
+    --accent-green: {{ config.couleur_accent|default:"#10b981" }};
+    --gray-light: #f8faff;
+    --gray-border: #e5e7eb;
+    --text-dark: #111827;
+    --text-gray: #6b7280;
+    --white: #ffffff;
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+    --radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Bannière promo ── */
+.promo-banner { font-size:0.9rem; font-weight:500; padding:8px 0; }
+
+/* ── Sections communes ── */
+.section-pad { padding: 80px 0; }
+.section-tag {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 50px;
+    margin-bottom: 16px;
+}
+.section-title { font-size: 2.2rem; font-weight: 800; color: var(--text-dark); margin-bottom: 12px; line-height: 1.2; }
+.section-sub { color: var(--text-gray); font-size: 1.05rem; max-width: 600px; margin: 0 auto; }
+.text-accent { color: var(--accent); }
+.section-header { margin-bottom: 50px; }
+.section-header-flex { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; gap: 20px; flex-wrap: wrap; }
+
+/* ── Hero ── */
+.min-vh-hero { min-height: 540px; padding: 80px 0; }
+.hero-static { position: relative; overflow: hidden; }
+.hero-badge {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.15); color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 6px 18px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+    margin-bottom: 24px; backdrop-filter: blur(4px);
+}
+.hero-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900; color: white; line-height: 1.15;
+    margin-bottom: 20px; letter-spacing: -0.5px;
+}
+.title-accent { display: block; color: var(--accent); }
+.hero-description { font-size: 1.1rem; color: rgba(255,255,255,0.88); margin-bottom: 36px; line-height: 1.7; max-width: 520px; }
+.hero-cta-group { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+.btn-hero-primary {
+    display: inline-flex; align-items: center;
+    background: var(--accent); color: var(--primary-dark);
+    padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 1rem;
+    text-decoration: none; transition: var(--transition);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.4);
+}
+.btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(245,158,11,0.5); color: var(--primary-dark); }
+.btn-hero-secondary {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.12); color: white;
+    padding: 14px 28px; border-radius: 12px; font-weight: 600;
+    border: 2px solid rgba(255,255,255,0.3); text-decoration: none; transition: var(--transition);
+    backdrop-filter: blur(4px);
+}
+.btn-hero-secondary:hover { background: rgba(255,255,255,0.2); color: white; transform: translateY(-2px); }
+.btn-video {
+    display: inline-flex; align-items: center; gap: 12px;
+    color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem; transition: var(--transition);
+}
+.btn-video:hover { color: white; }
+.play-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+}
+.btn-video:hover .play-icon { background: var(--accent); }
+
+/* ── Floating cards (hero illustration) ── */
+.hero-illustration-placeholder { position: relative; height: 420px; }
+.hero-circle-bg {
+    width: 320px; height: 320px; border-radius: 50%;
+    background: rgba(255,255,255,0.07); border: 2px solid rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-size: 6rem; color: rgba(255,255,255,0.15);
+}
+.floating-card {
+    position: absolute; background: white; border-radius: 14px;
+    padding: 12px 18px; display: flex; align-items: center; gap: 12px;
+    box-shadow: var(--shadow-lg); font-weight: 600; font-size: 0.85rem; color: var(--text-dark);
+    animation: float 3s ease-in-out infinite;
+}
+.floating-card i { font-size: 1.3rem; }
+.card-1 { top: 20px; left: 10px; animation-delay: 0s; }
+.card-2 { top: 50px; right: -10px; animation-delay: 1s; }
+.card-3 { bottom: 60px; left: 0; animation-delay: 2s; }
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+/* ── Stats bar ── */
+.hero-stats-bar {
+    background: white; box-shadow: 0 4px 30px rgba(0,0,0,0.1);
+    position: relative; z-index: 10;
+}
+.stats-row {
+    display: flex; align-items: stretch;
+    padding: 0; overflow: hidden;
+}
+.stat-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px; text-align: center;
+    transition: var(--transition);
+}
+.stat-item:hover { background: var(--gray-light); }
+.stat-number { font-size: 2rem; font-weight: 900; color: var(--primary); display: block; line-height: 1; }
+.stat-label { font-size: 0.78rem; color: var(--text-gray); margin-top: 6px; font-weight: 500; }
+.stat-divider { width: 1px; background: var(--gray-border); margin: 16px 0; }
+
+/* ── Carousel hero ── */
+.hero-carousel { position: relative; }
+.carousel-wrapper { position: relative; overflow: hidden; }
+.slide { display: none; min-height: 540px; padding: 80px 0; }
+.slide.active { display: flex; align-items: center; }
+.slide-content { width: 100%; }
+.carousel-ctrl {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.2); border: none; color: white;
+    width: 48px; height: 48px; border-radius: 50%; cursor: pointer;
+    backdrop-filter: blur(4px); transition: var(--transition); font-size: 1rem; z-index: 5;
+}
+.carousel-ctrl:hover { background: rgba(255,255,255,0.35); }
+.carousel-ctrl.prev { left: 20px; }
+.carousel-ctrl.next { right: 20px; }
+.carousel-dots { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.4); border: none; cursor: pointer; transition: var(--transition); }
+.dot.active { background: white; width: 28px; border-radius: 5px; }
+
+/* ── Services 3 piliers ── */
+.services-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
+@media(max-width:900px) { .services-grid-3 { grid-template-columns: 1fr; } }
+.service-pilier {
+    background: white; border-radius: 20px; padding: 36px 28px;
+    border: 2px solid var(--gray-border); position: relative; overflow: hidden;
+    transition: var(--transition);
+}
+.service-pilier:hover { border-color: var(--primary); box-shadow: var(--shadow-lg); transform: translateY(-6px); }
+.service-pilier.featured { border-color: var(--accent); box-shadow: 0 8px 30px rgba(245,158,11,0.15); }
+.featured-ribbon {
+    position: absolute; top: 16px; right: -26px;
+    background: var(--accent); color: white; font-size: 0.7rem; font-weight: 700;
+    padding: 4px 36px; transform: rotate(35deg); letter-spacing: 1px;
+}
+.pilier-icon-wrap {
+    width: 72px; height: 72px; border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: white; margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+.pilier-badge {
+    display: inline-block; font-size: 0.72rem; font-weight: 700;
+    padding: 3px 12px; border-radius: 50px; margin-bottom: 14px; letter-spacing: 0.5px;
+}
+.service-pilier h3 { font-size: 1.3rem; font-weight: 800; color: var(--text-dark); margin-bottom: 12px; }
+.service-pilier p { color: var(--text-gray); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px; }
+.pilier-features { list-style: none; padding: 0; margin: 0 0 24px; }
+.pilier-features li { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 0.9rem; color: var(--text-dark); border-bottom: 1px solid #f3f4f6; }
+.pilier-features li:last-child { border: none; }
+.pilier-price { margin-bottom: 24px; }
+.price-label { font-size: 0.75rem; color: var(--text-gray); display: block; }
+.price-value { font-size: 1.8rem; font-weight: 900; color: var(--primary); }
+.btn-pilier {
+    display: block; text-align: center; color: white;
+    padding: 14px; border-radius: 12px; font-weight: 700;
+    text-decoration: none; transition: var(--transition); font-size: 0.95rem;
+}
+.btn-pilier:hover { opacity: 0.9; color: white; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+
+/* ── Filter tabs ── */
+.filter-tabs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
+.filter-tab {
+    padding: 8px 18px; border-radius: 50px; border: 1.5px solid var(--gray-border);
+    background: white; color: var(--text-gray); font-size: 0.85rem; font-weight: 500;
+    cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 6px;
+}
+.filter-tab:hover { border-color: var(--primary); color: var(--primary); }
+.filter-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+.filter-tab-free { border-color: var(--accent-green); color: var(--accent-green); }
+.filter-tab-free.active { background: var(--accent-green); border-color: var(--accent-green); }
+.filter-count { background: rgba(0,0,0,0.08); border-radius: 50px; padding: 1px 8px; font-size: 0.75rem; }
+
+/* ── Formations grid ── */
+.formations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+.formation-card-modern {
+    background: white; border-radius: var(--radius); overflow: hidden;
+    border: 1.5px solid var(--gray-border); transition: var(--transition);
+    display: flex; flex-direction: column;
+}
+.formation-card-modern:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+.formation-card-modern.hidden { display: none; }
+.fcard-image { position: relative; height: 180px; overflow: hidden; background: #f0f4ff; }
+.fcard-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.formation-card-modern:hover .fcard-image img { transform: scale(1.05); }
+.fcard-placeholder { height: 100%; display: flex; align-items: center; justify-content: center; }
+.fcard-badges { position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; gap: 6px; }
+.badge-free {
+    background: var(--accent-green); color: white; font-size: 0.72rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 50px;
+}
+.badge-top {
+    background: var(--accent); color: white; font-size: 0.72rem; font-weight: 700;
+    padding: 3px 10px; border-radius: 50px;
+}
+.fcard-preview {
+    position: absolute; inset: 0; background: rgba(15,43,94,0.7);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: var(--transition);
+}
+.formation-card-modern:hover .fcard-preview { opacity: 1; }
+.btn-preview {
+    background: white; color: var(--primary); padding: 10px 20px;
+    border-radius: 50px; font-weight: 600; font-size: 0.85rem; text-decoration: none; transition: var(--transition);
+}
+.btn-preview:hover { background: var(--accent); color: white; }
+.fcard-body { padding: 18px; flex: 1; }
+.fcard-meta-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+.fcard-category { font-size: 0.72rem; font-weight: 700; color: var(--primary); background: #e0e7ff; padding: 3px 10px; border-radius: 50px; }
+.fcard-level { font-size: 0.7rem; padding: 3px 8px; border-radius: 50px; font-weight: 600; }
+.level-debutant { background: #d1fae5; color: #065f46; }
+.level-intermediaire { background: #fef3c7; color: #92400e; }
+.level-avance { background: #fee2e2; color: #991b1b; }
+.fcard-title { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; line-height: 1.4; }
+.fcard-title a { color: inherit; text-decoration: none; }
+.fcard-title a:hover { color: var(--primary); }
+.fcard-desc { font-size: 0.82rem; color: var(--text-gray); margin-bottom: 12px; line-height: 1.5; }
+.fcard-author { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.82rem; color: var(--text-gray); }
+.author-avatar-sm {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--primary);
+    display: flex; align-items: center; justify-content: center; color: white; font-size: 0.7rem; overflow: hidden; flex-shrink: 0;
+}
+.author-avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
+.author-name { font-weight: 600; }
+.fcard-rating { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.stars { display: flex; gap: 2px; }
+.stars .fa-star { font-size: 0.75rem; color: #d1d5db; }
+.stars .fa-star.filled { color: #f59e0b; }
+.rating-val { font-weight: 700; font-size: 0.85rem; color: var(--text-dark); }
+.rating-count { font-size: 0.78rem; color: var(--text-gray); }
+.fcard-infos { display: flex; gap: 12px; font-size: 0.78rem; color: var(--text-gray); flex-wrap: wrap; }
+.fcard-footer {
+    padding: 14px 18px; border-top: 1px solid var(--gray-border);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.fcard-price { display: flex; align-items: baseline; gap: 8px; }
+.price-gratuit { color: var(--accent-green); font-weight: 800; font-size: 1.1rem; }
+.price-main { color: var(--primary); font-weight: 800; font-size: 1.1rem; }
+.price-old { color: var(--text-gray); text-decoration: line-through; font-size: 0.85rem; }
+.price-discount { background: #fee2e2; color: #dc2626; font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+.btn-fcard {
+    padding: 8px 18px; background: var(--primary); color: white;
+    border-radius: 8px; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: var(--transition);
+}
+.btn-fcard:hover { background: var(--primary-dark); color: white; transform: translateY(-1px); }
+
+/* ── Boutons généraux ── */
+.btn-voir-tout {
+    display: inline-flex; align-items: center;
+    color: var(--primary); font-weight: 600; text-decoration: none;
+    padding: 8px 20px; border: 2px solid var(--primary); border-radius: 50px;
+    transition: var(--transition); font-size: 0.9rem; white-space: nowrap;
+}
+.btn-voir-tout:hover { background: var(--primary); color: white; }
+.btn-voir-tout.btn-large { padding: 12px 28px; font-size: 1rem; }
+.btn-section-cta {
+    display: inline-flex; align-items: center;
+    background: var(--primary); color: white; padding: 14px 36px;
+    border-radius: 12px; font-weight: 700; text-decoration: none; transition: var(--transition);
+    font-size: 1rem;
+}
+.btn-section-cta:hover { background: var(--primary-dark); color: white; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30,58,138,0.3); }
+.btn-section-cta.btn-green { background: var(--accent-green); }
+.btn-section-cta.btn-green:hover { background: #059669; }
+.badge-count { background: rgba(255,255,255,0.25); border-radius: 50px; padding: 2px 10px; font-size: 0.8rem; }
+
+/* ── Épreuves grid ── */
+.rubriques-nav { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+.rubrique-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 18px; background: white; border: 1.5px solid var(--gray-border);
+    border-radius: 50px; color: var(--text-dark); font-size: 0.85rem; font-weight: 500;
+    text-decoration: none; transition: var(--transition);
+}
+.rubrique-pill:hover { border-color: var(--primary); color: var(--primary); }
+.rubrique-count { background: var(--primary); color: white; border-radius: 50px; padding: 1px 8px; font-size: 0.72rem; }
+.epreuves-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+.epreuve-card {
+    background: white; border-radius: var(--radius); overflow: hidden;
+    border: 1.5px solid var(--gray-border); transition: var(--transition);
+    display: flex; flex-direction: column;
+}
+.epreuve-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--accent-green); }
+.ecard-preview { position: relative; height: 140px; background: #f0fdf4; overflow: hidden; }
+.ecard-preview img { width: 100%; height: 100%; object-fit: cover; }
+.ecard-placeholder {
+    height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    color: var(--accent-green); opacity: 0.5;
+}
+.ecard-placeholder span { font-size: 0.9rem; font-weight: 700; }
+.ecard-badge-pop {
+    position: absolute; top: 8px; left: 8px; background: #dc2626; color: white;
+    font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 50px;
+}
+.ecard-badge-corrige {
+    position: absolute; top: 8px; right: 8px; background: var(--accent-green); color: white;
+    font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 50px;
+}
+.ecard-body { padding: 14px; flex: 1; }
+.ecard-top { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+.ecard-rubrique { font-size: 0.68rem; font-weight: 700; color: var(--primary); background: #e0e7ff; padding: 2px 8px; border-radius: 50px; }
+.ecard-cat { font-size: 0.68rem; color: var(--text-gray); background: #f3f4f6; padding: 2px 8px; border-radius: 50px; }
+.ecard-title { font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; line-height: 1.4; }
+.ecard-meta { display: flex; gap: 10px; font-size: 0.75rem; color: var(--text-gray); flex-wrap: wrap; }
+.serie-badge { background: #fef3c7; color: #92400e; padding: 1px 8px; border-radius: 50px; font-weight: 600; }
+.ecard-footer { padding: 12px 14px; border-top: 1px solid var(--gray-border); display: flex; align-items: center; justify-content: space-between; }
+.ecard-price-block { display: flex; flex-direction: column; }
+.corrige-price { font-size: 0.7rem; color: var(--accent-green); font-weight: 500; }
+.ecard-actions { display: flex; gap: 6px; }
+.btn-ecard, .btn-ecard-cart {
+    width: 34px; height: 34px; border-radius: 8px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 0.85rem;
+    transition: var(--transition); text-decoration: none;
+}
+.btn-ecard { background: #e0e7ff; color: var(--primary); }
+.btn-ecard:hover { background: var(--primary); color: white; }
+.btn-ecard-cart { background: #d1fae5; color: var(--accent-green); }
+.btn-ecard-cart:hover { background: var(--accent-green); color: white; }
+
+/* ── Écoles grid ── */
+.ecoles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+.ecole-card { text-decoration: none; color: inherit; display: block; }
+.ecole-card > div { border-radius: var(--radius); overflow: hidden; border: 1.5px solid var(--gray-border); transition: var(--transition); background: white; }
+.ecole-card:hover > div { transform: translateY(-5px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+.ecole-banniere { position: relative; height: 100px; overflow: hidden; }
+.ecole-banniere img { width: 100%; height: 100%; object-fit: cover; }
+.ecole-ban-placeholder { width: 100%; height: 100%; }
+.ecole-logo-wrap {
+    position: absolute; bottom: -20px; left: 16px;
+    width: 44px; height: 44px; border-radius: 50%; background: white;
+    border: 2px solid white; box-shadow: var(--shadow-md);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; color: var(--primary); font-size: 1.2rem;
+}
+.ecole-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.ecole-body { padding: 28px 16px 16px; }
+.ecole-nom { font-size: 0.95rem; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+.ecole-ville { font-size: 0.78rem; color: var(--text-gray); margin-bottom: 8px; }
+.ecole-agrement { font-size: 0.68rem; background: #d1fae5; color: #065f46; padding: 2px 10px; border-radius: 50px; font-weight: 700; }
+
+/* ── Audience ── */
+.audience-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; }
+@media(max-width:900px) { .audience-grid-4 { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:540px) { .audience-grid-4 { grid-template-columns: 1fr; } }
+.audience-card-modern {
+    background: white; border-radius: 20px; padding: 28px 20px;
+    border: 1.5px solid var(--gray-border); text-align: center;
+    cursor: pointer; transition: var(--transition);
+}
+.audience-card-modern:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
+.aud-icon-wrap {
+    width: 70px; height: 70px; border-radius: 20px; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: white; box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+.audience-card-modern h4 { font-size: 1.1rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; }
+.audience-card-modern p { font-size: 0.85rem; color: var(--text-gray); margin-bottom: 14px; line-height: 1.5; }
+.aud-list { list-style: none; padding: 0; margin: 0 0 18px; text-align: left; }
+.aud-list li { font-size: 0.8rem; color: var(--text-gray); padding: 4px 0; padding-left: 16px; position: relative; }
+.aud-list li::before { content: "✓"; position: absolute; left: 0; color: var(--accent-green); font-weight: 700; }
+.aud-cta { font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+
+/* ── Steps ── */
+.steps-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; position: relative; }
+@media(max-width:800px) { .steps-grid { grid-template-columns: repeat(2,1fr); } }
+.step-card {
+    background: white; border-radius: 20px; padding: 30px 20px; text-align: center;
+    border: 1.5px solid var(--gray-border); position: relative; transition: var(--transition);
+}
+.step-card:hover { box-shadow: var(--shadow-md); border-color: var(--primary); transform: translateY(-4px); }
+.step-number {
+    font-size: 3.5rem; font-weight: 900; color: #e0e7ff; line-height: 1;
+    position: absolute; top: 14px; right: 18px; letter-spacing: -2px;
+}
+.step-icon {
+    width: 60px; height: 60px; background: linear-gradient(135deg,var(--primary),var(--primary-light));
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.5rem; margin: 0 auto 16px; box-shadow: 0 6px 16px rgba(30,58,138,0.25);
+}
+.step-card h4 { font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; }
+.step-card p { font-size: 0.85rem; color: var(--text-gray); line-height: 1.6; }
+.step-connector {
+    position: absolute; right: -20px; top: 50%; transform: translateY(-50%);
+    width: 20px; height: 2px; background: var(--gray-border); z-index: 1;
+}
+@media(max-width:800px) { .step-connector { display: none; } }
+
+/* ── Témoignages ── */
+.temoignages-carousel { position: relative; overflow: hidden; }
+.temoignages-track { display: flex; gap: 24px; transition: transform 0.4s ease; }
+.temoignage-card {
+    flex: 0 0 calc(33.33% - 16px); background: white;
+    border-radius: 20px; padding: 30px; border: 1.5px solid var(--gray-border);
+}
+@media(max-width:900px) { .temoignage-card { flex: 0 0 calc(50% - 12px); } }
+@media(max-width:600px) { .temoignage-card { flex: 0 0 100%; } }
+.stars-row { display: flex; gap: 3px; margin-bottom: 16px; }
+.temoignage-texte { font-size: 0.95rem; color: var(--text-dark); line-height: 1.7; margin-bottom: 20px; font-style: italic; }
+.temoignage-author { display: flex; align-items: center; gap: 12px; }
+.author-avatar-temo {
+    width: 46px; height: 46px; border-radius: 50%; overflow: hidden;
+    background: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.author-avatar-temo img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-initials { color: white; font-weight: 700; font-size: 1.1rem; }
+.temoignage-author strong { display: block; font-size: 0.9rem; color: var(--text-dark); }
+.author-role-temo { font-size: 0.8rem; color: var(--text-gray); display: block; }
+.temo-controls { display: flex; justify-content: center; gap: 12px; margin-top: 24px; }
+.temo-btn {
+    width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--gray-border);
+    background: white; cursor: pointer; color: var(--primary); transition: var(--transition); font-size: 0.9rem;
+}
+.temo-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ── Partenaires ── */
+.partenaires-section { padding: 32px 0; background: #f8faff; border-top: 1px solid var(--gray-border); }
+.partenaires-label { text-align: center; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-gray); margin-bottom: 20px; font-weight: 600; }
+.partenaires-strip { display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; }
+.partenaire-logo { display: block; opacity: 0.5; transition: var(--transition); }
+.partenaire-logo:hover { opacity: 1; }
+.partenaire-logo img { height: 40px; object-fit: contain; }
+
+/* ── CTA section ── */
+.cta-section-modern {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 60%, var(--primary-light) 100%);
+    padding: 100px 0; position: relative; overflow: hidden;
+}
+.cta-bg-pattern {
+    position: absolute; inset: 0; opacity: 0.05;
+    background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0);
+    background-size: 40px 40px;
+}
+.cta-icon-top { font-size: 3.5rem; margin-bottom: 20px; display: block; }
+.cta-title { font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 900; color: white; margin-bottom: 16px; }
+.cta-sub { color: rgba(255,255,255,0.8); font-size: 1.1rem; margin-bottom: 40px; }
+.cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px; }
+.btn-cta-primary {
+    display: inline-flex; align-items: center;
+    background: var(--accent); color: var(--primary-dark);
+    padding: 16px 36px; border-radius: 12px; font-weight: 800; font-size: 1.05rem;
+    text-decoration: none; transition: var(--transition); box-shadow: 0 6px 24px rgba(245,158,11,0.4);
+}
+.btn-cta-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(245,158,11,0.5); color: var(--primary-dark); }
+.btn-cta-secondary {
+    display: inline-flex; align-items: center;
+    background: rgba(255,255,255,0.12); color: white;
+    padding: 16px 30px; border-radius: 12px; font-weight: 700;
+    border: 2px solid rgba(255,255,255,0.3); text-decoration: none; transition: var(--transition);
+}
+.btn-cta-secondary:hover { background: rgba(255,255,255,0.22); color: white; transform: translateY(-2px); }
+.cta-badges { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.cta-badges span { color: rgba(255,255,255,0.8); font-size: 0.88rem; }
+
+/* ── Modal auth ── */
+.auth-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 9999;
+    align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.auth-modal-overlay.open { display: flex; }
+.auth-modal-box {
+    background: white; border-radius: 24px; padding: 40px;
+    max-width: 440px; width: 90%; position: relative; text-align: center;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-close-btn {
+    position: absolute; top: 16px; right: 20px;
+    background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-gray);
+}
+.modal-logo { font-size: 1rem; font-weight: 800; color: var(--primary); margin-bottom: 16px; }
+.auth-modal-box h3 { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 10px; }
+.auth-modal-box p { color: var(--text-gray); margin-bottom: 28px; }
+.modal-actions { display: flex; flex-direction: column; gap: 12px; }
+.btn-modal-primary {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--primary); color: white; padding: 13px;
+    border-radius: 12px; font-weight: 700; text-decoration: none; transition: var(--transition);
+}
+.btn-modal-primary:hover { background: var(--primary-dark); color: white; }
+.btn-modal-secondary {
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid var(--gray-border); color: var(--text-dark); padding: 12px;
+    border-radius: 12px; font-weight: 600; text-decoration: none; transition: var(--transition);
+}
+.btn-modal-secondary:hover { border-color: var(--primary); color: var(--primary); }
+
+/* ── Responsive général ── */
+@media(max-width:768px) {
+    .section-pad { padding: 50px 0; }
+    .section-title { font-size: 1.6rem; }
+    .stats-row { flex-wrap: wrap; }
+    .stat-item { flex: 0 0 50%; }
+    .stat-divider { display: none; }
+    .formations-grid { grid-template-columns: 1fr 1fr; }
+    .epreuves-grid { grid-template-columns: 1fr 1fr; }
+    .ecoles-grid { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width:480px) {
+    .formations-grid, .epreuves-grid, .ecoles-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 1.8rem; }
+}
+</style>
+
+<!-- ==================== SCRIPTS ==================== -->
+<script>
+// ── Carousel hero ──
+let currentSlide = 0;
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+let autoPlay;
+
+function goToSlide(n) {
+    if (!slides.length) return;
+    slides[currentSlide].classList.remove('active');
+    dots[currentSlide]?.classList.remove('active');
+    currentSlide = (n + slides.length) % slides.length;
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide]?.classList.add('active');
+}
+function changeSlide(dir) { goToSlide(currentSlide + dir); }
+
+if (slides.length > 1) {
+    autoPlay = setInterval(() => changeSlide(1), 5000);
+    document.querySelector('.carousel-wrapper')?.addEventListener('mouseenter', () => clearInterval(autoPlay));
+    document.querySelector('.carousel-wrapper')?.addEventListener('mouseleave', () => { autoPlay = setInterval(() => changeSlide(1), 5000); });
+}
+
+// ── Compteur stats ──
+function animateCounter(el) {
+    const target = parseInt(el.dataset.target) || 0;
+    if (!target) return;
+    const duration = 1500;
+    const step = target / (duration / 16);
+    let current = 0;
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        el.textContent = Math.floor(current).toLocaleString('fr-FR');
+    }, 16);
+}
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.querySelectorAll('.counter').forEach(animateCounter);
+            observer.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+
+document.querySelector('.hero-stats-bar') && observer.observe(document.querySelector('.hero-stats-bar'));
+
+// ── Carousel témoignages ──
+let temoOffset = 0;
+function slideTemo(dir) {
+    const track = document.getElementById('temoignagesTrack');
+    if (!track) return;
+    const cards = track.querySelectorAll('.temoignage-card');
+    const cardW = cards[0]?.offsetWidth + 24 || 360;
+    const maxOffset = (cards.length - (window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1)) * cardW;
+    temoOffset = Math.max(0, Math.min(temoOffset + dir * cardW, maxOffset));
+    track.style.transform = `translateX(-${temoOffset}px)`;
+}
+
+// ── Filtre formations ──
+function filterFormations(filter, btn) {
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.formation-card-modern').forEach(card => {
+        if (filter === 'all') {
+            card.classList.remove('hidden');
+        } else if (filter === 'gratuit') {
+            card.dataset.gratuit === 'true' ? card.classList.remove('hidden') : card.classList.add('hidden');
+        } else {
+            card.dataset.centres?.includes(filter) ? card.classList.remove('hidden') : card.classList.add('hidden');
+        }
+    });
+}
+
+// ── Modal auth ──
+function showAuthModal(type) {
+    const modal = document.getElementById('authModal');
+    const title = document.getElementById('modalTitle');
+    const desc = document.getElementById('modalDesc');
+    const msgs = {
+        school: ['Créer mon école', 'Digitalisez votre école sur Academia Net. Inscription gratuite.'],
+        trainer: ['Devenir formateur', 'Partagez votre expertise et gagnez de l\'argent. Inscription gratuite.'],
+        student: ['Espace étudiant', 'Accédez à des centaines de cours et épreuves. Inscription gratuite.'],
+        parent: ['Espace parents', 'Suivez les progrès de vos enfants. Inscription gratuite.'],
+    };
+    const [t, d] = msgs[type] || ['Rejoindre Academia Net', 'Inscrivez-vous gratuitement.'];
+    title.textContent = t;
+    desc.textContent = d;
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+function closeAuthModal() {
+    document.getElementById('authModal').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+// ── Panier épreuves (AJAX) ──
+function ajouterPanier(type, id, btn) {
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+    fetch(`/epreuves/panier/ajouter/${type}/${id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.style.background = '#d1fae5';
+            btn.style.color = '#059669';
+            // Mettre à jour le compteur panier dans la navbar
+            const panierCount = document.querySelector('.panier-count');
+            if (panierCount && data.count) panierCount.textContent = data.count;
+        } else {
+            btn.innerHTML = originalHTML;
+        }
+    })
+    .catch(() => { btn.innerHTML = originalHTML; })
+    .finally(() => { btn.disabled = false; });
+}
+
+function getCookie(name) {
+    const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+
+// Fermer modal avec Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuthModal(); });
+</script>
 
 {% endblock %}

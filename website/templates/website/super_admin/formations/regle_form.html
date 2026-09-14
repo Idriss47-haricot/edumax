@@ -1,0 +1,65 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}{{ titre }}{% endblock %}
+{% block page_title %}{{ titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-gavel me-2 text-primary"></i>
+                    {{ titre }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Rubrique</label>
+                        {{ form.rubrique }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre</label>
+                        {{ form.titre }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Contenu</label>
+                        {{ form.contenu }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ordre</label>
+                            {{ form.ordre }}
+                            <small class="text-muted">Plus petit = plus haut</small>
+                        </div>
+                        <div class="col-md-6 mb-3 form-check mt-4">
+                            {{ form.actif }}
+                            <label class="form-check-label">Règle active</label>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'regles_liste' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

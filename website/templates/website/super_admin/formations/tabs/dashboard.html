@@ -1,0 +1,72 @@
+<div class="card">
+    <div class="card-body">
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="bg-primary text-white rounded-4 p-3 text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h2 class="mb-0">{{ formations_publiees }}</h2>
+                    <p class="mb-0">Publiées</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="bg-warning text-dark rounded-4 p-3 text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h2 class="mb-0">{{ formations_en_attente }}</h2>
+                    <p class="mb-0">En attente</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="bg-danger text-white rounded-4 p-3 text-center">
+                    <i class="fas fa-ban fa-2x mb-2"></i>
+                    <h2 class="mb-0">{{ formations_suspendues }}</h2>
+                    <p class="mb-0">Suspendues</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="bg-secondary text-white rounded-4 p-3 text-center">
+                    <i class="fas fa-flag fa-2x mb-2"></i>
+                    <h2 class="mb-0">{{ signalements_non_traites }}</h2>
+                    <p class="mb-0">Signalements</p>
+                </div>
+            </div>
+        </div>
+        
+        <hr class="my-4">
+        
+        <div class="row">
+            <div class="col-md-6">
+                <canvas id="ventesChart" height="250"></canvas>
+            </div>
+            <div class="col-md-6">
+                <canvas id="revenusChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    new Chart(document.getElementById('ventesChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Publiées', 'En attente', 'Suspendues'],
+            datasets: [{
+                data: [{{ formations_publiees }}, {{ formations_en_attente }}, {{ formations_suspendues }}],
+                backgroundColor: ['#198754', '#ffc107', '#dc3545']
+            }]
+        }
+    });
+    
+    new Chart(document.getElementById('revenusChart'), {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+            datasets: [{
+                label: 'Ventes (FCFA)',
+                data: [0, 25000, 50000, 75000, 100000, 150000],
+                borderColor: '#0d6efd',
+                tension: 0.3
+            }]
+        }
+    });
+</script>

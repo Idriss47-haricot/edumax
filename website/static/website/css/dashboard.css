@@ -2,9 +2,11 @@
 :root {
     --sidebar-width: 280px;
     --sidebar-collapsed-width: 70px;
-    --primary-color: #1e3a8a;
+    --primary-color: #1e3a8a;        /* GARDÉ - votre bleu */
     --primary-dark: #0f2b5e;
     --primary-light: #3b82f6;
+    --secondary-color: #E67E22;      /* NOUVEAU - Terracotta africain */
+    --accent-gold: #F59E0B;          /* NOUVEAU - Jaune pour le premium */
     --gray-light: #f5f7fa;
     --gray-border: #e5e7eb;
     --text-gray: #6b7280;
@@ -13,7 +15,6 @@
     --success: #10b981;
     --warning: #f59e0b;
 }
-
 /* ========== CONTAINER PRINCIPAL ========== */
 .dashboard-container {
     display: flex;
@@ -396,3 +397,4 @@
 .sidebar-nav .dropdown-header {
     color: #facc15 !important;
 }
+

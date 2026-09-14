@@ -1,0 +1,92 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer correction - {{ seance.titre }}{% endblock %}
+{% block page_title %}Configuration de la correction : {{ seance.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-double text-warning me-2"></i>
+                    Configurer la correction
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Séance à corriger</label>
+                        <select name="seance_corrigee_id" class="form-select">
+                            <option value="">-- Aucune --</option>
+                            {% for s in seances_a_corriger %}
+                            <option value="{{ s.id }}" {% if correction.seance_corrigee_id == s.id %}selected{% endif %}>
+                                {{ s.titre }} ({{ s.get_type_seance_display }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Sélectionnez la séance (devoir/exercice) que cette correction couvre</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Texte de la correction</label>
+                        <textarea name="corrige_texte" class="form-control" rows="6">{{ correction.corrige_texte|default:'' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fichier de correction (PDF, DOC, etc.)</label>
+                        <input type="file" name="corrige_fichier" class="form-control" accept=".pdf,.doc,.docx">
+                        {% if correction.corrige_fichier %}
+                            <small class="text-muted">Actuel : <a href="{{ correction.corrige_fichier.url }}" target="_blank">{{ correction.corrige_fichier.name }}</a></small>
+                            <br>
+                            <a href="{% url 'seance_correction_supprimer_fichier' seance.id %}" class="btn btn-sm btn-outline-danger mt-1" onclick="return confirm('Supprimer ce fichier ?')">
+                                <i class="fas fa-trash me-1"></i>Supprimer le fichier
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Vidéo de correction (YouTube, Vimeo, etc.)</label>
+                        <input type="url" name="corrige_video_url" class="form-control" value="{{ correction.corrige_video_url|default:'' }}" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Points clés (un par ligne)</label>
+                        <textarea name="points_cles" class="form-control" rows="4" placeholder="Ex:&#10;1. Identifier le problème&#10;2. Proposer une solution&#10;3. Justifier la réponse">{{ correction.points_cles|default:'' }}</textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <div>
+                            <a href="{% url 'seance_detail' seance.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Retour
+                            </a>
+                        </div>
+                        <div>
+                            {% if correction.publie %}
+                                <a href="{% url 'seance_correction_depublier' seance.id %}" class="btn btn-warning" onclick="return confirm('Masquer la correction aux étudiants ?')">
+                                    <i class="fas fa-eye-slash me-1"></i>Masquer
+                                </a>
+                            {% endif %}
+                            {% if correction.a_du_contenu and not correction.publie %}
+                                <a href="{% url 'seance_correction_publier' seance.id %}" class="btn btn-success" onclick="return confirm('Publier la correction aux étudiants ?')">
+                                    <i class="fas fa-globe me-1"></i>Publier
+                                </a>
+                            {% endif %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

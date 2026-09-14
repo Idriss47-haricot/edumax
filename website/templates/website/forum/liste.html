@@ -1,11 +1,151 @@
 {% extends 'website/base_dashboard.html' %}
+{% load static %}
 
-{% block title %}Forum{% endblock %}
-{% block page_title %}Forum{% endblock %}
+{% block title %}Forums — {{ config.nom_site|default:"Academia Net" }}{% endblock %}
+{% block page_title %}Forums de la communauté{% endblock %}
 
 {% block content %}
-<div class="alert alert-info">
-    <i class="fas fa-info-circle me-2"></i>
-    Le forum sera bientôt disponible.
+
+{% if not config.forums_actifs %}
+<div class="forum-disabled">
+  <i class="fas fa-comments-slash fa-3x text-muted mb-3"></i>
+  <h4>Forums temporairement désactivés</h4>
+  <p class="text-muted">L'administrateur a désactivé les forums. Revenez plus tard.</p>
 </div>
+{% else %}
+
+<!-- ══ INTRO ═════════════════════════════════════════════════════ -->
+<div class="fo-hero">
+  <div class="fo-hero-left">
+    <h2 class="fo-hero-title">Bienvenue sur les forums</h2>
+    <p class="fo-hero-sub">Échangez, posez vos questions et partagez vos connaissances avec la communauté.</p>
+  </div>
+  <div class="fo-hero-right">
+    <div class="fo-hero-stat"><span>{{ total_sujets|default:0 }}</span><small>Sujets</small></div>
+    <div class="fo-hero-stat-div"></div>
+    <div class="fo-hero-stat"><span>{{ total_messages|default:0 }}</span><small>Messages</small></div>
+    <div class="fo-hero-stat-div"></div>
+    <div class="fo-hero-stat"><span>{{ total_membres|default:0 }}</span><small>Membres</small></div>
+  </div>
+</div>
+
+<!-- ══ FORUM GÉNÉRAL PLATEFORME ══════════════════════════════════ -->
+{% if config.forum_plateforme_actif and forums_plateforme %}
+<div class="fo-section">
+  <div class="fo-section-header">
+    <div class="fo-section-icon fo-icon-blue"><i class="fas fa-globe"></i></div>
+    <div>
+      <h5 class="fo-section-title">Forum général de la plateforme</h5>
+      <p class="fo-section-sub">Ouvert à toute la communauté Academia Net</p>
+    </div>
+  </div>
+  <div class="fo-forums-list">
+    {% for forum in forums_plateforme %}
+    {% include 'website/forum/partials/forum_card.html' with forum=forum %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ══ FORUMS D'ÉCOLE ════════════════════════════════════════════ -->
+{% if config.forum_ecole_actif and forums_ecoles %}
+<div class="fo-section">
+  <div class="fo-section-header">
+    <div class="fo-section-icon fo-icon-purple"><i class="fas fa-school"></i></div>
+    <div>
+      <h5 class="fo-section-title">Forums de mes écoles</h5>
+      <p class="fo-section-sub">Réservés aux membres de chaque établissement</p>
+    </div>
+  </div>
+  {% regroup forums_ecoles by ecole as ecoles_group %}
+  {% for ecole_group in ecoles_group %}
+  <div class="fo-group">
+    <div class="fo-group-header">
+      <div class="fo-group-logo">
+        {% if ecole_group.grouper.logo %}
+        <img src="{{ ecole_group.grouper.logo.url }}" alt="{{ ecole_group.grouper.nom }}">
+        {% else %}
+        <i class="fas fa-school"></i>
+        {% endif %}
+      </div>
+      <span class="fo-group-nom">{{ ecole_group.grouper.nom }}</span>
+      <span class="fo-group-lieu"><i class="fas fa-map-marker-alt me-1"></i>{{ ecole_group.grouper.ville }}</span>
+    </div>
+    <div class="fo-forums-list">
+      {% for forum in ecole_group.list %}
+      {% include 'website/forum/partials/forum_card.html' with forum=forum %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ══ FORUMS DE SPÉCIALITÉ ══════════════════════════════════════ -->
+{% if config.forum_specialite_actif and forums_specialites %}
+<div class="fo-section">
+  <div class="fo-section-header">
+    <div class="fo-section-icon fo-icon-green"><i class="fas fa-graduation-cap"></i></div>
+    <div>
+      <h5 class="fo-section-title">Forums de mes spécialités</h5>
+      <p class="fo-section-sub">Discussions spécifiques par matière ou filière</p>
+    </div>
+  </div>
+  <div class="fo-forums-list">
+    {% for forum in forums_specialites %}
+    {% include 'website/forum/partials/forum_card.html' with forum=forum %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- État vide -->
+{% if not forums_plateforme and not forums_ecoles and not forums_specialites %}
+<div class="fo-empty-all">
+  <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+  <h5>Aucun forum disponible</h5>
+  <p class="text-muted">
+    Inscrivez-vous à une école pour accéder à ses forums,<br>
+    ou attendez que l'administrateur active les forums généraux.
+  </p>
+</div>
+{% endif %}
+
+{% endif %}
+
+<style>
+.forum-disabled,.fo-empty-all { text-align:center; padding:60px 20px; }
+
+/* Hero */
+.fo-hero { background:linear-gradient(135deg,#0f2b5e,#1e3a8a); border-radius:16px; padding:28px 32px; display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+.fo-hero-title { font-size:1.4rem; font-weight:800; color:white; margin-bottom:8px; }
+.fo-hero-sub { color:rgba(255,255,255,0.75); font-size:0.9rem; margin:0; }
+.fo-hero-right { display:flex; align-items:center; gap:20px; }
+.fo-hero-stat { text-align:center; }
+.fo-hero-stat span { display:block; font-size:1.8rem; font-weight:900; color:white; line-height:1; }
+.fo-hero-stat small { color:rgba(255,255,255,0.65); font-size:0.75rem; }
+.fo-hero-stat-div { width:1px; height:40px; background:rgba(255,255,255,0.2); }
+
+/* Sections */
+.fo-section { margin-bottom:32px; }
+.fo-section-header { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+.fo-section-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:white; font-size:1.1rem; flex-shrink:0; }
+.fo-icon-blue { background:linear-gradient(135deg,#1e3a8a,#3b82f6); }
+.fo-icon-purple { background:linear-gradient(135deg,#7c3aed,#a78bfa); }
+.fo-icon-green { background:linear-gradient(135deg,#059669,#10b981); }
+.fo-section-title { font-size:1.05rem; font-weight:700; color:#111827; margin:0; }
+.fo-section-sub { font-size:0.82rem; color:#6b7280; margin:0; }
+
+/* Group école */
+.fo-group { margin-bottom:20px; }
+.fo-group-header { display:flex; align-items:center; gap:12px; padding:10px 16px; background:#f8faff; border-radius:10px; margin-bottom:8px; border:1px solid #e0e7ff; }
+.fo-group-logo { width:32px; height:32px; border-radius:8px; background:#e0e7ff; color:#1e3a8a; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+.fo-group-logo img { width:100%; height:100%; object-fit:cover; }
+.fo-group-nom { font-weight:700; font-size:0.9rem; color:#111827; }
+.fo-group-lieu { font-size:0.78rem; color:#6b7280; margin-left:auto; }
+
+/* Forum list */
+.fo-forums-list { display:flex; flex-direction:column; gap:8px; }
+</style>
+
 {% endblock %}

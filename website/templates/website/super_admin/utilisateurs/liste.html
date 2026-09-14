@@ -6,18 +6,16 @@
 {% block content %}
 
 <!-- Barre de recherche -->
-
-
-<div class="card-header bg-white d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">
-        <i class="fas fa-users me-2 text-primary"></i>
-        Liste des utilisateurs
-    </h5>
-    <a href="/super-admin/utilisateurs/ajouter/" class="btn btn-primary btn-sm">
-        <i class="fas fa-user-plus me-1"></i>Ajouter un utilisateur
-    </a>
-</div>
 <div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-users me-2 text-primary"></i>
+            Liste des utilisateurs
+        </h5>
+        <a href="/super-admin/utilisateurs/ajouter/" class="btn btn-primary btn-sm">
+            <i class="fas fa-user-plus me-1"></i>Ajouter un utilisateur
+        </a>
+    </div>
     <div class="card-body">
         <form method="get" class="d-flex gap-2">
             <input type="text" name="q" class="form-control" placeholder="Rechercher par nom, email, rôle..." value="{{ request.GET.q }}">
@@ -53,17 +51,19 @@
                             <th>Téléphone</th>
                             <th>Rôle</th>
                             <th>Statut</th>
+                            <th>Abonnement</th>
+                            <th>Gestion MDP</th>
                             <th>Actions</th>
                             <th>Changer rôle</th>
                         </thead>
                         <tbody>
                             {% for user in utilisateurs %}
-                            
-                                <td>{{ user.id }}
-                                <td><strong>{{ user.username }}</strong>
-                                <td>{{ user.prenom|default:"-" }}
-                                <td>{{ user.email }}
-                                <td>{{ user.telephone|default:"-" }}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td><strong>{{ user.username }}</strong></td>
+                                <td>{{ user.prenom|default:"-" }}</td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.telephone|default:"-" }}</td>
                                 <td>
                                     <span class="badge 
                                         {% if user.role == 'super_admin' %}bg-danger
@@ -72,14 +72,43 @@
                                         {% else %}bg-secondary{% endif %}">
                                         {{ user.get_role_display }}
                                     </span>
-                                
+                                </td>
                                 <td>
                                     {% if user.is_active %}
                                         <span class="badge bg-success">Actif</span>
                                     {% else %}
                                         <span class="badge bg-danger">Inactif</span>
                                     {% endif %}
-                                
+                                </td>
+                                <td>
+                                    {% if user.role == 'super_admin' %}
+                                        <span class="badge bg-secondary">Exempté</span>
+                                    {% elif user.paiement_desactive %}
+                                        <span class="badge bg-success">Gratuit (désactivé)</span>
+                                    {% else %}
+                                        {% with abo=user.abonnement_utilisateur %}
+                                            {% if abo %}
+                                                {% if abo.est_actif %}
+                                                    <span class="badge bg-success">Actif jusqu'au {{ abo.date_fin|date:"d/m/Y" }}</span>
+                                                {% elif abo.statut == 'essai' %}
+                                                    <span class="badge bg-warning">Essai ({{ abo.jours_restants }}j)</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Inactif</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-secondary">Aucun</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#mdpModal{{ user.id }}">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    <a href="{% url 'reinitialiser_mot_de_passe' user.id %}" class="btn btn-sm btn-outline-info" onclick="return confirm('Envoyer un email de réinitialisation à {{ user.email }} ?')">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                </td>
                                 <td>
                                     <a href="{% url 'super_admin_utilisateur_modifier' user.id %}" class="btn btn-sm btn-warning">
                                         <i class="fas fa-edit"></i>
@@ -97,7 +126,7 @@
                                        onclick="return confirm('Supprimer cet utilisateur ?')">
                                         <i class="fas fa-trash"></i>
                                     </a>
-                                
+                                </td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -110,8 +139,41 @@
                                             <li><a class="dropdown-item" href="{% url 'super_admin_changer_role' user.id 'etudiant' %}">Étudiant</a></li>
                                         </ul>
                                     </div>
-                                
+                                </td>
                             </tr>
+
+                            <!-- Modal pour modifier le mot de passe -->
+                            <div class="modal fade" id="mdpModal{{ user.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <form method="post" action="{% url 'super_admin_utilisateur_modifier' user.id %}">
+                                            {% csrf_token %}
+                                            <div class="modal-header bg-primary text-white">
+                                                <h6 class="modal-title">Modifier mot de passe - {{ user.username }}</h6>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Nouveau mot de passe</label>
+                                                    <input type="text" name="nouveau_mot_de_passe" class="form-control" required minlength="6">
+                                                    <small class="text-muted">Minimum 6 caractères</small>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="desactiver_paiement" class="form-check-input" id="desactiverPaiement{{ user.id }}" {% if user.paiement_desactive %}checked{% endif %}>
+                                                    <label class="form-check-label" for="desactiverPaiement{{ user.id }}">
+                                                        Désactiver l'obligation de paiement (compte gratuit)
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Annuler</button>
+                                                <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
                             {% endfor %}
                         </tbody>
                     </table>

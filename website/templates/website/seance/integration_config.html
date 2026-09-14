@@ -1,0 +1,160 @@
+{% extends 'website/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Configurer l'intégration - {{ seance.titre }}{% endblock %}
+{% block page_title %}Configuration de l'activité d'intégration : {{ seance.titre }}{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- En-tête -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-header bg-white rounded-top-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0">{{ seance.titre }}</h5>
+                        <small class="text-muted">Activité d'intégration - Gérez les exercices</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'seance_detail' seance.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>{{ exercices|length }}</strong> exercice(s) dans cette activité d'intégration
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    <span class="badge {% if seance.statut == 'brouillon' %}bg-secondary{% elif seance.statut == 'publie' %}bg-success{% else %}bg-info{% endif %} fs-6">
+                        {{ seance.get_statut_display }}
+                    </span>
+                    <span class="badge bg-primary fs-6">
+                        {{ seance.get_type_seance_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des exercices -->
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white rounded-top-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0"><i class="fas fa-list-ul text-primary me-2"></i>Exercices</h5>
+                <a href="{% url 'exercice_ajouter' seance.id %}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus me-1"></i>Ajouter un exercice
+                </a>
+            </div>
+            <div class="card-body">
+                {% if exercices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Titre</th>
+                                    <th>Type</th>
+                                    <th>Durée</th>
+                                    <th>Points</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ex in exercices %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ ex.titre }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ ex.consignes|truncatewords:10 }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ ex.get_type_exercice_display }}</span>
+                                    </td>
+                                    <td>{{ ex.duree }} min</td>
+                                    <td>{{ ex.points }} pts</td>
+                                    <td>
+                                        {% if ex.est_lance %}
+                                            <span class="badge bg-success">✓ Publié</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">📝 Brouillon</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'exercice_configurer' ex.id %}" class="btn btn-outline-primary" title="Configurer">
+                                                <i class="fas fa-cog"></i>
+                                            </a>
+                                            <a href="{% url 'exercice_tableau_resultats' ex.id %}" class="btn btn-outline-info" title="Résultats">
+                                                <i class="fas fa-chart-bar"></i>
+                                            </a>
+                                            <a href="{% url 'exercice_lancer' ex.id %}" class="btn {% if ex.est_lance %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="{% if ex.est_lance %}Arrêter{% else %}Publier{% endif %}" onclick="return confirm('{% if ex.est_lance %}Arrêter cet exercice ?{% else %}Publier cet exercice ?{% endif %}')">
+                                                <i class="fas {% if ex.est_lance %}fa-stop{% else %}fa-play{% endif %}"></i>
+                                            </a>
+                                            <a href="{% url 'exercice_modifier' ex.id %}" class="btn btn-outline-secondary" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'exercice_supprimer' ex.id %}" class="btn btn-outline-danger" title="Supprimer" onclick="return confirm('Supprimer cet exercice ?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-puzzle-piece fa-3x text-muted mb-3"></i>
+                        <p>Aucun exercice dans cette activité d'intégration.</p>
+                        <a href="{% url 'exercice_ajouter' seance.id %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Créer le premier exercice
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0 rounded-4 sticky-top" style="top: 20px;">
+            <div class="card-header bg-white rounded-top-4">
+                <h5 class="mb-0"><i class="fas fa-lightbulb text-warning me-2"></i>Conseils</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-3">
+                        <strong>📝 Créer un exercice</strong>
+                        <p class="text-muted small">Cliquez sur "Ajouter un exercice" pour créer un nouvel exercice dans cette activité d'intégration.</p>
+                    </li>
+                    <li class="mb-3">
+                        <strong>📊 Suivi des résultats</strong>
+                        <p class="text-muted small">Utilisez le bouton "Résultats" pour voir les performances des étudiants sur chaque exercice.</p>
+                    </li>
+                    <li class="mb-3">
+                        <strong>🚀 Publication</strong>
+                        <p class="text-muted small">Un exercice doit être "Publié" pour que les étudiants puissent y accéder.</p>
+                    </li>
+                </ul>
+                <hr>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'seance_publier' seance.id %}" class="btn {% if seance.statut == 'brouillon' %}btn-success{% else %}btn-secondary{% endif %}" onclick="return confirm('{% if seance.statut == 'brouillon' %}Publier cette séance ?{% else %}Cette séance est déjà publiée.{% endif %}')">
+                        <i class="fas fa-globe me-1"></i>
+                        {% if seance.statut == 'brouillon' %}Publier la séance{% else %}Séance publiée{% endif %}
+                    </a>
+                    <a href="{% url 'seance_detail' seance.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Retour à la séance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

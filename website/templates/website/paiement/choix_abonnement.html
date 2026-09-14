@@ -1,0 +1,528 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Choisissez votre abonnement - Academia Net{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --primary: #1e3a8a;
+    --primary-dark: #0f2b5e;
+    --primary-light: #3b82f6;
+    --accent: #f59e0b;
+    --success: #10b981;
+    --danger: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-600: #6b7280;
+    --gray-800: #1f2937;
+    --radius-xl: 24px;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  }
+
+  .abo-container {
+    min-height: calc(100vh - 200px);
+    background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
+    padding: 3rem 1rem 4rem;
+  }
+
+  .abo-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Bannières */
+  .alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 2rem;
+    animation: slideDown 0.4s ease;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .alert-banner i {
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .alert-info {
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    border: 1px solid #7dd3fc;
+    color: #0369a1;
+  }
+
+  .alert-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #fcd34d;
+    color: #b45309;
+  }
+
+  .alert-danger {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 1px solid #fca5a5;
+    color: #dc2626;
+  }
+
+  /* En-tête */
+  .abo-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .abo-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 1rem;
+  }
+
+  .abo-header p {
+    font-size: 1.1rem;
+    color: var(--gray-600);
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  /* Grille des plans */
+  .plans-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .plan-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--gray-200);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .plan-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--primary-light);
+  }
+
+  .plan-card.featured {
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .featured-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, var(--accent) 0%, #fbbf24 100%);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 50px;
+    letter-spacing: 0.5px;
+  }
+
+  .plan-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .plan-icon i {
+    font-size: 1.5rem;
+    color: white;
+  }
+
+  .plan-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 0.5rem;
+  }
+
+  .plan-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .plan-price small {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--gray-600);
+  }
+
+  .plan-period {
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--gray-200);
+  }
+
+  .plan-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .plan-features li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    padding: 0.4rem 0;
+  }
+
+  .plan-features li i {
+    font-size: 0.85rem;
+    color: var(--success);
+    width: 18px;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group select,
+  .form-group input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .form-group select:focus,
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+  }
+
+  .btn-pay {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-pay-dark {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+  }
+
+  .btn-pay-dark:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+  }
+
+  .btn-pay-blue {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+  }
+
+  .btn-pay-blue:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  }
+
+  /* Séparateur ou */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
+  }
+
+  .divider-text {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    font-weight: 500;
+  }
+
+  /* Carte essai */
+  .trial-card {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-radius: var(--radius-xl);
+    padding: 1.75rem;
+    text-align: center;
+    border: 1px solid #bbf7d0;
+  }
+
+  .trial-card i {
+    font-size: 2rem;
+    color: var(--success);
+    margin-bottom: 0.5rem;
+  }
+
+  .trial-card h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #065f46;
+    margin-bottom: 0.5rem;
+  }
+
+  .trial-card p {
+    font-size: 0.85rem;
+    color: #047857;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-trial {
+    background: white;
+    border: 1.5px solid var(--success);
+    color: #065f46;
+    padding: 0.7rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-trial:hover {
+    background: var(--success);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  /* Lien retour */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .back-link:hover {
+    color: var(--primary);
+  }
+
+  /* Footer quit */
+  .footer-quit {
+    display: block;
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.8rem;
+    color: var(--gray-600);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-quit:hover {
+    color: var(--danger);
+  }
+
+  @media (max-width: 768px) {
+    .abo-header h1 { font-size: 1.75rem; }
+    .plans-grid { grid-template-columns: 1fr; max-width: 400px; margin-left: auto; margin-right: auto; }
+    .plan-card { padding: 1.5rem; }
+  }
+</style>
+
+<div class="abo-container">
+  <div class="abo-wrapper">
+
+    {# Bandeau contextuel #}
+    {% if essai_expire %}
+    <div class="alert-banner alert-danger">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>Votre période d'essai est terminée. Choisissez un abonnement pour continuer.</span>
+    </div>
+    {% elif essai_en_cours %}
+    <div class="alert-banner alert-warning">
+      <i class="fas fa-hourglass-half"></i>
+      <span>Il vous reste <strong>{{ jours_essai }} jour{{ jours_essai|pluralize }}</strong> d'essai gratuit.</span>
+    </div>
+    {% elif premier_passage %}
+    <div class="alert-banner alert-info">
+      <i class="fas fa-sparkles"></i>
+      <span>Bienvenue sur Academia Net ! Choisissez votre mode d'accès.</span>
+    </div>
+    {% endif %}
+
+    {# En-tête #}
+    <div class="abo-header">
+      <h1>Accédez à toutes les fonctionnalités</h1>
+      <p>Choisissez la formule qui vous correspond. Annulation à tout moment.</p>
+    </div>
+
+    {# Grille des plans #}
+    <div class="plans-grid">
+
+      {# Mensuel #}
+      <form method="post" action="{% url 'initier_paiement' %}">
+        {% csrf_token %}
+        <input type="hidden" name="type_abonnement" value="mensuel">
+        <div class="plan-card">
+          <div class="plan-icon">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+          <h3 class="plan-name">Mensuel</h3>
+          <div class="plan-price">500 <small>FCFA</small></div>
+          <div class="plan-period">par mois · 30 jours</div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check-circle"></i> Accès complet à la plateforme</li>
+            <li><i class="fas fa-check-circle"></i> Cours et formations illimités</li>
+            <li><i class="fas fa-check-circle"></i> Bibliothèque d'épreuves</li>
+            <li><i class="fas fa-check-circle"></i> Certificats de formation</li>
+            <li><i class="fas fa-check-circle"></i> Support prioritaire</li>
+          </ul>
+          <div class="form-group">
+            <label>Moyen de paiement</label>
+            <select name="moyen_paiement" required>
+              <option value="orange_money">📱 Orange Money</option>
+              <option value="mtn_money">📱 MTN Money</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Numéro de téléphone</label>
+            <input type="tel" name="telephone" placeholder="6XXXXXXXX" required pattern="[0-9]{9}" title="9 chiffres sans indicatif">
+          </div>
+          <button type="submit" class="btn-pay btn-pay-dark">
+            <i class="fas fa-credit-card"></i> Payer 500 FCFA
+          </button>
+        </div>
+      </form>
+
+      {# Trimestriel #}
+      <form method="post" action="{% url 'initier_paiement' %}">
+        {% csrf_token %}
+        <input type="hidden" name="type_abonnement" value="trimestriel">
+        <div class="plan-card featured">
+          <div class="featured-badge">🌟 Meilleure offre</div>
+          <div class="plan-icon" style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <h3 class="plan-name">Trimestriel</h3>
+          <div class="plan-price">1 500 <small>FCFA</small></div>
+          <div class="plan-period">pour 3 mois · économisez 33%</div>
+          <ul class="plan-features">
+            <li><i class="fas fa-check-circle"></i> Accès complet à la plateforme</li>
+            <li><i class="fas fa-check-circle"></i> Cours et formations illimités</li>
+            <li><i class="fas fa-check-circle"></i> Bibliothèque d'épreuves</li>
+            <li><i class="fas fa-check-circle"></i> Certificats de formation</li>
+            <li><i class="fas fa-check-circle"></i> Support prioritaire</li>
+          </ul>
+          <div class="form-group">
+            <label>Moyen de paiement</label>
+            <select name="moyen_paiement" required>
+              <option value="orange_money">📱 Orange Money</option>
+              <option value="mtn_money">📱 MTN Money</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Numéro de téléphone</label>
+            <input type="tel" name="telephone" placeholder="6XXXXXXXX" required pattern="[0-9]{9}" title="9 chiffres sans indicatif">
+          </div>
+          <button type="submit" class="btn-pay btn-pay-blue">
+            <i class="fas fa-credit-card"></i> Payer 1 500 FCFA
+          </button>
+        </div>
+      </form>
+
+    </div>
+
+    {# Section "ou" + essai gratuit #}
+    {% if premier_passage %}
+    <div class="divider">
+      <div class="divider-line"></div>
+      <span class="divider-text">ou</span>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="trial-card">
+      <i class="fas fa-gift"></i>
+      <h3>Essai gratuit — 15 jours</h3>
+      <p>Accès complet sans paiement. À l'expiration, un abonnement sera requis.</p>
+      <form method="post" action="{% url 'demarrer_essai' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn-trial">
+          <i class="fas fa-play-circle"></i> Commencer l'essai gratuit
+        </button>
+      </form>
+    </div>
+
+    <a href="{% url 'abandonner_inscription' %}" class="footer-quit" onclick="return confirm('Votre compte sera supprimé définitivement. Continuer ?')">
+      <i class="fas fa-trash-alt"></i> Annuler et supprimer mon compte
+    </a>
+
+    {% elif essai_en_cours %}
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <a href="{% url 'dashboard' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Retourner au tableau de bord
+      </a>
+    </div>
+    <a href="{% url 'deconnexion' %}" class="footer-quit">
+      <i class="fas fa-sign-out-alt"></i> Se déconnecter
+    </a>
+    {% else %}
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <a href="{% url 'dashboard' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Retourner au tableau de bord
+      </a>
+    </div>
+    <a href="{% url 'deconnexion' %}" class="footer-quit">
+      <i class="fas fa-sign-out-alt"></i> Se déconnecter
+    </a>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

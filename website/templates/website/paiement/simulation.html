@@ -1,0 +1,41 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Confirmation de paiement - Academia Net{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-credit-card fa-4x text-primary"></i>
+                    </div>
+                    <h3 class="fw-bold">Demande de paiement initiée</h3>
+                    <p class="text-muted mb-4">Un paiement de <strong>{{ montant }} FCFA</strong> a été demandé sur votre numéro <strong>{{ telephone }}</strong></p>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Mode démonstration :</strong> Ceci est une simulation. Dans la version réelle, vous recevrez une notification sur votre téléphone pour confirmer le paiement.
+                    </div>
+                    
+                    <div class="mt-4">
+                        <p>Référence de la transaction : <strong>{{ reference }}</strong></p>
+                        <p>Abonnement : <strong>{{ type_abonnement|title }}</strong></p>
+                        <button id="confirmerBtn" class="btn btn-success btn-lg px-5 rounded-pill">
+                            <i class="fas fa-check-circle me-2"></i>Simuler la confirmation du paiement
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('confirmerBtn').addEventListener('click', function() {
+        window.location.href = "{% url 'confirmer_paiement' reference %}";
+    });
+</script>
+{% endblock %}

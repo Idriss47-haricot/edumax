@@ -1,0 +1,123 @@
+{% extends 'website/base.html' %}
+{% load static %}
+
+{% block title %}Laisser un avis — {{ formation.titre }}{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width:600px;">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-bottom py-3 px-4">
+      <h5 class="mb-0"><i class="fas fa-star me-2 text-warning"></i>Votre avis sur cette formation</h5>
+    </div>
+    <div class="card-body p-4">
+
+      <!-- Rappel formation -->
+      <div class="d-flex align-items-center gap-3 mb-4 p-3 bg-light rounded-3">
+        {% if formation.image_cover %}
+        <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}"
+             style="width:60px;height:60px;object-fit:cover;border-radius:10px;flex-shrink:0;">
+        {% else %}
+        <div style="width:60px;height:60px;background:#e0e7ff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="fas fa-graduation-cap text-primary"></i>
+        </div>
+        {% endif %}
+        <div>
+          <div class="fw-700">{{ formation.titre }}</div>
+          <div class="small text-muted">Formateur : {{ formation.createur.prenom|default:formation.createur.username }}</div>
+        </div>
+      </div>
+
+      <form method="post" id="avisForm">
+        {% csrf_token %}
+
+        <!-- Note étoiles -->
+        <div class="mb-4">
+          <label class="form-label fw-600 d-block mb-2">Note globale <span class="text-danger">*</span></label>
+          <div class="stars-input" id="starsInput">
+            {% for i in "12345" %}
+            <label class="star-label" data-value="{{ forloop.counter }}">
+              <input type="radio" name="note" value="{{ forloop.counter }}" required style="display:none;">
+              <i class="fas fa-star star-icon" data-val="{{ forloop.counter }}"></i>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="star-feedback small text-muted mt-1" id="starFeedback">Cliquez pour noter</div>
+        </div>
+
+        <!-- Commentaire -->
+        <div class="mb-4">
+          <label class="form-label fw-600">Votre commentaire (optionnel)</label>
+          <textarea name="commentaire" class="form-control rounded-3" rows="5"
+                    placeholder="Partagez votre expérience : ce que vous avez aimé, les points à améliorer, à qui vous le recommanderiez..."></textarea>
+          <small class="text-muted">Votre avis aide les autres apprenants à choisir.</small>
+        </div>
+
+        <div class="d-flex gap-3">
+          <a href="{% url 'formation_detail' formation.slug %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Retour
+          </a>
+          <button type="submit" class="btn btn-warning fw-700 flex-fill" id="avisBtn">
+            <i class="fas fa-paper-plane me-2"></i>Publier mon avis
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.stars-input { display:flex; gap:6px; }
+.star-label { cursor:pointer; }
+.star-icon { font-size:2.2rem; color:#d1d5db; transition:color 0.15s; }
+.star-icon.hovered, .star-icon.selected { color:#f59e0b; }
+.fw-600 { font-weight:600; }
+.fw-700 { font-weight:700; }
+</style>
+
+<script>
+const stars = document.querySelectorAll('.star-icon');
+const feedbacks = ['Très mauvais', 'Mauvais', 'Moyen', 'Bien', 'Excellent !'];
+const feedbackEl = document.getElementById('starFeedback');
+let selectedNote = 0;
+
+stars.forEach(star => {
+  const val = parseInt(star.dataset.val);
+
+  star.addEventListener('mouseenter', () => {
+    stars.forEach(s => s.classList.toggle('hovered', parseInt(s.dataset.val) <= val));
+    feedbackEl.textContent = feedbacks[val - 1];
+  });
+
+  star.parentElement.addEventListener('click', () => {
+    selectedNote = val;
+    document.querySelector(`input[name="note"][value="${val}"]`).checked = true;
+    stars.forEach(s => {
+      s.classList.toggle('selected', parseInt(s.dataset.val) <= val);
+      s.classList.remove('hovered');
+    });
+    feedbackEl.textContent = feedbacks[val - 1];
+    feedbackEl.style.color = '#f59e0b';
+    feedbackEl.style.fontWeight = '600';
+  });
+});
+
+document.querySelector('.stars-input').addEventListener('mouseleave', () => {
+  stars.forEach(s => {
+    s.classList.remove('hovered');
+    s.classList.toggle('selected', parseInt(s.dataset.val) <= selectedNote);
+  });
+  feedbackEl.textContent = selectedNote ? feedbacks[selectedNote - 1] : 'Cliquez pour noter';
+});
+
+document.getElementById('avisForm').addEventListener('submit', function(e) {
+  if (!selectedNote) {
+    e.preventDefault();
+    alert('Veuillez attribuer une note.');
+    return;
+  }
+  const btn = document.getElementById('avisBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Publication...';
+});
+</script>
+{% endblock %}

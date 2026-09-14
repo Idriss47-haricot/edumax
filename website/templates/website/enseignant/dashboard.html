@@ -1,120 +1,366 @@
 {% extends 'website/base_dashboard.html' %}
+{% load static %}
 
 {% block title %}Tableau de bord Enseignant{% endblock %}
-{% block page_title %}Tableau de bord{% endblock %}
+{% block page_title %}Mon espace enseignant{% endblock %}
 
 {% block content %}
 
-<div class="row mb-4">
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Mes cours</h3>
-                <div class="value">{{ cours_count }}</div>
-            </div>
-            <div class="icon"><i class="fas fa-book"></i></div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Mes étudiants</h3>
-                <div class="value">{{ etudiants_count }}</div>
-            </div>
-            <div class="icon"><i class="fas fa-users"></i></div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>Visios à venir</h3>
-                <div class="value">{{ visios_count }}</div>
-            </div>
-            <div class="icon"><i class="fas fa-video"></i></div>
-        </div>
-    </div>
-    <div class="col-md-6 mb-4">
-        <div class="card shadow-sm border-0 rounded-4 h-100">
-            <div class="card-body text-center">
-                <i class="fas fa-check-double fa-3x text-success mb-3"></i>
-                <h5 class="card-title">Correction des devoirs</h5>
-                <p class="card-text text-muted small">Consulter et corriger les devoirs soumis par les étudiants</p>
-                <a href="{% url 'enseignant_devoirs_a_corriger' %}" class="btn btn-outline-success">Accéder</a>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3 mb-3">
-        <div class="card-stats d-flex justify-content-between align-items-center">
-            <div>
-                <h3>À corriger</h3>
-                <div class="value">{{ devoirs_a_corriger }}</div>
-            </div>
-            <div class="icon"><i class="fas fa-check-double"></i></div>
-        </div>
-    </div>
+<!-- ══ STATS ══════════════════════════════════════════════════════ -->
+<div class="ens-stats-grid">
+  <div class="ens-stat" style="--c:#1e3a8a;">
+    <div class="ens-stat-icon"><i class="fas fa-book"></i></div>
+    <span class="ens-stat-n">{{ cours_count|default:0 }}</span>
+    <span class="ens-stat-l">Cours assignés</span>
+  </div>
+  <div class="ens-stat" style="--c:#d97706;">
+    <div class="ens-stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+    <span class="ens-stat-n">{{ formations_crees|length|default:0 }}</span>
+    <span class="ens-stat-l">Formations en ligne</span>
+  </div>
+  <div class="ens-stat" style="--c:#059669;">
+    <div class="ens-stat-icon"><i class="fas fa-users"></i></div>
+    <span class="ens-stat-n">{{ etudiants_count|default:0 }}</span>
+    <span class="ens-stat-l">Étudiants</span>
+  </div>
+  <div class="ens-stat" style="--c:#7c3aed;">
+    <div class="ens-stat-icon"><i class="fas fa-check-double"></i></div>
+    <span class="ens-stat-n">{{ devoirs_a_corriger|default:0 }}</span>
+    <span class="ens-stat-l">Devoirs à corriger</span>
+  </div>
+  <div class="ens-stat" style="--c:#dc2626;">
+    <div class="ens-stat-icon"><i class="fas fa-video"></i></div>
+    <span class="ens-stat-n">{{ visios_count|default:0 }}</span>
+    <span class="ens-stat-l">Visios à venir</span>
+  </div>
+  <div class="ens-stat" style="--c:#16a34a;">
+    <div class="ens-stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+    <span class="ens-stat-n">{{ revenus_total|default:0|floatformat:0 }}</span>
+    <span class="ens-stat-l">Revenus (FCFA)</span>
+  </div>
 </div>
 
-<!-- Mes écoles -->
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0"><i class="fas fa-school me-2 text-primary"></i>Mes écoles</h5>
-    </div>
-    <div class="card-body">
-        {% if ecoles %}
-            <div class="row">
-                {% for ecole in ecoles %}
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex align-items-center">
-                                    {% if ecole.logo %}
-                                        <img src="{{ ecole.logo.url }}" width="50" height="50" class="rounded-circle me-3">
-                                    {% else %}
-                                        <i class="fas fa-school fa-2x text-muted me-3"></i>
-                                    {% endif %}
-                                    <div>
-                                        <h5 class="mb-0">{{ ecole.nom }}</h5>
-                                        <small class="text-muted">{{ ecole.ville }}, {{ ecole.pays }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-muted text-center mb-0">Vous n'êtes pas encore rattaché à une école.</p>
-        {% endif %}
-    </div>
+<!-- ══ DEUX ONGLETS PRINCIPAUX ════════════════════════════════════ -->
+<div class="ens-tabs">
+  <button class="ens-tab active" onclick="showEnsTab('ecole', this)">
+    <i class="fas fa-school me-2"></i>Mes cours en école
+  </button>
+  <button class="ens-tab" onclick="showEnsTab('formation', this)">
+    <i class="fas fa-chalkboard-teacher me-2"></i>Mes formations en ligne
+    {% if formations_crees %}<span class="ens-tab-count">{{ formations_crees|length }}</span>{% endif %}
+  </button>
 </div>
 
-<!-- Mes cours assignés -->
-<div class="card shadow-sm">
-    <div class="card-header bg-white">
-        <h5 class="mb-0"><i class="fas fa-clock me-2 text-primary"></i>Mes cours assignés</h5>
+<!-- ══ ONGLET ÉCOLE ════════════════════════════════════════════════ -->
+<div id="ens-tab-ecole" class="ens-tab-content">
+  <div class="ens-two-col">
+
+    <!-- Mes écoles -->
+    <div class="ens-panel">
+      <div class="ens-panel-header">
+        <span><i class="fas fa-school me-2 text-primary"></i>Mes écoles</span>
+      </div>
+      {% if ecoles %}
+      {% for ecole in ecoles %}
+      <div class="ens-ecole-item">
+        <div class="ens-ecole-logo">
+          {% if ecole.logo %}<img src="{{ ecole.logo.url }}" alt="">
+          {% else %}<i class="fas fa-school"></i>{% endif %}
+        </div>
+        <div class="ens-ecole-info">
+          <strong>{{ ecole.nom }}</strong>
+          <span><i class="fas fa-map-marker-alt me-1"></i>{{ ecole.ville }}, {{ ecole.pays }}</span>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="ens-empty">
+        <i class="fas fa-school fa-2x text-muted mb-2"></i>
+        <p>Pas encore rattaché à une école.</p>
+      </div>
+      {% endif %}
     </div>
-    <div class="card-body">
-        {% if cours_assignes %}
-            <div class="list-group">
-                {% for cours in cours_assignes %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">{{ cours.titre }}</h6>
-                            <small class="text-muted">
-                                <i class="fas fa-tag me-1"></i>{{ cours.specialite.nom }}
-                                <i class="fas fa-school ms-2 me-1"></i>{{ cours.specialite.filiere.ecole.nom }}
-                            </small>
-                        </div>
-                        <a href="{% url 'cours_detail_enseignant' cours.id %}" class="btn btn-sm btn-primary">
-                            <i class="fas fa-eye me-1"></i>Gérer
-                        </a>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="text-muted text-center mb-0">Aucun cours assigné pour le moment.</p>
+
+    <!-- Devoirs à corriger -->
+    <div class="ens-panel">
+      <div class="ens-panel-header">
+        <span><i class="fas fa-check-double me-2 text-warning"></i>Devoirs à corriger</span>
+        {% if devoirs_a_corriger > 0 %}
+        <span class="ens-urgent-badge">{{ devoirs_a_corriger }} urgent{{ devoirs_a_corriger|pluralize }}</span>
         {% endif %}
+      </div>
+      {% if devoirs_list %}
+      {% for devoir in devoirs_list|slice:":5" %}
+      <div class="ens-list-item">
+        <div class="ens-list-icon ens-icon-warn"><i class="fas fa-file-alt"></i></div>
+        <div class="ens-list-info">
+          <strong>{{ devoir.titre }}</strong>
+          <span>{{ devoir.cours.titre }} · {{ devoir.date_limite|date:"d/m/Y" }}</span>
+        </div>
+        <a href="{% url 'corriger_devoir' devoir.id %}" class="ens-list-btn">Corriger</a>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="ens-empty"><p>Aucun devoir en attente. 🎉</p></div>
+      {% endif %}
     </div>
+
+  </div>
+
+  <!-- Cours assignés -->
+  <div class="ens-panel mt-4">
+    <div class="ens-panel-header">
+      <span><i class="fas fa-book me-2 text-primary"></i>Mes cours assignés</span>
+      <span class="ens-panel-count">{{ cours_count|default:0 }} cours</span>
+    </div>
+    {% if cours_assignes %}
+    <div class="ens-cours-grid">
+      {% for cours in cours_assignes %}
+      <a href="{% url 'cours_detail_enseignant' cours.id %}" class="ens-cours-card">
+        <div class="ens-cours-header">
+          <div class="ens-cours-icon"><i class="fas fa-book"></i></div>
+          <span class="ens-cours-statut ens-statut-{{ cours.statut|default:'actif' }}">
+            {{ cours.get_statut_display|default:"Actif" }}
+          </span>
+        </div>
+        <div class="ens-cours-body">
+          <h6 class="ens-cours-titre">{{ cours.titre }}</h6>
+          <p class="ens-cours-meta">
+            <i class="fas fa-tag me-1"></i>{{ cours.specialite.nom }}
+            <br>
+            <i class="fas fa-school me-1"></i>{{ cours.specialite.filiere.ecole.nom|truncatechars:25 }}
+          </p>
+        </div>
+        <div class="ens-cours-footer">
+          <span><i class="fas fa-eye me-1"></i>Gérer le cours</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ens-empty">
+      <i class="fas fa-book fa-2x text-muted mb-2"></i>
+      <p>Aucun cours assigné pour le moment.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Prochaines visios -->
+  {% if prochaines_visios %}
+  <div class="ens-panel mt-4">
+    <div class="ens-panel-header">
+      <span><i class="fas fa-video me-2 text-danger"></i>Prochaines visioconférences</span>
+    </div>
+    {% for visio in prochaines_visios|slice:":4" %}
+    <div class="ens-list-item">
+      <div class="ens-list-icon ens-icon-danger"><i class="fas fa-video"></i></div>
+      <div class="ens-list-info">
+        <strong>{{ visio.titre }}</strong>
+        <span>{{ visio.date_debut|date:"d/m/Y à H:i" }} · {{ visio.cours.titre }}</span>
+      </div>
+      {% if visio.lien_visio %}
+      <a href="{{ visio.lien_visio }}" target="_blank" class="ens-list-btn ens-btn-green">Rejoindre</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
+
+<!-- ══ ONGLET FORMATIONS EN LIGNE ══════════════════════════════════ -->
+<div id="ens-tab-formation" class="ens-tab-content d-none">
+
+  <!-- Stats formations -->
+  <div class="ens-formation-stats">
+    <div class="ens-fstat">
+      <span class="ens-fstat-n">{{ formations_crees|length|default:0 }}</span>
+      <span class="ens-fstat-l">Formations créées</span>
+    </div>
+    <div class="ens-fstat">
+      <span class="ens-fstat-n">{{ total_ventes|default:0 }}</span>
+      <span class="ens-fstat-l">Total ventes</span>
+    </div>
+    <div class="ens-fstat">
+      <span class="ens-fstat-n">{{ revenus_total|default:0|floatformat:0 }}</span>
+      <span class="ens-fstat-l">Revenus (FCFA)</span>
+    </div>
+    <div class="ens-fstat">
+      <span class="ens-fstat-n">{{ total_apprenants|default:0 }}</span>
+      <span class="ens-fstat-l">Apprenants total</span>
+    </div>
+  </div>
+
+  <!-- Bouton créer -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h6 class="mb-0 fw-700">Mes formations en ligne</h6>
+    <a href="{% url 'formation_creer' %}" class="ens-btn-create">
+      <i class="fas fa-plus me-2"></i>Créer une formation
+    </a>
+  </div>
+
+  {% if formations_crees %}
+  <div class="ens-formations-grid">
+    {% for formation in formations_crees %}
+    <div class="ens-fcard">
+      <div class="ens-fcard-img">
+        {% if formation.image_cover %}
+        <img src="{{ formation.image_cover.url }}" alt="{{ formation.titre }}" loading="lazy">
+        {% else %}
+        <div class="ens-fcard-placeholder"><i class="fas fa-graduation-cap fa-2x"></i></div>
+        {% endif %}
+        <span class="ens-fcard-statut ens-statut-{{ formation.statut }}">
+          {{ formation.get_statut_display }}
+        </span>
+      </div>
+      <div class="ens-fcard-body">
+        <h6 class="ens-fcard-titre">{{ formation.titre|truncatechars:45 }}</h6>
+        <div class="ens-fcard-meta">
+          <span class="ens-fprice">{{ formation.prix|floatformat:0 }} FCFA</span>
+          <span class="ens-fventes">{{ formation.nb_ventes|default:0 }} vente{{ formation.nb_ventes|default:0|pluralize }}</span>
+          {% if formation.note_moyenne > 0 %}
+          <span class="ens-fnote">★ {{ formation.note_moyenne|floatformat:1 }}</span>
+          {% endif %}
+        </div>
+        {% if formation.statut == 'refuse' and formation.raison_refus %}
+        <div class="ens-fcard-alert">
+          <i class="fas fa-exclamation-circle me-1"></i>{{ formation.raison_refus|truncatechars:60 }}
+        </div>
+        {% endif %}
+      </div>
+      <div class="ens-fcard-actions">
+        <a href="{% url 'formation_detail' formation.slug %}" class="ens-faction ens-faction-view" title="Voir">
+          <i class="fas fa-eye"></i>
+        </a>
+        <a href="{% url 'formation_modifier' formation.slug %}" class="ens-faction ens-faction-edit" title="Modifier">
+          <i class="fas fa-pen"></i>
+        </a>
+        <a href="{% url 'formation_ajouter_fichiers' formation.slug %}" class="ens-faction ens-faction-files" title="Fichiers">
+          <i class="fas fa-folder"></i>
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ens-empty-big">
+    <i class="fas fa-chalkboard-teacher fa-3x text-muted mb-3"></i>
+    <h5>Vous n'avez pas encore créé de formation</h5>
+    <p class="text-muted">Partagez votre expertise et commencez à générer des revenus.</p>
+    <a href="{% url 'formation_creer' %}" class="ens-btn-create">
+      <i class="fas fa-plus me-2"></i>Créer ma première formation
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ══ STYLES ═════════════════════════════════════════════════════ -->
+<style>
+/* Stats */
+.ens-stats-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-bottom:28px; }
+@media(max-width:1000px) { .ens-stats-grid { grid-template-columns:repeat(3,1fr); } }
+@media(max-width:600px) { .ens-stats-grid { grid-template-columns:repeat(2,1fr); } }
+.ens-stat { background:white; border-radius:14px; border:1.5px solid #e5e7eb; padding:16px 12px; text-align:center; position:relative; overflow:hidden; transition:all 0.2s; }
+.ens-stat:hover { border-color:var(--c); transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,0.08); }
+.ens-stat::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c); }
+.ens-stat-icon { width:40px; height:40px; background:var(--c); border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:1rem; margin:0 auto 10px; }
+.ens-stat-n { display:block; font-size:1.6rem; font-weight:900; color:#111827; line-height:1; }
+.ens-stat-l { font-size:0.72rem; color:#6b7280; font-weight:500; }
+
+/* Tabs */
+.ens-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+.ens-tab { padding:10px 22px; border-radius:50px; border:1.5px solid #e5e7eb; background:white; font-weight:600; font-size:0.88rem; cursor:pointer; transition:all 0.2s; color:#374151; position:relative; }
+.ens-tab:hover { border-color:#1e3a8a; color:#1e3a8a; }
+.ens-tab.active { background:#1e3a8a; color:white; border-color:#1e3a8a; }
+.ens-tab-count { background:rgba(255,255,255,0.25); border-radius:50px; padding:1px 8px; font-size:0.72rem; margin-left:6px; }
+
+/* Panels */
+.ens-two-col { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+@media(max-width:768px) { .ens-two-col { grid-template-columns:1fr; } }
+.ens-panel { background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; }
+.ens-panel-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid #f3f4f6; font-weight:600; font-size:0.88rem; }
+.ens-panel-count { background:#f0f4ff; color:#1e3a8a; border-radius:50px; padding:2px 10px; font-size:0.75rem; font-weight:700; }
+.ens-urgent-badge { background:#fee2e2; color:#dc2626; border-radius:50px; padding:2px 10px; font-size:0.75rem; font-weight:700; }
+
+.ens-ecole-item { display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid #f9fafb; }
+.ens-ecole-logo { width:42px; height:42px; border-radius:10px; background:#e0e7ff; color:#1e3a8a; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+.ens-ecole-logo img { width:100%; height:100%; object-fit:cover; }
+.ens-ecole-info strong { display:block; font-size:0.88rem; font-weight:700; color:#111827; }
+.ens-ecole-info span { font-size:0.75rem; color:#6b7280; }
+
+.ens-list-item { display:flex; align-items:center; gap:12px; padding:10px 18px; border-bottom:1px solid #f9fafb; }
+.ens-list-item:last-child { border:none; }
+.ens-list-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:0.9rem; flex-shrink:0; }
+.ens-icon-warn { background:#fef3c7; color:#d97706; }
+.ens-icon-danger { background:#fee2e2; color:#dc2626; }
+.ens-list-info { flex:1; min-width:0; }
+.ens-list-info strong { display:block; font-size:0.85rem; font-weight:600; color:#111827; }
+.ens-list-info span { font-size:0.75rem; color:#6b7280; }
+.ens-list-btn { background:#1e3a8a; color:white; border-radius:8px; padding:5px 12px; font-size:0.78rem; font-weight:600; text-decoration:none; transition:all 0.2s; white-space:nowrap; }
+.ens-list-btn:hover { background:#0f2b5e; color:white; }
+.ens-btn-green { background:#059669; }
+.ens-btn-green:hover { background:#047857; }
+
+/* Cours grid */
+.ens-cours-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; padding:16px 18px; }
+.ens-cours-card { background:#f8faff; border-radius:12px; border:1.5px solid #e5e7eb; text-decoration:none; color:#111827; transition:all 0.2s; overflow:hidden; }
+.ens-cours-card:hover { border-color:#1e3a8a; box-shadow:0 4px 14px rgba(30,58,138,0.1); transform:translateY(-2px); }
+.ens-cours-header { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-bottom:1px solid #e5e7eb; background:white; }
+.ens-cours-icon { width:32px; height:32px; background:#e0e7ff; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#1e3a8a; }
+.ens-cours-statut { font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:50px; }
+.ens-statut-actif,.ens-statut-publie { background:#d1fae5; color:#065f46; }
+.ens-statut-brouillon,.ens-statut-en_attente { background:#fef3c7; color:#92400e; }
+.ens-statut-refuse,.ens-statut-suspendu { background:#fee2e2; color:#991b1b; }
+.ens-cours-body { padding:12px 14px; }
+.ens-cours-titre { font-size:0.88rem; font-weight:700; color:#111827; margin-bottom:6px; line-height:1.3; }
+.ens-cours-meta { font-size:0.75rem; color:#6b7280; line-height:1.6; }
+.ens-cours-footer { padding:10px 14px; border-top:1px solid #f3f4f6; font-size:0.78rem; color:#1e3a8a; font-weight:600; }
+
+/* Section formations en ligne */
+.ens-formation-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; background:linear-gradient(135deg,#f0f4ff,#eff6ff); border-radius:14px; padding:20px; margin-bottom:24px; }
+@media(max-width:600px) { .ens-formation-stats { grid-template-columns:repeat(2,1fr); } }
+.ens-fstat { text-align:center; }
+.ens-fstat-n { display:block; font-size:1.6rem; font-weight:900; color:#1e3a8a; }
+.ens-fstat-l { font-size:0.72rem; color:#6b7280; }
+
+.ens-btn-create { background:#1e3a8a; color:white; padding:10px 22px; border-radius:10px; font-weight:700; font-size:0.88rem; text-decoration:none; display:inline-flex; align-items:center; transition:all 0.2s; }
+.ens-btn-create:hover { background:#0f2b5e; color:white; }
+
+/* Formations grid */
+.ens-formations-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:16px; }
+.ens-fcard { background:white; border-radius:14px; border:1.5px solid #e5e7eb; overflow:hidden; transition:all 0.2s; }
+.ens-fcard:hover { border-color:#d97706; box-shadow:0 4px 14px rgba(217,119,6,0.1); transform:translateY(-2px); }
+.ens-fcard-img { height:130px; overflow:hidden; background:#f0f4ff; position:relative; }
+.ens-fcard-img img { width:100%; height:100%; object-fit:cover; }
+.ens-fcard-placeholder { height:100%; display:flex; align-items:center; justify-content:center; color:#1e3a8a; opacity:0.3; }
+.ens-fcard-statut { position:absolute; top:8px; left:8px; font-size:0.68rem; font-weight:700; padding:2px 8px; border-radius:50px; }
+.ens-fcard-body { padding:12px 14px; }
+.ens-fcard-titre { font-size:0.88rem; font-weight:700; color:#111827; margin-bottom:8px; }
+.ens-fcard-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:0.78rem; }
+.ens-fprice { color:#1e3a8a; font-weight:800; }
+.ens-fventes,.ens-fnote { background:#f3f4f6; color:#374151; border-radius:50px; padding:2px 8px; font-weight:600; }
+.ens-fnote { background:#fef3c7; color:#92400e; }
+.ens-fcard-alert { background:#fee2e2; color:#991b1b; border-radius:8px; padding:6px 10px; font-size:0.75rem; margin-top:8px; }
+.ens-fcard-actions { display:flex; gap:6px; padding:10px 14px; border-top:1px solid #f3f4f6; }
+.ens-faction { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; text-decoration:none; font-size:0.8rem; transition:all 0.2s; }
+.ens-faction-view { background:#e0e7ff; color:#1e3a8a; }
+.ens-faction-view:hover { background:#1e3a8a; color:white; }
+.ens-faction-edit { background:#fef3c7; color:#92400e; }
+.ens-faction-edit:hover { background:#f59e0b; color:white; }
+.ens-faction-files { background:#d1fae5; color:#065f46; }
+.ens-faction-files:hover { background:#10b981; color:white; }
+
+.ens-empty, .ens-empty-big { text-align:center; padding:24px; color:#9ca3af; }
+.ens-empty-big { padding:60px 20px; }
+.fw-700 { font-weight:700; }
+</style>
+
+<script>
+function showEnsTab(name, btn) {
+  document.querySelectorAll('.ens-tab-content').forEach(t => t.classList.add('d-none'));
+  document.querySelectorAll('.ens-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('ens-tab-' + name).classList.remove('d-none');
+  btn.classList.add('active');
+}
+</script>
 
 {% endblock %}

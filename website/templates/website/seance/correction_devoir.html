@@ -1,0 +1,170 @@
+{% extends 'website/base_dashboard.html' %}
+
+{% block title %}Correction - {{ devoir.titre }}{% endblock %}
+{% block page_title %}Correction du devoir : {{ devoir.titre }} pendant "{{ seance.titre }}"{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Soumissions des étudiants</h5>
+            </div>
+            <div class="card-body">
+                {% if soumissions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Étudiant</th>
+                                    <th>Date de soumission</th>
+                                    <th>Fichier</th>
+                                    <th>Note</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for soumission in soumissions %}
+                                <tr>
+                                    <td>{{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</td>
+                                    <td>{{ soumission.date_soumission|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if soumission.fichier %}
+                                            <a href="{{ soumission.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if soumission.note %}
+                                            <span class="badge bg-success">{{ soumission.note }}/{{ devoir.note_max }}</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Non noté</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalCorrection{{ soumission.id }}">
+                                            <i class="fas fa-edit"></i> Corriger
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">Aucune soumission pour le moment.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Correction collective -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Correction collective</h5>
+            </div>
+            <div class="card-body">
+                {% if lien.correction_publique %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Correction publiée le {{ lien.date_correction_publique|date:"d/m/Y H:i" }}
+                    </div>
+                    <div class="border rounded p-3 mb-3">
+                        {{ lien.contenu_correction|linebreaks }}
+                    </div>
+                    {% if lien.fichier_correction %}
+                        <a href="{{ lien.fichier_correction.url }}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="fas fa-download me-1"></i>Télécharger la correction
+                        </a>
+                    {% endif %}
+                {% endif %}
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="correction_collective" value="1">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Titre de la correction</label>
+                        {{ form.titre }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contenu de la correction</label>
+                        {{ form.contenu }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fichier de correction (optionnel)</label>
+                        {{ form.fichier }}
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-globe me-1"></i>Publier la correction collective
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <a href="{% url 'seance_detail' seance.id %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-arrow-left me-1"></i>Retour à la séance
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals pour correction individuelle -->
+{% for soumission in soumissions %}
+<div class="modal fade" id="modalCorrection{{ soumission.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'devoir_corriger' soumission.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Correction pour {{ soumission.etudiant.prenom }} {{ soumission.etudiant.username }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    {% if soumission.texte_reponse %}
+                        <div class="mb-3">
+                            <strong>Réponse :</strong>
+                            <div class="border rounded p-3 bg-light">
+                                {{ soumission.texte_reponse|linebreaks }}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if soumission.fichier %}
+                        <div class="mb-3">
+                            <strong>Fichier joint :</strong><br>
+                            <a href="{{ soumission.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-1">
+                                <i class="fas fa-download me-1"></i>Télécharger
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Note (sur {{ devoir.note_max }})</label>
+                        <input type="number" name="note" class="form-control" step="0.5" min="0" max="{{ devoir.note_max }}" value="{{ soumission.note|default:'' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Feedback / Commentaires</label>
+                        <textarea name="feedback" class="form-control" rows="5">{{ soumission.feedback }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer la correction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
